@@ -1,103 +1,372 @@
-import Image from "next/image";
+'use client'
+
+import { useAuth } from '@/context/AuthContext'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { ProcessStep } from '@/lib/markdown'
+import Navbar from '@/components/layout/Navbar'
+import PageLayout from '@/components/layout/PageLayout'
+import TextCard from '@/components/ui/TextCard'
+import TextButton from '@/components/ui/TextButton'
+import TextHierarchy from '@/components/ui/TextHierarchy'
+import TextBadge from '@/components/ui/TextBadge'
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const { user, userProfile, loading, signInWithGitHub, signOut, refreshProfile } = useAuth()
+  const router = useRouter()
+  const [processSteps, setProcessSteps] = useState<ProcessStep[]>([])
+  const [welcomeText, setWelcomeText] = useState<string>('')
+  const [isLoadingContent, setIsLoadingContent] = useState(true)
+  const [initialLoading, setInitialLoading] = useState(true)
+  const [showBadge, setShowBadge] = useState('masterfabric')
+  const [authSuccess, setAuthSuccess] = useState(false)
+  const [hasRedirected, setHasRedirected] = useState(false)
+  const [systemInfo, setSystemInfo] = useState({
+    browser: '',
+    device: '',
+    os: '',
+    network: '',
+    memory: '',
+    performance: '',
+    screenResolution: ''
+  })
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  // Check for auth success parameter
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      if (urlParams.get('auth_success') === 'true') {
+        setAuthSuccess(true)
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+    }
+  }, [])
+
+  // Collect system information
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userAgent = navigator.userAgent;
+      let browserInfo = 'Unknown Browser';
+
+      if (userAgent.indexOf("Firefox") > -1) {
+        browserInfo = `Firefox ${userAgent.match(/Firefox\/([0-9.]+)/)?.[1] || ''}`;
+      } else if (userAgent.indexOf("Chrome") > -1) {
+        browserInfo = `Chrome ${userAgent.match(/Chrome\/([0-9.]+)/)?.[1] || ''}`;
+      } else if (userAgent.indexOf("Safari") > -1) {
+        browserInfo = `Safari ${userAgent.match(/Safari\/([0-9.]+)/)?.[1] || ''}`;
+      } else if (userAgent.indexOf("Edge") > -1) {
+        browserInfo = `Edge ${userAgent.match(/Edge\/([0-9.]+)/)?.[1] || ''}`;
+      } else if (userAgent.indexOf("MSIE") > -1 || userAgent.indexOf("Trident") > -1) {
+        browserInfo = 'Internet Explorer';
+      }
+
+      let osInfo = 'Unknown OS';
+      if (userAgent.indexOf("Win") > -1) {
+        osInfo = 'Windows';
+      } else if (userAgent.indexOf("Mac") > -1) {
+        osInfo = 'macOS';
+      } else if (userAgent.indexOf("Linux") > -1) {
+        osInfo = 'Linux';
+      } else if (userAgent.indexOf("Android") > -1) {
+        osInfo = 'Android';
+      } else if (userAgent.indexOf("iOS") > -1 || userAgent.indexOf("iPhone") > -1 || userAgent.indexOf("iPad") > -1) {
+        osInfo = 'iOS';
+      }
+
+      const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|Windows Phone/i.test(userAgent);
+      const deviceInfo = isMobile ? 'Mobile' : 'Desktop';
+
+      const connectionInfo = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+      let networkInfo = 'Unknown Network';
+      if (connectionInfo) {
+        networkInfo = `${connectionInfo.effectiveType || 'Unknown'} - ${connectionInfo.downlink || '?'} Mbps`;
+      }
+
+      let memoryInfo = 'Unknown Memory';
+      if ((performance as any).memory) {
+        const memoryMB = Math.round(((performance as any).memory.jsHeapSizeLimit / 1024 / 1024));
+        memoryInfo = `${memoryMB} MB Available`;
+      }
+
+      const screenRes = `${window.screen.width}×${window.screen.height}`;
+
+      const perfEntries = performance.getEntriesByType('navigation');
+      let perfInfo = 'Measuring...';
+      if (perfEntries.length > 0) {
+        const navTiming = perfEntries[0] as PerformanceNavigationTiming;
+        const loadTime = Math.round(navTiming.loadEventEnd - navTiming.startTime);
+        perfInfo = `Page load: ${loadTime}ms`;
+      }
+
+      const newSystemInfo = {
+        browser: browserInfo,
+        device: deviceInfo,
+        os: osInfo,
+        network: networkInfo,
+        memory: memoryInfo,
+        performance: perfInfo,
+        screenResolution: screenRes
+      };
+
+      setSystemInfo(newSystemInfo);
+
+      try {
+        localStorage.setItem('systemInfo', JSON.stringify(newSystemInfo));
+      } catch (e) {
+        console.error('Failed to save system info to localStorage:', e);
+      }
+    }
+  }, []);
+
+  // Initial loading animation effect
+  useEffect(() => {
+    if (!initialLoading) return;
+
+    let blinkCount = 0;
+    let lastToggleTime = 0;
+    let animationFrameId: number;
+    let timeoutId: NodeJS.Timeout;
+    const blinkInterval = 400;
+
+    const animate = (timestamp: number) => {
+      if (timestamp - lastToggleTime >= blinkInterval) {
+        setShowBadge(prev => prev === 'masterfabric' ? '' : 'masterfabric');
+        lastToggleTime = timestamp;
+        blinkCount++;
+
+        if (blinkCount >= 5) {
+          setShowBadge('LOADING...');
+
+          timeoutId = setTimeout(() => {
+            setInitialLoading(false);
+          }, 3500);
+
+          return;
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      clearTimeout(timeoutId);
+    };
+  }, [initialLoading]);
+
+  // Simple redirect logic
+  useEffect(() => {
+    if (user && !loading && !hasRedirected) {
+      console.log('🔄 User authenticated, checking profile:', userProfile)
+      setHasRedirected(true)
+      
+      // Check if user has completed all required steps
+      if (userProfile?.master_email && userProfile?.first_name && userProfile?.last_name) {
+        console.log('✅ All steps completed, redirecting to worklog')
+        router.push('/worklog')
+      } else if (userProfile?.first_name && userProfile?.last_name) {
+        console.log('📧 Bio completed, redirecting to email')
+        router.push('/email')
+      } else {
+        console.log('👤 Redirecting to bio')
+        router.push('/bio')
+      }
+    } else if (!user && !loading && hasRedirected) {
+      // If user becomes null after being authenticated, reset redirect state
+      console.log('🔄 User became null, resetting redirect state')
+      setHasRedirected(false)
+    }
+  }, [user, userProfile, loading, hasRedirected, router])
+
+  // Load content
+  useEffect(() => {
+    const loadContent = async () => {
+      try {
+        const stepsResponse = await fetch('/api/process-overview')
+        if (!stepsResponse.ok) {
+          throw new Error(`Failed to load process overview: ${stepsResponse.status}`)
+        }
+        const stepsData = await stepsResponse.json()
+        setProcessSteps(stepsData.steps || [])
+
+        const welcomeResponse = await fetch('/api/welcome-text')
+        if (!welcomeResponse.ok) {
+          throw new Error(`Failed to load welcome text: ${welcomeResponse.status}`)
+        }
+        const welcomeData = await welcomeResponse.json()
+        setWelcomeText(welcomeData.welcomeText || '')
+      } catch (error) {
+        console.error('Error loading content:', error)
+        setWelcomeText('Failed to load content. Please refresh the page.')
+        setProcessSteps([])
+      } finally {
+        setIsLoadingContent(false)
+      }
+    }
+
+    loadContent()
+  }, [])
+
+  const handleGitHubSignIn = async () => {
+    setHasRedirected(false)
+    await signInWithGitHub()
+  }
+
+
+
+  // Show initial loading animation
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        {showBadge && (
+          <TextBadge
+            variant="default"
+            blinking={showBadge === 'masterfabric'}
+            rgbEffect={showBadge === 'LOADING...'}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            {showBadge}
+          </TextBadge>
+        )}
+
+        {showBadge === 'LOADING...' && (
+          <div className="mt-8 text-xs text-center max-w-md">
+            <div className="grid grid-cols-2 gap-2 text-left">
+              <div className="muted">BROWSER</div>
+              <div>{systemInfo.browser}</div>
+
+              <div className="muted">DEVICE</div>
+              <div>{systemInfo.device}</div>
+
+              <div className="muted">OS</div>
+              <div>{systemInfo.os}</div>
+
+              <div className="muted">NETWORK</div>
+              <div>{systemInfo.network}</div>
+
+              <div className="muted">RESOLUTION</div>
+              <div>{systemInfo.screenResolution}</div>
+
+              <div className="muted">MEMORY</div>
+              <div>{systemInfo.memory}</div>
+
+              <div className="muted">PERFORMANCE</div>
+              <div>{systemInfo.performance}</div>
+            </div>
+
+            <div className="mt-4 text-center text-xs muted">
+              SYSTEM VERIFICATION IN PROGRESS...
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Show loading when auth is checking
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <TextBadge variant="default">LOADING...</TextBadge>
+      </div>
+    )
+  }
+
+
+  // If user is authenticated but hasn't completed all steps, show loading while redirecting
+  if (user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <TextBadge variant="success">
+          {authSuccess ? 'AUTHENTICATION SUCCESSFUL' : 'REDIRECTING...'}
+        </TextBadge>
+        {authSuccess && (
+          <div className="mt-4 text-center text-xs muted max-w-md">
+            <div>Welcome back! Setting up your workspace...</div>
+            <div className="mt-2">You will be redirected to the next step shortly.</div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen">
+      <Navbar user={userProfile} onSignOut={signOut} />
+
+      <PageLayout
+        title="ONBOARDING"
+        subtitle="Developer Integration System"
+      >
+        <TextCard title="WELCOME">
+          {isLoadingContent ? (
+            <TextHierarchy level={1} muted>
+              Loading welcome text...
+            </TextHierarchy>
+          ) : (
+            welcomeText
+          )}
+        </TextCard>
+
+
+        <TextCard title="PROCESS OVERVIEW">
+          {isLoadingContent ? (
+            <TextHierarchy level={1} muted>
+              Loading process overview...
+            </TextHierarchy>
+          ) : (
+            processSteps.map((step, stepIndex) => (
+              <div key={stepIndex}>
+                <TextHierarchy level={1} emphasis className={stepIndex > 0 ? "mt-4" : ""}>
+                  {step.title}
+                </TextHierarchy>
+                {step.items.map((item, itemIndex) => (
+                  <TextHierarchy key={itemIndex} level={2} muted>
+                    {item}
+                  </TextHierarchy>
+                ))}
+              </div>
+            ))
+          )}
+        </TextCard>
+
+        <TextCard title="SYSTEM INFORMATION">
+          <TextHierarchy level={1} className="mb-3">
+            <TextBadge variant="default">INTERFACE</TextBadge> Text-based UI with whitespace hierarchy
+          </TextHierarchy>
+          <TextHierarchy level={1} className="mb-3">
+            <TextBadge variant="default">FONT</TextBadge> JetBrains Mono monospace
+          </TextHierarchy>
+          <TextHierarchy level={1} className="mb-3">
+            <TextBadge variant="success">SUCCESS</TextBadge> Green indicators for completed tasks
+          </TextHierarchy>
+          <TextHierarchy level={1} className="mb-3">
+            <TextBadge variant="warning">PENDING</TextBadge> Yellow indicators for pending tasks
+          </TextHierarchy>
+          <TextHierarchy level={1}>
+            <TextBadge variant="error">ERROR</TextBadge> Orange indicators for failed operations
+          </TextHierarchy>
+        </TextCard>
+
+
+        <div className="flex justify-center pt-8">
+          <TextButton
+            onClick={handleGitHubSignIn}
+            variant="success"
+            className="text-base px-8 py-3"
           >
-            Read our docs
-          </a>
+            BEGIN ONBOARDING → GITHUB LOGIN
+          </TextButton>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <TextCard variant="default" className="mt-8">
+          <TextHierarchy level={1} muted>
+            By proceeding, you agree to authenticate via GitHub OAuth and provide your email for verification.
+          </TextHierarchy>
+        </TextCard>
+      </PageLayout>
+
     </div>
-  );
+  )
 }

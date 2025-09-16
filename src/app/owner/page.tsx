@@ -1,0 +1,1229 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/context/AuthContext'
+import { useRouter } from 'next/navigation'
+import { getAllUsers, getAllChecklistStatuses, getAllTickets, updateTicket, Ticket, getAllPerformanceGoals, createPerformanceGoal, updatePerformanceGoal, deletePerformanceGoal, PerformanceGoalWithUser, getCurrentMonthYear, calculatePerformancePercentage, getAllDynamicChecklists, createDynamicChecklist, updateDynamicChecklist, deleteDynamicChecklist, DynamicChecklist, ChecklistWithAssignments } from '@/lib/supabase'
+import { ONBOARDING_CHECKLIST, CATEGORY_LABELS } from '@/data/checklist'
+import Navbar from '@/components/layout/Navbar'
+import PageLayout from '@/components/layout/PageLayout'
+import TextCard from '@/components/ui/TextCard'
+import TextHierarchy from '@/components/ui/TextHierarchy'
+import TextBadge from '@/components/ui/TextBadge'
+import PerformanceGoalForm from '@/components/PerformanceGoalForm'
+import DynamicChecklistForm from '@/components/DynamicChecklistForm'
+import ExistingChecklistForm from '@/components/ExistingChecklistForm'
+
+interface UserWithProgress {
+  id: string
+  github_username: string | null
+  master_email: string | null
+  first_name: string | null
+  last_name: string | null
+  department: string | null
+  is_verified: boolean
+  created_at: string
+  completedTasks: number
+  totalTasks: number
+  requiredCompleted: number
+  requiredTotal: number
+}
+
+export default function OwnerPage() {
+  const { user, userProfile, loading, signOut } = useAuth()
+  const router = useRouter()
+  const [users, setUsers] = useState<UserWithProgress[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all')
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [ticketFilter, setTicketFilter] = useState<'all' | 'open' | 'in_progress' | 'resolved' | 'closed'>('all')
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
+  const [showTicketModal, setShowTicketModal] = useState(false)
+  const [performanceGoals, setPerformanceGoals] = useState<PerformanceGoalWithUser[]>([])
+  const [showPerformanceModal, setShowPerformanceModal] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<UserWithProgress | null>(null)
+  const [performanceFilter, setPerformanceFilter] = useState<'all' | 'current' | 'past'>('current')
+  const [dynamicChecklists, setDynamicChecklists] = useState<ChecklistWithAssignments[]>([])
+  const [showChecklistModal, setShowChecklistModal] = useState(false)
+  const [selectedChecklist, setSelectedChecklist] = useState<DynamicChecklist | null>(null)
+  const [checklistFilter, setChecklistFilter] = useState<'all' | 'global' | 'custom' | 'existing'>('all')
+  const [showExistingChecklistModal, setShowExistingChecklistModal] = useState(false)
+  const [selectedExistingChecklist, setSelectedExistingChecklist] = useState<any>(null)
+  const [checklistError, setChecklistError] = useState<string | null>(null)
+  const [checklistSuccess, setChecklistSuccess] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Temporarily disable owner check due to RLS recursion issue
+    // if (userProfile && !userProfile.is_owner) {
+    //   router.push('/')
+    //   return
+    // }
+    if (user) {
+      loadOwnerData()
+    }
+  }, [user, userProfile, router])
+
+  const loadOwnerData = async () => {
+    try {
+      const [usersResult, checklistResult, ticketsResult, performanceResult, dynamicChecklistsResult] = await Promise.all([
+        getAllUsers(),
+        getAllChecklistStatuses(),
+        getAllTickets(),
+        getAllPerformanceGoals(),
+        getAllDynamicChecklists()
+      ])
+
+      if (usersResult.error || checklistResult.error || ticketsResult.error || performanceResult.error || dynamicChecklistsResult.error) {
+        const error = usersResult.error || checklistResult.error || ticketsResult.error || performanceResult.error || dynamicChecklistsResult.error
+        console.error('Error loading owner data:', error)
+        
+        // More detailed error messages
+        let errorMessage = 'Failed to load data: '
+        if (usersResult.error) errorMessage += `Users: ${usersResult.error.message}; `
+        if (checklistResult.error) errorMessage += `Checklist: ${checklistResult.error.message}; `
+        if (ticketsResult.error) errorMessage += `Tickets: ${ticketsResult.error.message}; `
+        if (performanceResult.error) errorMessage += `Performance: ${performanceResult.error.message}; `
+        if (dynamicChecklistsResult.error) errorMessage += `Dynamic Checklists: ${dynamicChecklistsResult.error.message}; `
+        
+        setChecklistError(errorMessage)
+        return
+      }
+
+      const usersData = usersResult.data || []
+      const checklistData = checklistResult.data || []
+      const ticketsData = ticketsResult.data || []
+      const performanceData = performanceResult.data || []
+      const dynamicChecklistsData = dynamicChecklistsResult.data || []
+
+      // Process checklist data by user
+      const userProgress = usersData.map(user => {
+        const userChecklistItems = checklistData.filter(item => item.user_id === user.id)
+        const completedTasks = userChecklistItems.filter(item => item.completed).length
+        const totalTasks = ONBOARDING_CHECKLIST.length
+        
+        const requiredTasks = ONBOARDING_CHECKLIST.filter(item => item.required)
+        const requiredCompleted = requiredTasks.filter(task => 
+          userChecklistItems.some(item => item.step_name === task.id && item.completed)
+        ).length
+
+        return {
+          ...user,
+          completedTasks,
+          totalTasks,
+          requiredCompleted,
+          requiredTotal: requiredTasks.length
+        }
+      })
+
+      setUsers(userProgress)
+      setTickets(ticketsData)
+      setPerformanceGoals(performanceData)
+      setDynamicChecklists(dynamicChecklistsData)
+    } catch (error) {
+      console.error('Error loading owner data:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getFilteredUsers = () => {
+    switch (filter) {
+      case 'active':
+        return users.filter(user => user.requiredCompleted < user.requiredTotal)
+      case 'completed':
+        return users.filter(user => user.requiredCompleted === user.requiredTotal)
+      default:
+        return users
+    }
+  }
+
+  const getOverallStats = () => {
+    const totalUsers = users.length
+    const completedUsers = users.filter(user => user.requiredCompleted === user.requiredTotal).length
+    const activeUsers = users.filter(user => user.master_email && user.requiredCompleted < user.requiredTotal).length
+    
+    return {
+      total: totalUsers,
+      completed: completedUsers,
+      active: activeUsers,
+      pending: totalUsers - completedUsers - activeUsers
+    }
+  }
+
+  const getFilteredTickets = () => {
+    if (ticketFilter === 'all') return tickets
+    return tickets.filter(ticket => ticket.status === ticketFilter)
+  }
+
+  const getTicketStats = () => {
+    return {
+      all: tickets.length,
+      open: tickets.filter(t => t.status === 'open').length,
+      in_progress: tickets.filter(t => t.status === 'in_progress').length,
+      resolved: tickets.filter(t => t.status === 'resolved').length,
+      closed: tickets.filter(t => t.status === 'closed').length
+    }
+  }
+
+  const handleTicketUpdate = async (ticketId: string, updates: any) => {
+    try {
+      const { error } = await updateTicket(ticketId, updates)
+      if (error) {
+        console.error('Error updating ticket:', error)
+      } else {
+        loadOwnerData() // Reload data
+        setShowTicketModal(false)
+        setSelectedTicket(null)
+      }
+    } catch (error) {
+      console.error('Error updating ticket:', error)
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const getFilteredPerformanceGoals = () => {
+    const currentMonth = getCurrentMonthYear()
+    switch (performanceFilter) {
+      case 'current':
+        return performanceGoals.filter(goal => goal.month_year === currentMonth)
+      case 'past':
+        return performanceGoals.filter(goal => goal.month_year < currentMonth)
+      default:
+        return performanceGoals
+    }
+  }
+
+  const handleCreatePerformanceGoal = async (goalData: {
+    target_hours: number
+    target_story_points: number
+    monthly_checklist: any[]
+  }) => {
+    if (!selectedUser) return
+
+    try {
+      const { error } = await createPerformanceGoal({
+        user_id: selectedUser.id,
+        month_year: getCurrentMonthYear(),
+        target_hours: goalData.target_hours,
+        target_story_points: goalData.target_story_points,
+        monthly_checklist: goalData.monthly_checklist
+      })
+
+      if (error) {
+        console.error('Error creating performance goal:', error)
+      } else {
+        loadOwnerData() // Reload data
+        setShowPerformanceModal(false)
+        setSelectedUser(null)
+      }
+    } catch (error) {
+      console.error('Error creating performance goal:', error)
+    }
+  }
+
+  const handleUpdatePerformanceGoal = async (goalId: string, updates: any) => {
+    try {
+      const { error } = await updatePerformanceGoal(goalId, updates)
+      if (error) {
+        console.error('Error updating performance goal:', error)
+      } else {
+        loadOwnerData() // Reload data
+      }
+    } catch (error) {
+      console.error('Error updating performance goal:', error)
+    }
+  }
+
+  const getFilteredDynamicChecklists = () => {
+    switch (checklistFilter) {
+      case 'global':
+        return dynamicChecklists.filter(checklist => checklist.is_global)
+      case 'custom':
+        return dynamicChecklists.filter(checklist => !checklist.is_global)
+      case 'existing':
+        return ONBOARDING_CHECKLIST.map(item => ({
+          id: item.id,
+          title: item.title,
+          description: item.description || null,
+          category: item.category || 'onboarding',
+          is_global: true,
+          is_active: true,
+          created_by: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          assignments: []
+        }))
+      default:
+        return dynamicChecklists
+    }
+  }
+
+  const handleCreateDynamicChecklist = async (checklistData: {
+    title: string
+    description?: string
+    category: string
+    is_global: boolean
+  }) => {
+    try {
+      setChecklistError(null)
+      setChecklistSuccess(null)
+      
+      console.log('Creating checklist with data:', checklistData)
+      
+      const { data, error } = await createDynamicChecklist(checklistData)
+      
+      if (error) {
+        console.error('Error creating dynamic checklist:', error)
+        setChecklistError(`Failed to create checklist: ${error.message}`)
+        return
+      }
+      
+      if (data) {
+        console.log('Checklist created successfully:', data)
+        setChecklistSuccess(`Checklist "${checklistData.title}" created successfully!`)
+        loadOwnerData() // Reload data
+        setShowChecklistModal(false)
+        setSelectedChecklist(null)
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => setChecklistSuccess(null), 3000)
+      }
+    } catch (error) {
+      console.error('Error creating dynamic checklist:', error)
+      setChecklistError(`Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  const handleUpdateDynamicChecklist = async (checklistData: {
+    title: string
+    description?: string
+    category: string
+    is_global: boolean
+  }) => {
+    if (!selectedChecklist) return
+
+    try {
+      const { error } = await updateDynamicChecklist(selectedChecklist.id, checklistData)
+      if (error) {
+        console.error('Error updating dynamic checklist:', error)
+      } else {
+        loadOwnerData() // Reload data
+        setShowChecklistModal(false)
+        setSelectedChecklist(null)
+      }
+    } catch (error) {
+      console.error('Error updating dynamic checklist:', error)
+    }
+  }
+
+  const handleDeleteDynamicChecklist = async (checklistId: string) => {
+    if (!confirm('Are you sure you want to delete this checklist? This will also remove all user assignments.')) {
+      return
+    }
+
+    try {
+      const { error } = await deleteDynamicChecklist(checklistId)
+      if (error) {
+        console.error('Error deleting dynamic checklist:', error)
+      } else {
+        loadOwnerData() // Reload data
+      }
+    } catch (error) {
+      console.error('Error deleting dynamic checklist:', error)
+    }
+  }
+
+  const handleEditExistingChecklist = (checklistItem: any) => {
+    setSelectedExistingChecklist(checklistItem)
+    setShowExistingChecklistModal(true)
+  }
+
+  const handleUpdateExistingChecklist = async (checklistData: {
+    title: string
+    description?: string
+    category: string
+    required: boolean
+  }) => {
+    if (!selectedExistingChecklist) return
+
+    try {
+      // Update the existing checklist in the data file
+      // This would require updating the ONBOARDING_CHECKLIST array
+      // For now, we'll show a message that this requires code changes
+      alert('Existing checklist updates require code changes. Please contact the development team.')
+      setShowExistingChecklistModal(false)
+      setSelectedExistingChecklist(null)
+    } catch (error) {
+      console.error('Error updating existing checklist:', error)
+    }
+  }
+
+  if (loading || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <TextBadge variant="muted">LOADING DASHBOARD...</TextBadge>
+      </div>
+    )
+  }
+
+  // This useEffect has been moved up to keep all hooks together
+  
+  // Show loading or null while redirecting
+  // Temporarily disable owner check due to RLS recursion issue
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <TextBadge variant="warning">REDIRECTING...</TextBadge>
+      </div>
+    )
+  }
+
+  const filteredUsers = getFilteredUsers()
+  const stats = getOverallStats()
+
+  return (
+    <div className="min-h-screen">
+      <Navbar user={userProfile} onSignOut={signOut} />
+      
+      <PageLayout
+        title="OWNER DASHBOARD"
+        subtitle="Onboarding Progress Overview"
+      >
+        <TextCard title="SYSTEM OVERVIEW">
+          <TextHierarchy level={1}>
+            <TextBadge variant="muted">TOTAL USERS</TextBadge> {stats.total} registered developers
+          </TextHierarchy>
+          <TextHierarchy level={1}>
+            <TextBadge variant="success">COMPLETED</TextBadge> {stats.completed} users finished onboarding
+          </TextHierarchy>
+          <TextHierarchy level={1}>
+            <TextBadge variant="warning">ACTIVE</TextBadge> {stats.active} users in progress
+          </TextHierarchy>
+          <TextHierarchy level={1}>
+            <TextBadge variant="error">PENDING</TextBadge> {stats.pending} users not started
+          </TextHierarchy>
+        </TextCard>
+
+        <TextCard title="FILTER OPTIONS">
+          <div className="flex gap-4">
+            {[
+              { key: 'all', label: 'ALL USERS', count: users.length },
+              { key: 'active', label: 'ACTIVE', count: stats.active },
+              { key: 'completed', label: 'COMPLETED', count: stats.completed }
+            ].map(option => (
+              <button
+                key={option.key}
+                onClick={() => setFilter(option.key as any)}
+                className={`
+                  px-4 py-2 border font-mono text-sm transition-colors
+                  ${filter === option.key 
+                    ? 'bg-black text-white border-black' 
+                    : 'bg-white text-black border-black hover:bg-black hover:text-white'
+                  }
+                `}
+              >
+                {option.label} ({option.count})
+              </button>
+            ))}
+          </div>
+        </TextCard>
+
+        <TextCard title={`USER LIST - ${filter.toUpperCase()}`}>
+          {filteredUsers.length === 0 ? (
+            <TextHierarchy level={1} muted>
+              No users found for the selected filter.
+            </TextHierarchy>
+          ) : (
+            <div className="space-y-4">
+              {filteredUsers.map(user => {
+                const progressPercentage = Math.round((user.completedTasks / user.totalTasks) * 100)
+                const isCompleted = user.requiredCompleted === user.requiredTotal
+                const hasStarted = user.master_email
+
+                return (
+                  <div key={user.id} className="border-l-2 border-black pl-4">
+                    <TextHierarchy level={1} emphasis>
+                      {user.first_name && user.last_name 
+                        ? `${user.first_name} ${user.last_name}`
+                        : user.github_username || 'Unknown User'
+                      }
+                      {isCompleted && (
+                        <TextBadge variant="success" className="ml-2">
+                          COMPLETED
+                        </TextBadge>
+                      )}
+                      {!hasStarted && (
+                        <TextBadge variant="error" className="ml-2">
+                          NOT STARTED
+                        </TextBadge>
+                      )}
+                    </TextHierarchy>
+
+                    <TextHierarchy level={2} muted>
+                      <TextBadge variant="muted">GITHUB</TextBadge> {user.github_username || 'N/A'}
+                    </TextHierarchy>
+                    
+                    <TextHierarchy level={2} muted>
+                      <TextBadge variant="muted">EMAIL</TextBadge> {user.master_email || 'Not provided'}
+                    </TextHierarchy>
+                    
+                    <TextHierarchy level={2} muted>
+                      <TextBadge variant="muted">DEPARTMENT</TextBadge> {user.department || 'Not specified'}
+                    </TextHierarchy>
+                    
+                    <TextHierarchy level={2}>
+                      <TextBadge variant="muted">PROGRESS</TextBadge> {user.completedTasks}/{user.totalTasks} tasks ({progressPercentage}%)
+                    </TextHierarchy>
+                    
+                    <TextHierarchy level={2}>
+                      <TextBadge variant={isCompleted ? "success" : "warning"}>REQUIRED</TextBadge> {user.requiredCompleted}/{user.requiredTotal} required tasks
+                    </TextHierarchy>
+                    
+                    <TextHierarchy level={2} muted>
+                      <TextBadge variant="muted">REGISTERED</TextBadge> {new Date(user.created_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </TextHierarchy>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </TextCard>
+
+        <TextCard title="CHECKLIST OVERVIEW">
+          <TextHierarchy level={1} emphasis className="mb-4">
+            ONBOARDING TASKS BREAKDOWN
+          </TextHierarchy>
+          
+          {Object.entries(CATEGORY_LABELS).map(([category, label]) => {
+            const categoryTasks = ONBOARDING_CHECKLIST.filter(item => item.category === category)
+            const requiredTasks = categoryTasks.filter(item => item.required).length
+            const optionalTasks = categoryTasks.length - requiredTasks
+
+            return (
+              <TextHierarchy key={category} level={2} className="mb-2">
+                <TextBadge variant="muted">{label}</TextBadge> {categoryTasks.length} tasks 
+                ({requiredTasks} required, {optionalTasks} optional)
+              </TextHierarchy>
+            )
+          })}
+        </TextCard>
+
+        <TextCard variant="muted">
+          <TextHierarchy level={1} muted>
+            This dashboard provides read-only access to all user onboarding progress. 
+            Use filters to focus on specific user groups and monitor completion rates.
+          </TextHierarchy>
+          <TextHierarchy level={1} muted>
+            Contact individual users directly if they need assistance with their onboarding process.
+          </TextHierarchy>
+        </TextCard>
+
+        {/* Ticket Management Section */}
+        <TextCard title="TICKET MANAGEMENT">
+          <div className="space-y-4">
+            {/* Minimalist Stats & Filter */}
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              {/* Compact Stats */}
+              <div className="flex gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{getTicketStats().all}</div>
+                  <div className="text-xs text-gray-500">TOTAL</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">{getTicketStats().open}</div>
+                  <div className="text-xs text-gray-500">OPEN</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{getTicketStats().in_progress}</div>
+                  <div className="text-xs text-gray-500">ACTIVE</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">{getTicketStats().resolved + getTicketStats().closed}</div>
+                  <div className="text-xs text-gray-500">DONE</div>
+                </div>
+              </div>
+
+              {/* Compact Filter */}
+              <div className="flex gap-1">
+                {[
+                  { key: 'all', label: 'ALL', color: 'gray' },
+                  { key: 'open', label: 'OPEN', color: 'orange' },
+                  { key: 'in_progress', label: 'ACTIVE', color: 'blue' },
+                  { key: 'resolved', label: 'DONE', color: 'green' }
+                ].map(option => (
+                  <button
+                    key={option.key}
+                    onClick={() => setTicketFilter(option.key as any)}
+                    className={`
+                      px-2 py-1 text-xs font-mono transition-colors rounded
+                      ${ticketFilter === option.key
+                        ? `bg-${option.color}-100 text-${option.color}-800 border border-${option.color}-300`
+                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                      }
+                    `}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tickets List */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {getFilteredTickets().length === 0 ? (
+                <div className="col-span-full text-center py-8">
+                  <TextHierarchy level={1} muted>
+                    No tickets found for the selected filter.
+                  </TextHierarchy>
+                </div>
+              ) : (
+                getFilteredTickets().map(ticket => (
+                  <div key={ticket.id} className="bg-white border-2 border-black p-6 hover:shadow-lg transition-all duration-200 hover:border-gray-400">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <TextHierarchy level={1} emphasis className="text-lg mb-3 text-gray-900">
+                          {ticket.title}
+                        </TextHierarchy>
+                        <div className="flex gap-2">
+                          <TextBadge variant={ticket.status === 'open' ? 'warning' : ticket.status === 'resolved' ? 'success' : 'default'} className="text-xs font-bold">
+                            {ticket.status.toUpperCase()}
+                          </TextBadge>
+                          <TextBadge variant={ticket.priority === 'urgent' ? 'error' : ticket.priority === 'high' ? 'warning' : 'default'} className="text-xs font-bold">
+                            {ticket.priority.toUpperCase()}
+                          </TextBadge>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Category and Date */}
+                    <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-600 font-mono text-sm">CATEGORY:</span>
+                        <TextBadge variant="default" className="text-xs">
+                          {ticket.category}
+                        </TextBadge>
+                      </div>
+                      <div className="text-gray-500 font-mono text-xs">
+                        {formatDate(ticket.created_at)}
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <div className="mb-4">
+                      <div className="text-sm text-gray-600 font-mono mb-2">DESCRIPTION:</div>
+                      <div className="text-sm text-gray-800 bg-gray-50 p-4 border-l-4 border-gray-300 rounded-r-lg">
+                        {ticket.description.length > 100 
+                          ? `${ticket.description.substring(0, 100)}...` 
+                          : ticket.description
+                        }
+                      </div>
+                    </div>
+
+                    {/* Resolution Notes (if exists) */}
+                    {ticket.resolution_notes && (
+                      <div className="mb-4">
+                        <div className="text-sm text-green-600 font-mono mb-2">RESOLUTION:</div>
+                        <div className="text-sm text-green-800 bg-green-50 p-4 border-l-4 border-green-400 rounded-r-lg">
+                          {ticket.resolution_notes}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Footer with Manage Button */}
+                    <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                      <div className="text-xs text-gray-500 font-mono">
+                        ID: {ticket.id.substring(0, 8)}...
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedTicket(ticket)
+                          setShowTicketModal(true)
+                        }}
+                        className="px-4 py-2 border-2 border-black bg-white text-black font-mono text-xs hover:bg-black hover:text-white transition-colors font-bold"
+                      >
+                        MANAGE
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </TextCard>
+
+        {/* Performance Management Section */}
+        <TextCard title="PERFORMANCE GOALS MANAGEMENT">
+          <div className="space-y-6">
+            {/* Performance Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 border border-black">
+                <TextHierarchy level={1} emphasis>
+                  {performanceGoals.length}
+                </TextHierarchy>
+                <TextHierarchy level={2} muted>
+                  TOTAL GOALS
+                </TextHierarchy>
+              </div>
+              <div className="text-center p-4 border border-black">
+                <TextHierarchy level={1} emphasis>
+                  {performanceGoals.filter(g => g.month_year === getCurrentMonthYear()).length}
+                </TextHierarchy>
+                <TextHierarchy level={2} muted>
+                  CURRENT MONTH
+                </TextHierarchy>
+              </div>
+              <div className="text-center p-4 border border-black">
+                <TextHierarchy level={1} emphasis>
+                  {Math.round(performanceGoals.reduce((acc, goal) => 
+                    acc + calculatePerformancePercentage(
+                      goal.completed_hours, 
+                      goal.target_hours, 
+                      goal.completed_story_points, 
+                      goal.target_story_points
+                    ), 0) / (performanceGoals.length || 1))}%
+                </TextHierarchy>
+                <TextHierarchy level={2} muted>
+                  AVG PERFORMANCE
+                </TextHierarchy>
+              </div>
+            </div>
+
+            {/* Performance Filter */}
+            <div className="flex gap-2">
+              {[
+                { key: 'current', label: 'CURRENT MONTH' },
+                { key: 'past', label: 'PAST MONTHS' },
+                { key: 'all', label: 'ALL GOALS' }
+              ].map(option => (
+                <button
+                  key={option.key}
+                  onClick={() => setPerformanceFilter(option.key as any)}
+                  className={`
+                    px-3 py-1 border font-mono text-xs transition-colors
+                    ${performanceFilter === option.key
+                      ? 'bg-black text-white border-black'
+                      : 'bg-white text-black border-black hover:bg-gray-100'
+                    }
+                  `}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Create Goal Button */}
+            <div className="flex justify-between items-center">
+              <TextHierarchy level={1} emphasis>
+                PERFORMANCE GOALS
+              </TextHierarchy>
+              <button
+                onClick={() => setShowPerformanceModal(true)}
+                className="px-4 py-2 border-2 border-black bg-white text-black font-mono text-sm hover:bg-black hover:text-white transition-colors font-bold"
+              >
+                SET GOALS
+              </button>
+            </div>
+
+            {/* Performance Goals List */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {getFilteredPerformanceGoals().length === 0 ? (
+                <div className="col-span-full text-center py-8">
+                  <TextHierarchy level={1} muted>
+                    No performance goals found for the selected filter.
+                  </TextHierarchy>
+                </div>
+              ) : (
+                getFilteredPerformanceGoals().map(goal => {
+                  const performancePercentage = calculatePerformancePercentage(
+                    goal.completed_hours,
+                    goal.target_hours,
+                    goal.completed_story_points,
+                    goal.target_story_points
+                  )
+                  
+                  return (
+                    <div key={goal.id} className="bg-white border-2 border-black p-6 hover:shadow-lg transition-all duration-200">
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <TextHierarchy level={1} emphasis className="text-lg mb-2">
+                            {goal.user.first_name} {goal.user.last_name}
+                          </TextHierarchy>
+                          <div className="flex gap-2">
+                            <TextBadge variant="default" className="text-xs">
+                              {goal.month_year}
+                            </TextBadge>
+                            <TextBadge variant={performancePercentage >= 100 ? "success" : performancePercentage >= 70 ? "warning" : "error"} className="text-xs">
+                              {Math.round(performancePercentage)}%
+                            </TextBadge>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Progress Bars */}
+                      <div className="space-y-3 mb-4">
+                        <div>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="font-mono">HOURS</span>
+                            <span className="font-mono">{goal.completed_hours}/{goal.target_hours}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 h-2">
+                            <div 
+                              className="bg-blue-500 h-2 transition-all duration-300"
+                              style={{ width: `${Math.min((goal.completed_hours / goal.target_hours) * 100, 100)}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="font-mono">STORY POINTS</span>
+                            <span className="font-mono">{goal.completed_story_points}/{goal.target_story_points}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 h-2">
+                            <div 
+                              className="bg-green-500 h-2 transition-all duration-300"
+                              style={{ width: `${Math.min((goal.completed_story_points / goal.target_story_points) * 100, 100)}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Monthly Checklist */}
+                      {goal.monthly_checklist && goal.monthly_checklist.length > 0 && (
+                        <div className="mb-4">
+                          <div className="text-sm text-gray-600 font-mono mb-2">MONTHLY CHECKLIST:</div>
+                          <div className="text-xs text-gray-700 bg-gray-50 p-3 border-l-4 border-gray-300 rounded-r">
+                            {goal.monthly_checklist.map((item: any, index: number) => (
+                              <div key={index} className="flex items-center gap-2">
+                                <span className={item.completed ? "text-green-500" : "text-gray-400"}>
+                                  {item.completed ? "✓" : "○"}
+                                </span>
+                                <span>{item.title}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Footer */}
+                      <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                        <div className="text-xs text-gray-500 font-mono">
+                          ID: {goal.id.substring(0, 8)}...
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedUser(users.find(u => u.id === goal.user_id) || null)
+                            setShowPerformanceModal(true)
+                          }}
+                          className="px-3 py-1 border border-black bg-white text-black font-mono text-xs hover:bg-black hover:text-white transition-colors"
+                        >
+                          EDIT
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        </TextCard>
+
+        {/* Dynamic Checklists Management Section */}
+        <TextCard title="DYNAMIC CHECKLISTS MANAGEMENT">
+          <div className="space-y-6">
+            {/* Error/Success Messages */}
+            {checklistError && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded">
+                <TextHierarchy level={2} className="text-red-800 mb-2">
+                  ❌ ERROR:
+                </TextHierarchy>
+                <div className="text-sm text-red-700 font-mono">
+                  {checklistError}
+                </div>
+                <button
+                  onClick={() => setChecklistError(null)}
+                  className="mt-2 text-xs text-red-600 hover:text-red-800 underline"
+                >
+                  DISMISS
+                </button>
+              </div>
+            )}
+            
+            {checklistSuccess && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded">
+                <TextHierarchy level={2} className="text-green-800 mb-2">
+                  ✅ SUCCESS:
+                </TextHierarchy>
+                <div className="text-sm text-green-700 font-mono">
+                  {checklistSuccess}
+                </div>
+              </div>
+            )}
+            {/* Checklist Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 border border-black">
+                <TextHierarchy level={1} emphasis>
+                  {dynamicChecklists.length}
+                </TextHierarchy>
+                <TextHierarchy level={2} muted>
+                  TOTAL CHECKLISTS
+                </TextHierarchy>
+              </div>
+              <div className="text-center p-4 border border-black">
+                <TextHierarchy level={1} emphasis>
+                  {dynamicChecklists.filter(c => c.is_global).length}
+                </TextHierarchy>
+                <TextHierarchy level={2} muted>
+                  GLOBAL CHECKLISTS
+                </TextHierarchy>
+              </div>
+              <div className="text-center p-4 border border-black">
+                <TextHierarchy level={1} emphasis>
+                  {dynamicChecklists.filter(c => !c.is_global).length}
+                </TextHierarchy>
+                <TextHierarchy level={2} muted>
+                  CUSTOM CHECKLISTS
+                </TextHierarchy>
+              </div>
+            </div>
+
+            {/* Checklist Filter */}
+            <div className="flex gap-2">
+              {[
+                { key: 'all', label: 'ALL CHECKLISTS' },
+                { key: 'existing', label: 'EXISTING' },
+                { key: 'global', label: 'GLOBAL' },
+                { key: 'custom', label: 'CUSTOM' }
+              ].map(option => (
+                <button
+                  key={option.key}
+                  onClick={() => setChecklistFilter(option.key as any)}
+                  className={`
+                    px-3 py-1 border font-mono text-xs transition-colors
+                    ${checklistFilter === option.key
+                      ? 'bg-black text-white border-black'
+                      : 'bg-white text-black border-black hover:bg-gray-100'
+                    }
+                  `}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Create Checklist Button */}
+            <div className="flex justify-between items-center">
+              <TextHierarchy level={1} emphasis>
+                CHECKLIST ITEMS
+              </TextHierarchy>
+              <div className="flex gap-2">
+                <button
+                  onClick={async () => {
+                    try {
+                      setChecklistError(null)
+                      const { data, error } = await getAllDynamicChecklists()
+                      if (error) {
+                        setChecklistError(`Database check failed: ${error.message}`)
+                      } else {
+                        setChecklistSuccess(`Database connected! Found ${data?.length || 0} checklists.`)
+                        setTimeout(() => setChecklistSuccess(null), 3000)
+                      }
+                    } catch (err) {
+                      setChecklistError(`Database check error: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                    }
+                  }}
+                  className="px-3 py-2 border border-blue-300 bg-white text-blue-600 font-mono text-xs hover:bg-blue-50 transition-colors"
+                >
+                  CHECK DB
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      setChecklistError(null)
+                      const testData = {
+                        title: `Test Checklist ${Date.now()}`,
+                        description: 'This is a test checklist created by the owner',
+                        category: 'general',
+                        is_global: false
+                      }
+                      await handleCreateDynamicChecklist(testData)
+                    } catch (err) {
+                      setChecklistError(`Test creation failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                    }
+                  }}
+                  className="px-3 py-2 border border-green-300 bg-white text-green-600 font-mono text-xs hover:bg-green-50 transition-colors"
+                >
+                  TEST CREATE
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedChecklist(null)
+                    setShowChecklistModal(true)
+                  }}
+                  className="px-4 py-2 border-2 border-black bg-white text-black font-mono text-sm hover:bg-black hover:text-white transition-colors font-bold"
+                >
+                  CREATE CHECKLIST
+                </button>
+              </div>
+            </div>
+
+            {/* Checklists List */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {getFilteredDynamicChecklists().length === 0 ? (
+                <div className="col-span-full text-center py-8">
+                  <TextHierarchy level={1} muted>
+                    No checklists found for the selected filter.
+                  </TextHierarchy>
+                </div>
+              ) : (
+                getFilteredDynamicChecklists().map(checklist => (
+                  <div key={checklist.id} className="bg-white border-2 border-black p-6 hover:shadow-lg transition-all duration-200">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <TextHierarchy level={1} emphasis className="text-lg mb-2">
+                          {checklist.title}
+                        </TextHierarchy>
+                        <div className="flex gap-2">
+                          <TextBadge variant={checklist.is_global ? "success" : "default"} className="text-xs">
+                            {checklist.is_global ? "GLOBAL" : "CUSTOM"}
+                          </TextBadge>
+                          <TextBadge variant="muted" className="text-xs capitalize">
+                            {checklist.category}
+                          </TextBadge>
+                          {'user_assignment' in checklist && checklist.user_assignment?.is_required && (
+                            <TextBadge variant="error" className="text-xs">
+                              REQUIRED
+                            </TextBadge>
+                          )}
+                          <TextBadge variant={checklist.is_active ? "success" : "error"} className="text-xs">
+                            {checklist.is_active ? "ACTIVE" : "INACTIVE"}
+                          </TextBadge>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    {checklist.description && (
+                      <div className="mb-4">
+                        <div className="text-sm text-gray-600 font-mono mb-2">DESCRIPTION:</div>
+                        <div className="text-sm text-gray-800 bg-gray-50 p-3 border-l-4 border-gray-300 rounded-r">
+                          {checklist.description}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Assignments Count */}
+                    <div className="mb-4">
+                      <div className="text-sm text-gray-600 font-mono mb-2">ASSIGNMENTS:</div>
+                      <div className="text-sm text-gray-800">
+                        {checklist.assignments?.length || 0} user(s) assigned
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                      <div className="text-xs text-gray-500 font-mono">
+                        ID: {checklist.id.substring(0, 8)}...
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setSelectedChecklist(checklist)
+                            setShowChecklistModal(true)
+                          }}
+                          className="px-3 py-1 border border-black bg-white text-black font-mono text-xs hover:bg-black hover:text-white transition-colors"
+                        >
+                          EDIT
+                        </button>
+                        <button
+                          onClick={() => handleDeleteDynamicChecklist(checklist.id)}
+                          className="px-3 py-1 border border-red-300 bg-white text-red-600 font-mono text-xs hover:bg-red-50 transition-colors"
+                        >
+                          DELETE
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </TextCard>
+      </PageLayout>
+
+      {/* Dynamic Checklist Modal */}
+      {showChecklistModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-white border border-black p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <TextHierarchy level={1} emphasis className="mb-4">
+              {selectedChecklist ? 'EDIT CHECKLIST' : 'CREATE NEW CHECKLIST'}
+            </TextHierarchy>
+            
+            <DynamicChecklistForm
+              checklist={selectedChecklist}
+              onSubmit={selectedChecklist ? handleUpdateDynamicChecklist : handleCreateDynamicChecklist}
+              onCancel={() => {
+                setShowChecklistModal(false)
+                setSelectedChecklist(null)
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Performance Goal Modal */}
+      {showPerformanceModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-white border border-black p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <TextHierarchy level={1} emphasis className="mb-4">
+              {selectedUser ? `SET GOALS FOR ${selectedUser.first_name} ${selectedUser.last_name}` : 'SET PERFORMANCE GOALS'}
+            </TextHierarchy>
+            
+            <PerformanceGoalForm
+              user={selectedUser as any}
+              onSubmit={handleCreatePerformanceGoal}
+              onCancel={() => {
+                setShowPerformanceModal(false)
+                setSelectedUser(null)
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Ticket Management Modal */}
+      {showTicketModal && selectedTicket && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-white border border-black p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <TextHierarchy level={1} emphasis className="mb-4">
+              MANAGE TICKET
+            </TextHierarchy>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <TextHierarchy level={2} emphasis>Title:</TextHierarchy>
+                <div className="text-sm">{selectedTicket.title}</div>
+              </div>
+              
+              <div>
+                <TextHierarchy level={2} emphasis>Description:</TextHierarchy>
+                <div className="text-sm bg-gray-50 p-3 border">{selectedTicket.description}</div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <TextHierarchy level={2} emphasis className="mb-2">Status:</TextHierarchy>
+                <div className="flex gap-2">
+                  {['open', 'in_progress', 'resolved', 'closed'].map(status => (
+                    <button
+                      key={status}
+                      onClick={() => handleTicketUpdate(selectedTicket.id, { status })}
+                      className={`
+                        px-3 py-1 border font-mono text-xs transition-colors
+                        ${selectedTicket.status === status
+                          ? 'bg-black text-white border-black'
+                          : 'bg-white text-black border-black hover:bg-gray-100'
+                        }
+                      `}
+                    >
+                      {status.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <TextHierarchy level={2} emphasis className="mb-2">Priority:</TextHierarchy>
+                <div className="flex gap-2">
+                  {['low', 'medium', 'high', 'urgent'].map(priority => (
+                    <button
+                      key={priority}
+                      onClick={() => handleTicketUpdate(selectedTicket.id, { priority })}
+                      className={`
+                        px-3 py-1 border font-mono text-xs transition-colors
+                        ${selectedTicket.priority === priority
+                          ? 'bg-black text-white border-black'
+                          : 'bg-white text-black border-black hover:bg-gray-100'
+                        }
+                      `}
+                    >
+                      {priority.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <TextHierarchy level={2} emphasis className="mb-2">Resolution Notes:</TextHierarchy>
+                <textarea
+                  value={selectedTicket.resolution_notes || ''}
+                  onChange={(e) => setSelectedTicket({...selectedTicket, resolution_notes: e.target.value})}
+                  placeholder="Add resolution notes..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-black bg-white text-black font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  onClick={() => handleTicketUpdate(selectedTicket.id, { resolution_notes: selectedTicket.resolution_notes })}
+                  className="mt-2 px-3 py-1 border border-black bg-white text-black font-mono text-xs hover:bg-black hover:text-white transition-colors"
+                >
+                  UPDATE NOTES
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-4 justify-end mt-6">
+              <button
+                onClick={() => {
+                  setShowTicketModal(false)
+                  setSelectedTicket(null)
+                }}
+                className="px-4 py-2 border border-black bg-white text-black font-mono text-sm hover:bg-black hover:text-white transition-colors"
+              >
+                CLOSE
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Existing Checklist Modal */}
+      {showExistingChecklistModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-white border border-black p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <TextHierarchy level={1} emphasis className="mb-4">
+              EDIT EXISTING CHECKLIST
+            </TextHierarchy>
+            
+            <ExistingChecklistForm
+              checklist={selectedExistingChecklist}
+              onSubmit={handleUpdateExistingChecklist}
+              onCancel={() => {
+                setShowExistingChecklistModal(false)
+                setSelectedExistingChecklist(null)
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

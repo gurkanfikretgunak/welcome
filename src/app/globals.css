@@ -2,25 +2,112 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #000000;
+  --success: #16a34a;
+  --warning: #eab308;
+  --error: #ea580c;
+  --muted: #6b7280;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-muted: var(--muted);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+  line-height: 1.6;
+}
+
+/* Text-based UI Components */
+.info-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.info-card {
+  border: 1px solid var(--foreground);
+  padding: 1.5rem;
+  margin: 1rem 0;
+  background: var(--background);
+}
+
+.success {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.warning {
+  color: var(--warning);
+  border-color: var(--warning);
+}
+
+.error {
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.error:hover {
+  background-color: var(--error) !important;
+  color: white !important;
+  border-color: var(--error) !important;
+}
+
+.no-hover:hover {
+  background-color: transparent !important;
+  color: var(--error) !important;
+  border-color: var(--error) !important;
+}
+
+
+.muted {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.emphasis {
+  font-weight: 700;
+  opacity: 1;
+}
+
+.hierarchy-1 { margin-left: 0; }
+.hierarchy-2 { margin-left: 2rem; }
+.hierarchy-3 { margin-left: 4rem; }
+.hierarchy-4 { margin-left: 6rem; }
+
+@keyframes blinkAnimation {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.blinking {
+  animation: blinkAnimation 0.8s infinite;
+}
+
+@keyframes rgbAnimation {
+  0% { color: #ff0000; border-color: #ff0000; }
+  16% { color: #ff00ff; border-color: #ff00ff; }
+  33% { color: #0000ff; border-color: #0000ff; }
+  50% { color: #00ffff; border-color: #00ffff; }
+  66% { color: #00ff00; border-color: #00ff00; }
+  82% { color: #ffff00; border-color: #ffff00; }
+  100% { color: #ff0000; border-color: #ff0000; }
+}
+
+.rgb-text {
+  animation: rgbAnimation 3s infinite linear;
+  will-change: color, border-color;
 }
