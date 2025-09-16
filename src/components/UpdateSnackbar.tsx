@@ -15,9 +15,9 @@ function getCurrentBuildId(): string {
 
 async function isBuildStillActive(buildId: string): Promise<boolean> {
   try {
-    const res = await fetch(`/_next/static/${buildId}/_buildManifest.js`, {
+    const res = await fetch(`/_next/static/${buildId}/_buildManifest.js?ts=${Date.now()}`, {
       method: 'GET',
-      cache: 'no-store',
+      cache: 'no-store', // bypass caches
       credentials: 'same-origin',
     })
     if (res.status === 404) return false
@@ -28,10 +28,12 @@ async function isBuildStillActive(buildId: string): Promise<boolean> {
   }
 }
 
+
 export default function UpdateSnackbar() {
   const [visible, setVisible] = useState(false)
   const baselineIdRef = useRef<string>('')
   const initialized = useRef(false)
+  const missCountRef = useRef(0) // double-confirm 404s
 
   useEffect(() => {
     let intervalId: number | undefined
@@ -44,23 +46,41 @@ export default function UpdateSnackbar() {
       // If we cannot read a buildId, skip polling to avoid false positives
       if (!currentId) return
       baselineIdRef.current = currentId
+      const tick = async () => {
+        if (document.visibilityState !== 'visible') return
+        if (!navigator.onLine) return
 
-      intervalId = window.setInterval(async () => {
+        // Build asset availability check (with double 404 confirm)
         const stillActive = await isBuildStillActive(baselineIdRef.current)
         if (!stillActive) {
-          setVisible(true)
-          if (intervalId !== undefined) {
-            window.clearInterval(intervalId)
-            intervalId = undefined
+          missCountRef.current += 1
+          if (missCountRef.current >= 2) {
+            setVisible(true)
+            if (intervalId !== undefined) {
+              window.clearInterval(intervalId)
+              intervalId = undefined
+            }
           }
+        } else {
+          missCountRef.current = 0
         }
-      }, 5000)
+      }
+
+      intervalId = window.setInterval(tick, 5000)
+      // Also run once on visibility regain
+      const onVis = () => { void tick() }
+      document.addEventListener('visibilitychange', onVis)
+      // Cleanup extra listener on unmount
+      const cleanup = () => document.removeEventListener('visibilitychange', onVis)
+      ;(window as any).__update_snackbar_cleanup__ = cleanup
     }
 
     init()
 
     return () => {
       if (intervalId !== undefined) window.clearInterval(intervalId)
+      const cleanup = (window as any).__update_snackbar_cleanup__
+      if (typeof cleanup === 'function') cleanup()
     }
   }, [])
 
