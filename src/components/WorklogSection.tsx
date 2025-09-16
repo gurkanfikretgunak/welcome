@@ -686,7 +686,6 @@ export default function WorklogSection() {
                           DELETE
                         </TextButton>
                       </div>
-                      </div>
                     </div>
 
                     {/* Date and Project Info */}
