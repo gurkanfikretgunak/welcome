@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import PageLayout from '@/components/layout/PageLayout'
 import WorklogSection from '@/components/WorklogSection'
@@ -12,22 +12,27 @@ export default function WorklogPage() {
   const router = useRouter()
 
   // Redirect if not authenticated or not completed all steps
+  const redirectedRef = useRef(false)
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/')
-        return
+    if (redirectedRef.current) return
+    if (loading) return
+
+    if (!user) {
+      redirectedRef.current = true
+      router.replace('/')
+      return
+    }
+
+    if (!userProfile) return // wait profile fully loads to avoid flicker
+
+    if (!userProfile.master_email || !userProfile.first_name || !userProfile.last_name) {
+      redirectedRef.current = true
+      if (!userProfile.first_name || !userProfile.last_name) {
+        router.replace('/bio')
+      } else if (!userProfile.master_email) {
+        router.replace('/email')
       }
-      
-      if (!userProfile?.master_email || !userProfile?.first_name || !userProfile?.last_name) {
-        // Redirect to appropriate step
-        if (!userProfile?.first_name || !userProfile?.last_name) {
-          router.push('/bio')
-        } else if (!userProfile?.master_email) {
-          router.push('/email')
-        }
-        return
-      }
+      return
     }
   }, [user, userProfile, loading, router])
 
