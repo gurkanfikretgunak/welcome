@@ -49,6 +49,7 @@ export default function OwnerPage() {
   const [checklistFilter, setChecklistFilter] = useState<'all' | 'global' | 'custom' | 'existing'>('all')
   const [showExistingChecklistModal, setShowExistingChecklistModal] = useState(false)
   const [selectedExistingChecklist, setSelectedExistingChecklist] = useState<any>(null)
+  const [hoveredUser, setHoveredUser] = useState<string | null>(null)
   const [checklistError, setChecklistError] = useState<string | null>(null)
   const [checklistSuccess, setChecklistSuccess] = useState<string | null>(null)
 
@@ -467,6 +468,36 @@ export default function OwnerPage() {
                         </TextBadge>
                       )}
                     </TextHierarchy>
+
+                    {/* Hover-to-copy User ID like Worklog/Ticket */}
+                    <div className="mt-1">
+                      <div
+                        className="relative inline-block"
+                        onMouseEnter={() => setHoveredUser(user.id)}
+                        onMouseLeave={() => setHoveredUser(null)}
+                      >
+                        <TextBadge variant="muted" className="text-xs px-2 py-1 cursor-pointer">ID: {user.id.substring(0, 8)}...</TextBadge>
+                        {hoveredUser === user.id && (
+                          <div
+                            className="absolute top-full left-0 mt-1 z-50 bg-white border border-black p-3 shadow-lg min-w-64"
+                            onMouseEnter={() => setHoveredUser(user.id)}
+                            onMouseLeave={() => setHoveredUser(null)}
+                          >
+                            <div className="space-y-2">
+                              <TextHierarchy level={2} emphasis className="text-xs">FULL ID</TextHierarchy>
+                              <div className="font-mono text-xs bg-gray-50 p-2 border rounded break-all">{user.id}</div>
+                              <TextButton
+                                onClick={() => navigator.clipboard.writeText(user.id)}
+                                variant="success"
+                                className="w-full px-2 py-1 text-xs"
+                              >
+                                COPY ID
+                              </TextButton>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
                     <TextHierarchy level={2} muted>
                       <TextBadge variant="muted">GITHUB</TextBadge> {user.github_username || 'N/A'}
