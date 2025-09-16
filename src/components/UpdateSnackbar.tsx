@@ -34,6 +34,7 @@ export default function UpdateSnackbar() {
   const baselineIdRef = useRef<string>('')
   const initialized = useRef(false)
   const missCountRef = useRef(0) // double-confirm 404s
+  const autoReloadTimerRef = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     let intervalId: number | undefined
@@ -60,6 +61,10 @@ export default function UpdateSnackbar() {
               window.clearInterval(intervalId)
               intervalId = undefined
             }
+            // Schedule an automatic reload as a fallback to avoid being stuck on LOADING...
+            autoReloadTimerRef.current = window.setTimeout(() => {
+              doRefresh()
+            }, 8000)
           }
         } else {
           missCountRef.current = 0
@@ -79,13 +84,20 @@ export default function UpdateSnackbar() {
 
     return () => {
       if (intervalId !== undefined) window.clearInterval(intervalId)
+      if (autoReloadTimerRef.current !== undefined) window.clearTimeout(autoReloadTimerRef.current)
       const cleanup = (window as any).__update_snackbar_cleanup__
       if (typeof cleanup === 'function') cleanup()
     }
   }, [])
 
   const doRefresh = () => {
-    window.location.reload()
+    try {
+      const url = new URL(window.location.href)
+      url.searchParams.set('v', Date.now().toString())
+      window.location.replace(url.toString())
+    } catch {
+      window.location.reload()
+    }
   }
 
   if (!visible) return null
