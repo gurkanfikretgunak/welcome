@@ -138,7 +138,7 @@ export default function ChecklistPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar user={userProfile} onSignOut={signOut} />
+      {userProfile && <Navbar user={userProfile} onSignOut={signOut} />}
       
       <PageLayout
         title="ONBOARDING CHECKLIST"
@@ -170,14 +170,14 @@ export default function ChecklistPage() {
               {CATEGORY_DESCRIPTIONS[category as keyof typeof CATEGORY_DESCRIPTIONS]}
             </TextHierarchy>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {items.map(item => {
                 const isCompleted = checklistStatus[item.id] || false
                 const isUpdating = updatingItem === item.id
 
                 return (
-                  <div key={item.id} className="border-l-2 border-black pl-4">
-                    <div className="flex items-start justify-between">
+                  <div key={item.id} className="border-l-2 border-black pl-3 sm:pl-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                       <div className="flex-1">
                         <TextHierarchy level={2} emphasis={!isCompleted}>
                           <span className="mr-2">

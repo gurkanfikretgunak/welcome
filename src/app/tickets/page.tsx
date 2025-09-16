@@ -32,7 +32,7 @@ export default function TicketsPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar user={userProfile} onSignOut={signOut} />
+      {userProfile && <Navbar user={userProfile} onSignOut={signOut} />}
       
       <PageLayout
         title="SUPPORT TICKETS"

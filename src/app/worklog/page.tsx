@@ -55,7 +55,7 @@ export default function WorklogPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar user={userProfile} onSignOut={signOut} />
+      {userProfile && <Navbar user={userProfile} onSignOut={signOut} />}
       <PageLayout title="WORKLOG">
         <WorklogSection />
       </PageLayout>

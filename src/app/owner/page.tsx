@@ -392,7 +392,7 @@ export default function OwnerPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar user={userProfile} onSignOut={signOut} />
+      {userProfile && <Navbar user={userProfile} onSignOut={signOut} />}
       
       <PageLayout
         title="OWNER DASHBOARD"

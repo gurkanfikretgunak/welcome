@@ -139,7 +139,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar user={userProfile} onSignOut={signOut} />
+      {userProfile && <Navbar user={userProfile} onSignOut={signOut} />}
       
       <PageLayout
         title="SETTINGS"
@@ -194,7 +194,7 @@ export default function SettingsPage() {
               </TextHierarchy>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <TextHierarchy level={1} emphasis className="mb-2">
                   FIRST NAME

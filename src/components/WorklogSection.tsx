@@ -365,7 +365,7 @@ export default function WorklogSection() {
             </TextHierarchy>
             
             {/* Quick Filter Badges */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-4 overflow-x-auto pb-1 -mx-1 px-1">
               <TextButton
                 onClick={() => setQuickFilter('all')}
                 variant={dateFilter.quickFilter === 'all' ? 'success' : 'default'}

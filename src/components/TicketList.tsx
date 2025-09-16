@@ -125,7 +125,7 @@ export default function TicketList({ showCreateButton = true, onCreateTicket }: 
     <TextCard title="MY TICKETS">
       {/* Header with Create Button */}
       {showCreateButton && onCreateTicket && (
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
           <TextHierarchy level={1} emphasis>
             SUPPORT TICKETS
           </TextHierarchy>
@@ -140,7 +140,7 @@ export default function TicketList({ showCreateButton = true, onCreateTicket }: 
       )}
 
       {/* Filter Buttons */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-6 overflow-x-auto -mx-1 px-1 pb-1">
         {[
           { key: 'all', label: 'ALL', count: stats.all },
           { key: 'open', label: 'OPEN', count: stats.open },
@@ -181,7 +181,7 @@ export default function TicketList({ showCreateButton = true, onCreateTicket }: 
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {filteredTickets.map(ticket => (
             <div key={ticket.id} className="bg-white border-2 border-black p-6 hover:shadow-lg transition-all duration-200 hover:border-gray-400">
               {/* Header */}

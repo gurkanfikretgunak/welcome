@@ -6,6 +6,7 @@ import TextCard from '@/components/ui/TextCard'
 import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
+import { sanitizeTurkishText } from '@/lib/validation'
 
 interface TicketFormProps {
   onTicketCreated?: (ticket: Ticket) => void
@@ -83,9 +84,10 @@ export default function TicketForm({ onTicketCreated, onCancel }: TicketFormProp
   }
 
   const handleInputChange = (field: string, value: string) => {
+    const sanitized = field === 'title' ? sanitizeTurkishText(value) : (field === 'description' ? sanitizeTurkishText(value) : value)
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: sanitized
     }))
   }
 
@@ -193,12 +195,12 @@ export default function TicketForm({ onTicketCreated, onCancel }: TicketFormProp
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <TextButton
             type="submit"
             variant="default"
             disabled={isSubmitting}
-            className="px-6 py-2"
+            className="px-6 py-2 w-full sm:w-auto"
           >
             {isSubmitting ? 'CREATING...' : 'CREATE TICKET'}
           </TextButton>
@@ -209,7 +211,7 @@ export default function TicketForm({ onTicketCreated, onCancel }: TicketFormProp
               variant="default"
               onClick={onCancel}
               disabled={isSubmitting}
-              className="px-6 py-2"
+              className="px-6 py-2 w-full sm:w-auto"
             >
               CANCEL
             </TextButton>

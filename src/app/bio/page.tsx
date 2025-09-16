@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { updateUserProfile } from '@/lib/supabase'
 import Navbar from '@/components/layout/Navbar'
+import { sanitizeTurkishName } from '@/lib/validation'
 import PageLayout from '@/components/layout/PageLayout'
 import TextCard from '@/components/ui/TextCard'
 import TextButton from '@/components/ui/TextButton'
@@ -70,7 +71,7 @@ export default function BioPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar user={userProfile} onSignOut={signOut} />
+      {userProfile && <Navbar user={userProfile} onSignOut={signOut} />}
 
       <PageLayout
         title="BIO INFORMATION"
@@ -104,7 +105,7 @@ export default function BioPage() {
                 <input
                   type="text"
                   value={formData.first_name}
-                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, first_name: sanitizeTurkishName(e.target.value) })}
                   className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-sm font-mono"
                   placeholder="Enter your first name"
                   disabled={isSubmitting}
@@ -119,7 +120,7 @@ export default function BioPage() {
                 <input
                   type="text"
                   value={formData.last_name}
-                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, last_name: sanitizeTurkishName(e.target.value) })}
                   className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-sm font-mono"
                   placeholder="Enter your last name"
                   disabled={isSubmitting}
