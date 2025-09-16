@@ -41,12 +41,18 @@ export default function UpdateSnackbar() {
       initialized.current = true
 
       const currentId = getCurrentBuildId()
+      // If we cannot read a buildId, skip polling to avoid false positives
+      if (!currentId) return
       baselineIdRef.current = currentId
 
       intervalId = window.setInterval(async () => {
         const stillActive = await isBuildStillActive(baselineIdRef.current)
         if (!stillActive) {
           setVisible(true)
+          if (intervalId !== undefined) {
+            window.clearInterval(intervalId)
+            intervalId = undefined
+          }
         }
       }, 5000)
     }
