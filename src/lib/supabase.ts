@@ -662,28 +662,50 @@ export async function getUserPerformanceGoals(): Promise<{ data: PerformanceGoal
 export async function getAllPerformanceGoals(): Promise<{ data: PerformanceGoalWithUser[] | null; error: Error | null }> {
   try {
     console.log('🎯 Fetching all performance goals (owner)')
-    
-    const { data, error } = await supabase
+
+    // 1) Fetch goals (no relational join required)
+    const { data: goals, error: goalsError } = await supabase
       .from('performance_goals')
-      .select(`
-        *,
-        user:users(
-          id,
-          first_name,
-          last_name,
-          github_username,
-          department
-        )
-      `)
+      .select('*')
       .order('month_year', { ascending: false })
 
-    if (error) {
-      console.error('❌ Get all performance goals error:', error)
-      return { data: null, error }
+    if (goalsError) {
+      console.error('❌ Get all performance goals error:', goalsError)
+      return { data: null, error: goalsError }
     }
 
-    console.log('✅ All performance goals fetched successfully:', data?.length || 0)
-    return { data, error: null }
+    if (!goals || goals.length === 0) {
+      return { data: [], error: null }
+    }
+
+    // 2) Collect unique user ids and fetch users in one query
+    const userIds = Array.from(new Set(goals.map((g: any) => g.user_id).filter(Boolean)))
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id, first_name, last_name, github_username, department')
+      .in('id', userIds as string[])
+
+    if (usersError) {
+      console.error('❌ Get users for performance goals error:', usersError)
+      return { data: null, error: usersError }
+    }
+
+    const userById = new Map((users || []).map((u: any) => [u.id, u]))
+
+    // 3) Merge
+    const merged: PerformanceGoalWithUser[] = (goals as any[]).map((g) => ({
+      ...g,
+      user: userById.get(g.user_id) || {
+        id: g.user_id,
+        first_name: null,
+        last_name: null,
+        github_username: null,
+        department: null,
+      },
+    }))
+
+    console.log('✅ All performance goals fetched successfully:', merged.length)
+    return { data: merged, error: null }
   } catch (error) {
     console.error('❌ Get all performance goals exception:', error)
     return { data: null, error: error as Error }
