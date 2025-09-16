@@ -112,18 +112,20 @@ export default function Navbar({ user, onSignOut }: NavbarProps) {
               </TextBadge>
             </div>
 
-            {/* Mobile Menu Button */}
-            <button
-              onClick={toggleMobileMenu}
-              className="p-2 border border-black hover:bg-gray-50 transition-colors"
-              aria-label="Toggle mobile menu"
-            >
-              <div className="w-5 h-5 flex flex-col justify-center space-y-1">
-                <div className={`w-full h-0.5 bg-black transition-transform duration-200 ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
-                <div className={`w-full h-0.5 bg-black transition-opacity duration-200 ${isMobileMenuOpen ? 'opacity-0' : ''}`}></div>
-                <div className={`w-full h-0.5 bg-black transition-transform duration-200 ${isMobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
-              </div>
-            </button>
+            {/* Mobile Menu Button (only when user is authenticated) */}
+            {user && (
+              <button
+                onClick={toggleMobileMenu}
+                className="p-2 border border-black hover:bg-gray-50 transition-colors"
+                aria-label="Toggle mobile menu"
+              >
+                <div className="w-5 h-5 flex flex-col justify-center space-y-1">
+                  <div className={`w-full h-0.5 bg-black transition-transform duration-200 ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
+                  <div className={`w-full h-0.5 bg-black transition-opacity duration-200 ${isMobileMenuOpen ? 'opacity-0' : ''}`}></div>
+                  <div className={`w-full h-0.5 bg-black transition-transform duration-200 ${isMobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
+                </div>
+              </button>
+            )}
           </div>
 
           {/* Mobile Menu */}
