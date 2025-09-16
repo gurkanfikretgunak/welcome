@@ -184,25 +184,30 @@ export default function TicketList({ showCreateButton = true, onCreateTicket }: 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {filteredTickets.map(ticket => (
             <div key={ticket.id} className="bg-white border-2 border-black p-6 hover:shadow-lg transition-all duration-200 hover:border-gray-400">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <TextHierarchy level={1} emphasis className="text-lg mb-3 text-gray-900">
-                    {ticket.title}
-                  </TextHierarchy>
-                  <div className="flex gap-2">
-                    <TextBadge variant={STATUS_COLORS[ticket.status]} className="text-xs font-bold">
-                      {ticket.status.toUpperCase()}
-                    </TextBadge>
-                    <TextBadge variant={PRIORITY_COLORS[ticket.priority]} className="text-xs font-bold">
-                      {ticket.priority.toUpperCase()}
-                    </TextBadge>
-                  </div>
+              {/* Row 1: ID */}
+              <div className="flex items-center gap-2 mb-2">
+                <TextBadge variant="muted" className="text-xs">
+                  ID: {ticket.id.substring(0, 8)}...
+                </TextBadge>
+              </div>
+
+              {/* Row 2: Title + Status/Priority */}
+              <div className="mb-3">
+                <TextHierarchy level={1} emphasis className="text-lg text-gray-900">
+                  {ticket.title}
+                </TextHierarchy>
+                <div className="flex gap-2 mt-2">
+                  <TextBadge variant={STATUS_COLORS[ticket.status]} className="text-xs font-bold">
+                    {ticket.status.toUpperCase()}
+                  </TextBadge>
+                  <TextBadge variant={PRIORITY_COLORS[ticket.priority]} className="text-xs font-bold">
+                    {ticket.priority.toUpperCase()}
+                  </TextBadge>
                 </div>
               </div>
 
-              {/* Category and Date */}
-              <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-200">
+              {/* Row 3: Category + Created Date */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 pb-3 border-b border-gray-200">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600 font-mono text-sm">CATEGORY:</span>
                   <TextBadge variant="default" className="text-xs">
@@ -214,7 +219,7 @@ export default function TicketList({ showCreateButton = true, onCreateTicket }: 
                 </div>
               </div>
 
-              {/* Description */}
+              {/* Row 4: Description */}
               <div className="mb-4">
                 <div className="text-sm text-gray-600 font-mono mb-2">DESCRIPTION:</div>
                 <div className="text-sm text-gray-800 bg-gray-50 p-4 border-l-4 border-gray-300 rounded-r-lg">
@@ -225,7 +230,7 @@ export default function TicketList({ showCreateButton = true, onCreateTicket }: 
                 </div>
               </div>
 
-              {/* Resolution Notes (if exists) */}
+              {/* Row 5: Resolution (optional) */}
               {ticket.resolution_notes && (
                 <div className="mb-4">
                   <div className="text-sm text-green-600 font-mono mb-2">RESOLUTION:</div>
@@ -235,11 +240,9 @@ export default function TicketList({ showCreateButton = true, onCreateTicket }: 
                 </div>
               )}
 
-              {/* Footer */}
+              {/* Row 6: Footer (Resolved time) */}
               <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                <div className="text-xs text-gray-500 font-mono">
-                  ID: {ticket.id.substring(0, 8)}...
-                </div>
+                <div className="text-xs text-gray-500 font-mono"></div>
                 {ticket.resolved_at && (
                   <div className="text-xs text-green-600 font-mono flex items-center gap-1">
                     <span className="text-green-500">✓</span>

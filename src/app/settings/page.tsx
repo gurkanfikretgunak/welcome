@@ -146,18 +146,20 @@ export default function SettingsPage() {
         subtitle="Account & Profile Management"
       >
         <TextCard title="ACCOUNT INFORMATION">
-          <TextHierarchy level={1}>
-            <TextBadge variant="muted">USER ID</TextBadge> {user.id}
-          </TextHierarchy>
-          <TextHierarchy level={1}>
-            <TextBadge variant="muted">GITHUB USERNAME</TextBadge> {userProfile?.github_username || 'N/A'}
-          </TextHierarchy>
-          <TextHierarchy level={1}>
-            <TextBadge variant="muted">REGISTRATION DATE</TextBadge> {userProfile?.created_at ? new Date(userProfile.created_at).toLocaleDateString() : 'N/A'}
-          </TextHierarchy>
-          <TextHierarchy level={1}>
-            <TextBadge variant={userProfile?.is_owner ? "success" : "muted"}>ROLE</TextBadge> {userProfile?.is_owner ? 'Owner' : 'Developer'}
-          </TextHierarchy>
+          <div className="space-y-2">
+            <TextHierarchy level={1}>
+              <TextBadge variant="muted">USER ID</TextBadge> {user.id}
+            </TextHierarchy>
+            <TextHierarchy level={1}>
+              <TextBadge variant="muted">GITHUB USERNAME</TextBadge> {userProfile?.github_username || 'N/A'}
+            </TextHierarchy>
+            <TextHierarchy level={1}>
+              <TextBadge variant="muted">REGISTRATION DATE</TextBadge> {userProfile?.created_at ? new Date(userProfile.created_at).toLocaleDateString() : 'N/A'}
+            </TextHierarchy>
+            <TextHierarchy level={1}>
+              <TextBadge variant={userProfile?.is_owner ? "success" : "muted"}>ROLE</TextBadge> {userProfile?.is_owner ? 'Owner' : 'Developer'}
+            </TextHierarchy>
+          </div>
         </TextCard>
 
         <TextCard title="PROFILE SETTINGS">
