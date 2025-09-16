@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ProcessStep } from '@/lib/markdown'
 import Navbar from '@/components/layout/Navbar'
 import PageLayout from '@/components/layout/PageLayout'
@@ -156,29 +156,26 @@ export default function Home() {
     };
   }, [initialLoading]);
 
-  // Simple redirect logic
+  // Simple redirect logic with guards to avoid loops
+  const redirectedRef = useRef(false)
   useEffect(() => {
-    if (user && !loading && !hasRedirected) {
-      console.log('🔄 User authenticated, checking profile:', userProfile)
-      setHasRedirected(true)
-      
-      // Check if user has completed all required steps
-      if (userProfile?.master_email && userProfile?.first_name && userProfile?.last_name) {
-        console.log('✅ All steps completed, redirecting to worklog')
-        router.push('/worklog')
-      } else if (userProfile?.first_name && userProfile?.last_name) {
-        console.log('📧 Bio completed, redirecting to email')
-        router.push('/email')
-      } else {
-        console.log('👤 Redirecting to bio')
-        router.push('/bio')
-      }
-    } else if (!user && !loading && hasRedirected) {
-      // If user becomes null after being authenticated, reset redirect state
-      console.log('🔄 User became null, resetting redirect state')
-      setHasRedirected(false)
+    if (redirectedRef.current) return
+    if (loading) return
+
+    if (!user) return // show landing when not authenticated
+    if (!userProfile) return // wait profile before deciding the next route
+
+    redirectedRef.current = true
+    console.log('🔄 User authenticated, checking profile:', userProfile)
+
+    if (userProfile.master_email && userProfile.first_name && userProfile.last_name) {
+      router.replace('/worklog')
+    } else if (userProfile.first_name && userProfile.last_name) {
+      router.replace('/email')
+    } else {
+      router.replace('/bio')
     }
-  }, [user, userProfile, loading, hasRedirected, router])
+  }, [user, userProfile, loading, router])
 
   // Load content
   useEffect(() => {
