@@ -24,6 +24,21 @@ body {
   color: var(--foreground);
   font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
   line-height: 1.6;
+  /* iOS safe areas */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* iOS notch safe header space if any fixed headers used in the future */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Small iPhone tweaks for tighter spacing */
+@media (max-width: 360px) {
+  .info-card { padding: 1rem; }
+  .info-badge { font-size: 0.7rem; padding: 0.2rem 0.45rem; }
 }
 
 /* Text-based UI Components */
