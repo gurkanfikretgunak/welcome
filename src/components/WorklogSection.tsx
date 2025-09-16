@@ -620,7 +620,8 @@ export default function WorklogSection() {
                   </div>
                   <div className="space-y-4">
                     {/* Header with ID, Category and Hours */}
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col gap-3">
+                      {/* Row 1: ID */}
                       <div className="flex items-center gap-3">
                         <div 
                           className="relative"
@@ -656,6 +657,9 @@ export default function WorklogSection() {
                             </div>
                           )}
                         </div>
+                      </div>
+                      {/* Row 2: Category + Hours */}
+                      <div className="flex items-center gap-3">
                         {worklog.category && (
                           <TextBadge variant="default" className="text-sm px-3 py-1">
                             {worklog.category}
@@ -665,22 +669,23 @@ export default function WorklogSection() {
                           {worklog.hours}h
                         </TextBadge>
                       </div>
-                      
+                      {/* Row 3: Actions */}
                       <div className="flex gap-2">
                         <TextButton
                           onClick={() => handleEdit(worklog)}
                           variant="default"
-                          className="px-4 py-2 text-sm"
+                          className="px-4 py-2 text-sm w-full sm:w-auto"
                         >
                           EDIT
                         </TextButton>
                         <TextButton
                           onClick={() => handleDelete(worklog.id)}
                           variant="error"
-                          className="px-4 py-2 text-sm"
+                          className="px-4 py-2 text-sm w-full sm:w-auto"
                         >
                           DELETE
                         </TextButton>
+                      </div>
                       </div>
                     </div>
 
