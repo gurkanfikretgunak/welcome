@@ -40,6 +40,7 @@ export default function TicketList({ showCreateButton = true, onCreateTicket }: 
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState<'all' | 'open' | 'in_progress' | 'resolved' | 'closed'>('all')
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   const loadTickets = async () => {
     try {
@@ -87,6 +88,22 @@ export default function TicketList({ showCreateButton = true, onCreateTicket }: 
       closed: tickets.filter(t => t.status === 'closed').length
     }
     return stats
+  }
+
+  const handleMouseEnter = (id: string) => {
+    setHoveredId(id)
+  }
+
+  const handleMouseLeave = () => {
+    setHoveredId(null)
+  }
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch (e) {
+      console.error('Failed to copy:', e)
+    }
   }
 
   if (isLoading) {
@@ -184,11 +201,41 @@ export default function TicketList({ showCreateButton = true, onCreateTicket }: 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {filteredTickets.map(ticket => (
             <div key={ticket.id} className="bg-white border-2 border-black p-6 hover:shadow-lg transition-all duration-200 hover:border-gray-400">
-              {/* Row 1: ID */}
+              {/* Row 1: ID with hover popup */}
               <div className="flex items-center gap-2 mb-2">
-                <TextBadge variant="muted" className="text-xs">
-                  ID: {ticket.id.substring(0, 8)}...
-                </TextBadge>
+                <div
+                  className="relative"
+                  onMouseEnter={() => handleMouseEnter(ticket.id)}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <TextBadge variant="muted" className="text-xs px-2 py-1 cursor-pointer">
+                    ID: {ticket.id.substring(0, 8)}...
+                  </TextBadge>
+
+                  {hoveredId === ticket.id && (
+                    <div
+                      className="absolute top-full left-0 mt-1 z-50 bg-white border border-black p-3 shadow-lg min-w-64"
+                      onMouseEnter={() => handleMouseEnter(ticket.id)}
+                      onMouseLeave={handleMouseLeave}
+                    >
+                      <div className="space-y-2">
+                        <TextHierarchy level={2} emphasis className="text-xs">
+                          FULL ID
+                        </TextHierarchy>
+                        <div className="font-mono text-xs bg-gray-50 p-2 border rounded break-all">
+                          {ticket.id}
+                        </div>
+                        <TextButton
+                          onClick={() => copyToClipboard(ticket.id)}
+                          variant="success"
+                          className="w-full px-2 py-1 text-xs"
+                        >
+                          COPY ID
+                        </TextButton>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Row 2: Title + Status/Priority */}
