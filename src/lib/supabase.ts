@@ -1102,3 +1102,57 @@ export async function deleteChecklistAssignment(assignmentId: string): Promise<{
     return { error: error as Error }
   }
 }
+
+// OTP Codes functions
+export interface OtpCode {
+  id: string
+  github_username: string | null
+  first_name: string | null
+  last_name: string | null
+  verification_code: string
+  verification_email: string
+  verification_expires: string
+  is_expired?: boolean
+  time_remaining?: number
+}
+
+export async function getActiveOtpCodes(): Promise<{ data: OtpCode[] | null; error: Error | null }> {
+  try {
+    console.log('🔑 Getting active OTP codes')
+    
+    // Get all active OTP codes
+    const { data, error } = await supabase
+      .from('users')
+      .select(`
+        id,
+        github_username,
+        first_name,
+        last_name,
+        verification_code,
+        verification_email,
+        verification_expires
+      `)
+      .not('verification_code', 'is', null)
+      .order('verification_expires', { ascending: false })
+
+    if (error) {
+      console.error('❌ Get OTP codes error:', error)
+      return { data: null, error }
+    }
+
+    // Process OTP codes and mark expired ones
+    const now = new Date()
+    const processedOtpData = data.map(user => ({
+      ...user,
+      is_expired: user.verification_expires ? new Date(user.verification_expires) < now : true,
+      time_remaining: user.verification_expires ? 
+        Math.max(0, Math.floor((new Date(user.verification_expires).getTime() - now.getTime()) / 1000)) : 0
+    }))
+
+    console.log('✅ OTP codes retrieved:', processedOtpData.length)
+    return { data: processedOtpData, error: null }
+  } catch (error) {
+    console.error('❌ Get OTP codes exception:', error)
+    return { data: null, error: error as Error }
+  }
+}

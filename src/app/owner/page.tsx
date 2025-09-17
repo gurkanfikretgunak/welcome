@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
-import { getAllUsers, getAllChecklistStatuses, getAllTickets, updateTicket, Ticket, getAllPerformanceGoals, createPerformanceGoal, updatePerformanceGoal, deletePerformanceGoal, PerformanceGoalWithUser, getCurrentMonthYear, calculatePerformancePercentage, getAllDynamicChecklists, createDynamicChecklist, updateDynamicChecklist, deleteDynamicChecklist, DynamicChecklist, ChecklistWithAssignments } from '@/lib/supabase'
+import { getAllUsers, getAllChecklistStatuses, getAllTickets, updateTicket, Ticket, getAllPerformanceGoals, createPerformanceGoal, updatePerformanceGoal, deletePerformanceGoal, PerformanceGoalWithUser, getCurrentMonthYear, calculatePerformancePercentage, getAllDynamicChecklists, createDynamicChecklist, updateDynamicChecklist, deleteDynamicChecklist, DynamicChecklist, ChecklistWithAssignments, getActiveOtpCodes, OtpCode } from '@/lib/supabase'
 import { ONBOARDING_CHECKLIST, CATEGORY_LABELS } from '@/data/checklist'
 import Navbar from '@/components/layout/Navbar'
 import PageLayout from '@/components/layout/PageLayout'
@@ -30,6 +30,7 @@ interface UserWithProgress {
   requiredTotal: number
 }
 
+
 export default function OwnerPage() {
   const { user, userProfile, loading, signOut } = useAuth()
   const router = useRouter()
@@ -53,6 +54,9 @@ export default function OwnerPage() {
   const [hoveredUser, setHoveredUser] = useState<string | null>(null)
   const [checklistError, setChecklistError] = useState<string | null>(null)
   const [checklistSuccess, setChecklistSuccess] = useState<string | null>(null)
+  const [otpCodes, setOtpCodes] = useState<OtpCode[]>([])
+  const [isLoadingOtp, setIsLoadingOtp] = useState(false)
+  const [otpError, setOtpError] = useState<string | null>(null)
 
   useEffect(() => {
     // Temporarily disable owner check due to RLS recursion issue
@@ -62,8 +66,35 @@ export default function OwnerPage() {
     // }
     if (user) {
       loadOwnerData()
+      loadOtpCodes()
     }
   }, [user, userProfile, router])
+  
+  // Load OTP codes
+  const loadOtpCodes = async () => {
+    try {
+      setIsLoadingOtp(true)
+      setOtpError(null)
+      
+      const { data, error } = await getActiveOtpCodes()
+      
+      if (error) {
+        throw error
+      }
+      
+      setOtpCodes(data || [])
+    } catch (error) {
+      console.error('Error loading OTP codes:', error)
+      setOtpError(error instanceof Error ? error.message : 'Unknown error loading OTP codes')
+    } finally {
+      setIsLoadingOtp(false)
+    }
+  }
+  
+  // Refresh OTP codes
+  const refreshOtpCodes = () => {
+    loadOtpCodes()
+  }
 
   const loadOwnerData = async () => {
     try {
@@ -555,6 +586,102 @@ export default function OwnerPage() {
           })}
         </TextCard>
 
+        <TextCard title="OTP VERIFICATION CODES" variant="warning">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <TextHierarchy level={1} emphasis>
+                ACTIVE EMAIL VERIFICATION CODES
+              </TextHierarchy>
+              <TextButton
+                onClick={refreshOtpCodes}
+                variant="default"
+                className="text-xs py-1 px-3"
+                disabled={isLoadingOtp}
+              >
+                {isLoadingOtp ? 'LOADING...' : 'REFRESH'}
+              </TextButton>
+            </div>
+            
+            {otpError && (
+              <div className="p-3 border border-red-300 bg-red-50 rounded">
+                <TextHierarchy level={2} className="text-red-600">
+                  <TextBadge variant="error">ERROR</TextBadge> {otpError}
+                </TextHierarchy>
+              </div>
+            )}
+            
+            {isLoadingOtp && !otpCodes.length ? (
+              <div className="text-center py-6">
+                <TextBadge variant="default">LOADING OTP CODES...</TextBadge>
+              </div>
+            ) : otpCodes.length === 0 ? (
+              <div className="text-center py-6 border border-dashed border-gray-300 rounded">
+                <TextHierarchy level={1} muted>
+                  No active verification codes found
+                </TextHierarchy>
+                <TextHierarchy level={2} muted className="mt-2">
+                  Codes will appear here when users request email verification
+                </TextHierarchy>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b-2 border-black">
+                      <th className="py-2 px-3 text-left">User</th>
+                      <th className="py-2 px-3 text-left">Email</th>
+                      <th className="py-2 px-3 text-center font-mono bg-yellow-50">OTP CODE</th>
+                      <th className="py-2 px-3 text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {otpCodes.map((otp) => (
+                      <tr key={otp.id} className="border-b border-gray-200 hover:bg-gray-50">
+                        <td className="py-3 px-3">
+                          <div className="font-medium">
+                            {otp.first_name && otp.last_name 
+                              ? `${otp.first_name} ${otp.last_name}`
+                              : otp.github_username || 'Unknown User'
+                            }
+                          </div>
+                          <div className="text-xs text-gray-500 font-mono">
+                            ID: {otp.id.substring(0, 8)}...
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 font-mono text-sm">
+                          {otp.verification_email}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <div className="inline-block bg-yellow-100 border border-yellow-300 px-3 py-1 rounded font-mono text-lg font-bold tracking-widest">
+                            {otp.verification_code}
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          {otp.is_expired ? (
+                            <TextBadge variant="error">EXPIRED</TextBadge>
+                          ) : (
+                            <div>
+                              <TextBadge variant="success">ACTIVE</TextBadge>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {Math.floor((otp.time_remaining || 0) / 60)}:{((otp.time_remaining || 0) % 60).toString().padStart(2, '0')} remaining
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            
+            <TextHierarchy level={2} muted className="mt-4">
+              OTP codes are automatically generated when users verify their MasterFabric email address.
+              Codes expire after 10 minutes and are cleared after successful verification.
+            </TextHierarchy>
+          </div>
+        </TextCard>
+        
         <TextCard variant="muted">
           <TextHierarchy level={1} muted>
             This dashboard provides read-only access to all user onboarding progress. 
