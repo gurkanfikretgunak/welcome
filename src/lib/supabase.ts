@@ -33,6 +33,7 @@ export interface User {
   last_name?: string
   phone?: string
   department?: string
+  role?: string
 }
 
 // Worklog interface

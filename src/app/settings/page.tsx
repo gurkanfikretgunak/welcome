@@ -25,6 +25,19 @@ const DEPARTMENTS = [
   'Other'
 ]
 
+const ROLES = [
+  'Developer',
+  'Senior Developer',
+  'Team Lead',
+  'Project Manager',
+  'Designer',
+  'QA Engineer',
+  'DevOps Engineer',
+  'Product Owner',
+  'Scrum Master',
+  'Other'
+]
+
 export default function SettingsPage() {
   const { user, userProfile, loading, signOut, refreshProfile } = useAuth()
   const router = useRouter()
@@ -34,6 +47,7 @@ export default function SettingsPage() {
     last_name: '',
     phone: '',
     department: '',
+    role: '',
     master_email: '',
     personal_email: ''
   })
@@ -57,6 +71,7 @@ export default function SettingsPage() {
         last_name: userProfile.last_name || '',
         phone: userProfile.phone || '',
         department: userProfile.department || '',
+        role: userProfile.role || '',
         master_email: userProfile.master_email || '',
         personal_email: userProfile.personal_email || ''
       })
@@ -89,6 +104,7 @@ export default function SettingsPage() {
         last_name: formData.last_name,
         phone: formData.phone,
         department: formData.department,
+        role: formData.role,
         master_email: formData.master_email,
         personal_email: formData.personal_email
       })
@@ -237,21 +253,40 @@ export default function SettingsPage() {
               />
             </div>
 
-            <div>
-              <TextHierarchy level={1} emphasis className="mb-2">
-                DEPARTMENT / ROLE
-              </TextHierarchy>
-              <select
-                value={formData.department}
-                onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
-                className="w-full p-3 border border-black font-mono text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black"
-                required
-              >
-                <option value="">Select your department</option>
-                {DEPARTMENTS.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div>
+                <TextHierarchy level={1} emphasis className="mb-2">
+                  DEPARTMENT
+                </TextHierarchy>
+                <select
+                  value={formData.department}
+                  onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
+                  className="w-full p-3 border border-black font-mono text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black"
+                  required
+                >
+                  <option value="">Select your department</option>
+                  {DEPARTMENTS.map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <TextHierarchy level={1} emphasis className="mb-2">
+                  ROLE
+                </TextHierarchy>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
+                  className="w-full p-3 border border-black font-mono text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black"
+                  required
+                >
+                  <option value="">Select your role</option>
+                  {ROLES.map(role => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {error && (
