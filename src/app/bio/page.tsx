@@ -13,7 +13,7 @@ import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
 
 export default function BioPage() {
-  const { user, userProfile, loading, signOut, refreshProfile } = useAuth()
+  const { user, userProfile, loading, profileLoading, signOut, refreshProfile } = useAuth()
   const router = useRouter()
   const [formData, setFormData] = useState({
     first_name: '',
@@ -25,10 +25,12 @@ export default function BioPage() {
 
   // Navigation
   useEffect(() => {
+    if (loading) return
+    
     if (!user) {
       router.push('/')
     }
-  }, [user, router])
+  }, [user, loading, router])
 
   // Load existing data
   useEffect(() => {

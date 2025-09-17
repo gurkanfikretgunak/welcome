@@ -8,6 +8,7 @@ interface AuthContextType {
   user: User | null
   userProfile: UserProfile | null
   loading: boolean
+  profileLoading: boolean
   signInWithGitHub: () => Promise<{ data: any; error: any }>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
@@ -19,6 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [profileLoading, setProfileLoading] = useState(false)
 
   // Initialize auth state
   useEffect(() => {
@@ -33,15 +35,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           console.log('✅ User found:', session.user.email)
           setUser(session.user)
-          await loadUserProfile(session.user.id)
+          // Load profile without blocking loading state
+          loadUserProfile(session.user.id)
         } else {
           console.log('ℹ️ No session found')
           setUser(null)
           setUserProfile(null)
         }
+        
+        // Set loading to false immediately after checking session
+        setLoading(false)
       } catch (error) {
         console.error('❌ Auth initialization error:', error)
-      } finally {
         setLoading(false)
       }
     }
@@ -55,7 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (session?.user) {
           setUser(session.user)
-          await loadUserProfile(session.user.id)
+          // Load profile without blocking
+          loadUserProfile(session.user.id)
         } else {
           console.log('🚪 No session - clearing auth state')
           setUser(null)
@@ -75,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
         
-        setLoading(false)
+        // Don't set loading to false here, it's already handled in initialization
       }
     )
 
@@ -86,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Load user profile from database
   const loadUserProfile = async (userId: string) => {
+    setProfileLoading(true)
     try {
       console.log('👤 Loading profile for user:', userId)
       
@@ -113,6 +120,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserProfile(data)
     } catch (error) {
       console.error('❌ Profile load exception:', error)
+    } finally {
+      setProfileLoading(false)
     }
   }
 
@@ -241,6 +250,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     userProfile,
     loading,
+    profileLoading,
     signInWithGitHub,
     signOut,
     refreshProfile

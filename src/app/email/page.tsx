@@ -12,7 +12,7 @@ import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
 
 export default function EmailPage() {
-  const { user, userProfile, loading, signOut, refreshProfile } = useAuth()
+  const { user, userProfile, loading, profileLoading, signOut, refreshProfile } = useAuth()
   const router = useRouter()
   const [emailInput, setEmailInput] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
@@ -24,13 +24,13 @@ export default function EmailPage() {
 
   // Navigation
   useEffect(() => {
+    if (loading) return
+    
     if (!user) {
       router.push('/')
-    } else if (user && !userProfile) {
-      // Wait for user profile to load
-      console.log('⏳ Waiting for user profile to load...')
     }
-  }, [user, userProfile, router])
+    // Don't wait for profile - show page immediately if user exists
+  }, [user, loading, router])
 
   // Load existing email if available
   useEffect(() => {
@@ -138,12 +138,10 @@ export default function EmailPage() {
     }
   }
 
-  if (loading || !userProfile) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <TextBadge variant="default">
-          {loading ? 'LOADING...' : 'LOADING PROFILE...'}
-        </TextBadge>
+        <TextBadge variant="default">LOADING...</TextBadge>
       </div>
     )
   }

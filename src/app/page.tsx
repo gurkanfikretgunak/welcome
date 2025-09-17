@@ -12,7 +12,7 @@ import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
 
 export default function Home() {
-  const { user, userProfile, loading, signInWithGitHub, signOut, refreshProfile } = useAuth()
+  const { user, userProfile, loading, profileLoading, signInWithGitHub, signOut, refreshProfile } = useAuth()
   const router = useRouter()
   const [processSteps, setProcessSteps] = useState<ProcessStep[]>([])
   const [welcomeText, setWelcomeText] = useState<string>('')
@@ -163,19 +163,26 @@ export default function Home() {
     if (loading) return
 
     if (!user) return // show landing when not authenticated
-    if (!userProfile) return // wait profile before deciding the next route
+    
+    // Don't wait for profile - redirect immediately if we have user
+    // Profile-dependent redirects will happen in target pages
+    if (user && !profileLoading && userProfile) {
+      redirectedRef.current = true
+      console.log('🔄 User authenticated, checking profile:', userProfile)
 
-    redirectedRef.current = true
-    console.log('🔄 User authenticated, checking profile:', userProfile)
-
-    if (userProfile.master_email && userProfile.first_name && userProfile.last_name) {
-      router.replace('/worklog')
-    } else if (userProfile.first_name && userProfile.last_name) {
-      router.replace('/email')
-    } else {
+      if (userProfile.master_email && userProfile.first_name && userProfile.last_name) {
+        router.replace('/worklog')
+      } else if (userProfile.first_name && userProfile.last_name) {
+        router.replace('/email')
+      } else {
+        router.replace('/bio')
+      }
+    } else if (user && !userProfile && !profileLoading) {
+      // If user exists but no profile and not loading, redirect to bio
+      redirectedRef.current = true
       router.replace('/bio')
     }
-  }, [user, userProfile, loading, router])
+  }, [user, userProfile, loading, profileLoading, router])
 
   // Load content
   useEffect(() => {

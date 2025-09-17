@@ -17,7 +17,7 @@ interface ChecklistStatus {
 }
 
 export default function ChecklistPage() {
-  const { user, userProfile, loading, signOut } = useAuth()
+  const { user, userProfile, loading, profileLoading, signOut } = useAuth()
   const router = useRouter()
   const [checklistStatus, setChecklistStatus] = useState<ChecklistStatus>({})
   const [isLoading, setIsLoading] = useState(true)
@@ -29,14 +29,16 @@ export default function ChecklistPage() {
     }
   }, [user])
   
-  // Navigation
+  // Navigation - only redirect if we have profile data and it's incomplete
   useEffect(() => {
+    if (loading) return // Wait for auth to complete
+    
     if (!user) {
       router.push('/')
     } else if (userProfile && !userProfile.master_email) {
       router.push('/email')
     }
-  }, [user, userProfile, router])
+  }, [user, userProfile, loading, router])
 
   const loadChecklistStatus = async () => {
     if (!user) return
@@ -117,19 +119,37 @@ export default function ChecklistPage() {
     return acc
   }, {} as Record<string, ChecklistItem[]>)
 
-  if (loading || isLoading) {
+  // Show loading only for initial auth check
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <TextBadge variant="default">LOADING CHECKLIST...</TextBadge>
+        <TextBadge variant="default">LOADING...</TextBadge>
       </div>
     )
   }
 
-  // Show loading while redirecting
-  if (!user || !userProfile?.master_email) {
+  // Redirect only if no user
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <TextBadge variant="warning">REDIRECTING...</TextBadge>
+      </div>
+    )
+  }
+
+  // Show checklist loading state if still loading checklist data
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        {userProfile && <Navbar user={userProfile} onSignOut={signOut} />}
+        <PageLayout
+          title="ONBOARDING CHECKLIST"
+          subtitle="Step 4 of 4 - Complete Integration Tasks"
+        >
+          <div className="flex justify-center">
+            <TextBadge variant="default">LOADING CHECKLIST...</TextBadge>
+          </div>
+        </PageLayout>
       </div>
     )
   }

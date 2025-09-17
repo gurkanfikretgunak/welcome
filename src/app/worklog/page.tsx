@@ -8,7 +8,7 @@ import PageLayout from '@/components/layout/PageLayout'
 import WorklogSection from '@/components/WorklogSection'
 
 export default function WorklogPage() {
-  const { user, userProfile, loading, signOut } = useAuth()
+  const { user, userProfile, loading, profileLoading, signOut } = useAuth()
   const router = useRouter()
 
   // Redirect if not authenticated or not completed all steps
@@ -23,9 +23,9 @@ export default function WorklogPage() {
       return
     }
 
-    if (!userProfile) return // wait profile fully loads to avoid flicker
-
-    if (!userProfile.master_email || !userProfile.first_name || !userProfile.last_name) {
+    // Don't wait for profile if user exists - show page immediately
+    // Profile-dependent redirects will happen after profile loads
+    if (userProfile && (!userProfile.master_email || !userProfile.first_name || !userProfile.last_name)) {
       redirectedRef.current = true
       if (!userProfile.first_name || !userProfile.last_name) {
         router.replace('/bio')
@@ -36,7 +36,7 @@ export default function WorklogPage() {
     }
   }, [user, userProfile, loading, router])
 
-  // Show loading while checking auth
+  // Show loading only for initial auth check
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -47,8 +47,8 @@ export default function WorklogPage() {
     )
   }
 
-  // Show loading while redirecting
-  if (!user || !userProfile?.master_email || !userProfile?.first_name || !userProfile?.last_name) {
+  // Redirect only if no user
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
