@@ -32,7 +32,7 @@ interface UserWithProgress {
 
 
 export default function OwnerPage() {
-  const { user, userProfile, loading, signOut } = useAuth()
+  const { user, userProfile, loading, signOut, isOwner } = useAuth()
   const router = useRouter()
   const [users, setUsers] = useState<UserWithProgress[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -59,16 +59,24 @@ export default function OwnerPage() {
   const [otpError, setOtpError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Temporarily disable owner check due to RLS recursion issue
-    // if (userProfile && !userProfile.is_owner) {
-    //   router.push('/')
-    //   return
-    // }
-    if (user) {
+    if (loading) return // Wait for auth to complete
+    
+    if (!user) {
+      router.push('/')
+      return
+    }
+    
+    // Check if user is owner after profile loads
+    if (userProfile && !isOwner()) {
+      router.push('/')
+      return
+    }
+    
+    if (user && isOwner()) {
       loadOwnerData()
       loadOtpCodes()
     }
-  }, [user, userProfile, router])
+  }, [user, userProfile, loading, router])
   
   // Load OTP codes
   const loadOtpCodes = async () => {
@@ -410,12 +418,28 @@ export default function OwnerPage() {
 
   // This useEffect has been moved up to keep all hooks together
   
-  // Show loading or null while redirecting
-  // Temporarily disable owner check due to RLS recursion issue
+  // Show loading or redirecting states
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <TextBadge variant="default">LOADING...</TextBadge>
+      </div>
+    )
+  }
+  
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <TextBadge variant="warning">REDIRECTING...</TextBadge>
+      </div>
+    )
+  }
+  
+  // Check if user is owner - redirect if not
+  if (userProfile && !userProfile.is_owner) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <TextBadge variant="error">ACCESS DENIED - OWNER ONLY</TextBadge>
       </div>
     )
   }

@@ -31,71 +31,140 @@ async function isBuildStillActive(buildId: string): Promise<boolean> {
 
 export default function UpdateSnackbar() {
   const [visible, setVisible] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const baselineIdRef = useRef<string>('')
   const initialized = useRef(false)
   const missCountRef = useRef(0) // double-confirm 404s
   const autoReloadTimerRef = useRef<number | undefined>(undefined)
+  const intervalIdRef = useRef<number | undefined>(undefined)
+  
+  // Debug mode - set to true to test snackbar functionality
+  const DEBUG_MODE = process.env.NODE_ENV === 'development' && false // Set to true to enable debug mode
 
   useEffect(() => {
-    let intervalId: number | undefined
-
     const init = async () => {
       if (initialized.current) return
       initialized.current = true
 
       const currentId = getCurrentBuildId()
       // If we cannot read a buildId, skip polling to avoid false positives
-      if (!currentId) return
+      if (!currentId) {
+        console.log('UpdateSnackbar: No buildId found, skipping update detection')
+        return
+      }
+      
+      console.log('UpdateSnackbar: Initialized with buildId:', currentId)
       baselineIdRef.current = currentId
+      
+      // Debug keyboard shortcut (Ctrl+Shift+U)
+      let handleKeyDown: ((e: KeyboardEvent) => void) | undefined
+      if (DEBUG_MODE) {
+        handleKeyDown = (e: KeyboardEvent) => {
+          if (e.ctrlKey && e.shiftKey && e.key === 'U') {
+            e.preventDefault()
+            console.log('UpdateSnackbar: Debug shortcut triggered')
+            setVisible(true)
+          }
+        }
+        document.addEventListener('keydown', handleKeyDown)
+        console.log('UpdateSnackbar: Debug mode enabled. Press Ctrl+Shift+U to test snackbar')
+      }
+      
       const tick = async () => {
         if (document.visibilityState !== 'visible') return
         if (!navigator.onLine) return
+        if (visible || isRefreshing) return // Don't check if already showing or refreshing
 
-        // Build asset availability check (with double 404 confirm)
-        const stillActive = await isBuildStillActive(baselineIdRef.current)
-        if (!stillActive) {
-          missCountRef.current += 1
-          if (missCountRef.current >= 2) {
+        try {
+          // Debug mode - simulate update detection
+          if (DEBUG_MODE) {
+            console.log('UpdateSnackbar: DEBUG MODE - Simulating update detection')
             setVisible(true)
-            if (intervalId !== undefined) {
-              window.clearInterval(intervalId)
-              intervalId = undefined
+            if (intervalIdRef.current !== undefined) {
+              window.clearInterval(intervalIdRef.current)
+              intervalIdRef.current = undefined
             }
-            // Schedule an automatic reload as a fallback to avoid being stuck on LOADING...
-            autoReloadTimerRef.current = window.setTimeout(() => {
-              doRefresh()
-            }, 8000)
+            return
           }
-        } else {
-          missCountRef.current = 0
+
+          // Build asset availability check (with double 404 confirm)
+          const stillActive = await isBuildStillActive(baselineIdRef.current)
+          if (!stillActive) {
+            missCountRef.current += 1
+            console.log('UpdateSnackbar: Build not active, miss count:', missCountRef.current)
+            if (missCountRef.current >= 2) {
+              console.log('UpdateSnackbar: Showing update notification')
+              setVisible(true)
+              if (intervalIdRef.current !== undefined) {
+                window.clearInterval(intervalIdRef.current)
+                intervalIdRef.current = undefined
+              }
+              // Schedule an automatic reload as a fallback
+              autoReloadTimerRef.current = window.setTimeout(() => {
+                console.log('UpdateSnackbar: Auto-refreshing after timeout')
+                doRefresh()
+              }, 10000) // Increased to 10 seconds
+            }
+          } else {
+            missCountRef.current = 0
+          }
+        } catch (error) {
+          console.error('UpdateSnackbar: Error during build check:', error)
         }
       }
 
-      intervalId = window.setInterval(tick, 5000)
+      // Start polling every 5 seconds
+      intervalIdRef.current = window.setInterval(tick, 5000)
+      
       // Also run once on visibility regain
-      const onVis = () => { void tick() }
-      document.addEventListener('visibilitychange', onVis)
-      // Cleanup extra listener on unmount
-      const cleanup = () => document.removeEventListener('visibilitychange', onVis)
+      const onVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          void tick()
+        }
+      }
+      
+      document.addEventListener('visibilitychange', onVisibilityChange)
+      
+      // Cleanup function
+      const cleanup = () => {
+        document.removeEventListener('visibilitychange', onVisibilityChange)
+        if (DEBUG_MODE && handleKeyDown) {
+          document.removeEventListener('keydown', handleKeyDown)
+        }
+        if (intervalIdRef.current !== undefined) {
+          window.clearInterval(intervalIdRef.current)
+          intervalIdRef.current = undefined
+        }
+        if (autoReloadTimerRef.current !== undefined) {
+          window.clearTimeout(autoReloadTimerRef.current)
+          autoReloadTimerRef.current = undefined
+        }
+      }
+      
+      // Store cleanup function
       ;(window as any).__update_snackbar_cleanup__ = cleanup
     }
 
     init()
 
     return () => {
-      if (intervalId !== undefined) window.clearInterval(intervalId)
-      if (autoReloadTimerRef.current !== undefined) window.clearTimeout(autoReloadTimerRef.current)
       const cleanup = (window as any).__update_snackbar_cleanup__
       if (typeof cleanup === 'function') cleanup()
     }
-  }, [])
+  }, [visible, isRefreshing])
 
   const doRefresh = () => {
+    if (isRefreshing) return // Prevent multiple refreshes
+    
+    setIsRefreshing(true)
+    console.log('UpdateSnackbar: Refreshing page...')
+    
     try {
       const url = new URL(window.location.href)
       url.searchParams.set('v', Date.now().toString())
       window.location.replace(url.toString())
-    } catch {
+    } catch (error) {
+      console.error('UpdateSnackbar: Error refreshing with URL params:', error)
       window.location.reload()
     }
   }
@@ -105,13 +174,19 @@ export default function UpdateSnackbar() {
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 flex items-end justify-center pointer-events-none">
       <div className="pointer-events-auto mb-[max(env(safe-area-inset-bottom),12px)]">
-        <div className="flex items-center gap-3 bg-black text-white px-4 py-3 rounded shadow-lg border border-black mx-3">
-          <div className="text-xs sm:text-sm">New update is available.</div>
+        <div className="flex items-center gap-3 bg-black text-white px-4 py-3 rounded shadow-lg border border-black mx-3 animate-in slide-in-from-bottom-2 duration-300">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <div className="text-xs sm:text-sm font-medium">
+              {isRefreshing ? 'Updating...' : 'New update is available.'}
+            </div>
+          </div>
           <button
             onClick={doRefresh}
-            className="px-3 py-1 border border-white text-white hover:bg-white hover:text-black transition-colors text-xs"
+            disabled={isRefreshing}
+            className="px-3 py-1 border border-white text-white hover:bg-white hover:text-black transition-colors text-xs font-mono disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            UPDATE
+            {isRefreshing ? 'UPDATING...' : 'UPDATE'}
           </button>
         </div>
       </div>

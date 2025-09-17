@@ -12,6 +12,7 @@ interface AuthContextType {
   signInWithGitHub: () => Promise<{ data: any; error: any }>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
+  isOwner: () => boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -246,6 +247,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const isOwner = () => {
+    return userProfile?.is_owner === true
+  }
+
   const value = {
     user,
     userProfile,
@@ -253,7 +258,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     profileLoading,
     signInWithGitHub,
     signOut,
-    refreshProfile
+    refreshProfile,
+    isOwner
   }
 
   return (
