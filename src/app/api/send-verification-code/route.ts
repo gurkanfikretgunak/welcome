@@ -4,11 +4,19 @@ import { cookies } from 'next/headers'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, userId } = await request.json()
+    const { email, userId, isInternship } = await request.json()
     
     if (!email || !email.includes('@masterfabric.co')) {
       return NextResponse.json(
         { error: 'Valid MasterFabric email required' },
+        { status: 400 }
+      )
+    }
+
+    // Check internship email format if it's an internship verification
+    if (isInternship && !email.startsWith('internship.')) {
+      return NextResponse.json(
+        { error: 'Internship emails must start with "internship." (e.g., internship.johndoe@masterfabric.co)' },
         { status: 400 }
       )
     }
@@ -23,8 +31,8 @@ export async function POST(request: NextRequest) {
     const cookieStore = await cookies()
     
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key',
       {
         cookies: {
           get(name: string) {
@@ -52,7 +60,8 @@ export async function POST(request: NextRequest) {
       .update({
         verification_code: verificationCode,
         verification_email: email,
-        verification_expires: new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes
+        verification_expires: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes
+        is_internship: isInternship || false
       })
       .eq('id', userId)
 
@@ -66,7 +75,8 @@ export async function POST(request: NextRequest) {
 
     // In a real implementation, you would send the email here
     // For now, we'll just log it
-    console.log(`📧 Verification code for ${email}: ${verificationCode}`)
+    const emailType = isInternship ? 'Internship' : 'Standard'
+    console.log(`📧 ${emailType} verification code for ${email}: ${verificationCode}`)
     
     return NextResponse.json({ 
       success: true, 

@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 
 export async function POST(request: NextRequest) {
   try {
-    const { code, userId } = await request.json()
+    const { code, userId, isInternship } = await request.json()
     
     if (!code || code.length !== 6) {
       return NextResponse.json(
@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
     const cookieStore = await cookies()
     
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key',
       {
         cookies: {
           get(name: string) {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     // Get verification data from users table
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('verification_code, verification_email, verification_expires')
+      .select('verification_code, verification_email, verification_expires, is_internship')
       .eq('id', userId)
       .single()
 
@@ -58,10 +58,19 @@ export async function POST(request: NextRequest) {
     const storedCode = userData?.verification_code
     const verificationEmail = userData?.verification_email
     const verificationExpires = userData?.verification_expires
+    const storedIsInternship = userData?.is_internship
 
     if (!storedCode || !verificationEmail || !verificationExpires) {
       return NextResponse.json(
         { error: 'No verification code found' },
+        { status: 400 }
+      )
+    }
+
+    // Verify that the internship flag matches
+    if (isInternship !== storedIsInternship) {
+      return NextResponse.json(
+        { error: 'Verification type mismatch' },
         { status: 400 }
       )
     }
@@ -88,6 +97,7 @@ export async function POST(request: NextRequest) {
       .update({
         master_email: verificationEmail,
         is_verified: true,
+        is_internship: isInternship || false,
         updated_at: new Date().toISOString()
       })
       .eq('id', userId)
@@ -110,9 +120,12 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', userId)
 
+    const emailType = isInternship ? 'Internship' : 'Standard'
+    console.log(`✅ ${emailType} email verified successfully for user ${userId}`)
+    
     return NextResponse.json({ 
       success: true, 
-      message: 'Email verified successfully' 
+      message: `${emailType} email verified successfully` 
     })
     
   } catch (error) {

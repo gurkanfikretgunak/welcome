@@ -11,7 +11,7 @@ import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
 
-export default function EmailPage() {
+export default function InternshipVerificationPage() {
   const { user, userProfile, loading, profileLoading, signOut, refreshProfile } = useAuth()
   const router = useRouter()
   const [emailInput, setEmailInput] = useState('')
@@ -29,7 +29,6 @@ export default function EmailPage() {
     if (!user) {
       router.push('/')
     }
-    // Don't wait for profile - show page immediately if user exists
   }, [user, loading, router])
 
   // Load existing email if available
@@ -50,13 +49,21 @@ export default function EmailPage() {
         ? emailInput.trim() 
         : `${emailInput.trim()}@masterfabric.co`
 
+      // Check if it's a valid internship email format
       if (!fullEmail.includes('@masterfabric.co')) {
         setError('Please enter a valid @masterfabric.co email address')
         setIsSubmitting(false)
         return
       }
 
-      console.log('📧 Sending verification code to:', fullEmail)
+      // Check if it's in internship format (internship.name@masterfabric.co)
+      if (!fullEmail.startsWith('internship.')) {
+        setError('Internship emails must start with "internship." (e.g., internship.johndoe@masterfabric.co)')
+        setIsSubmitting(false)
+        return
+      }
+
+      console.log('📧 Sending internship verification code to:', fullEmail)
 
       const response = await fetch('/api/send-verification-code', {
         method: 'POST',
@@ -65,7 +72,8 @@ export default function EmailPage() {
         },
         body: JSON.stringify({ 
           email: fullEmail,
-          userId: user!.id 
+          userId: user!.id,
+          isInternship: true
         }),
       })
 
@@ -77,12 +85,12 @@ export default function EmailPage() {
         return
       }
 
-      console.log('✅ Verification code sent successfully')
-      setSuccess('Verification code sent to your email!')
+      console.log('✅ Internship verification code sent successfully')
+      setSuccess('Internship verification code sent to your email!')
       setShowVerification(true)
       setIsSubmitting(false)
     } catch (error) {
-      console.error('❌ Error sending verification code:', error)
+      console.error('❌ Error sending internship verification code:', error)
       setError('An unexpected error occurred. Please try again.')
       setIsSubmitting(false)
     }
@@ -101,7 +109,7 @@ export default function EmailPage() {
         return
       }
 
-      console.log('🔐 Verifying code:', verificationCode)
+      console.log('🔐 Verifying internship code:', verificationCode)
 
       const response = await fetch('/api/verify-email-code', {
         method: 'POST',
@@ -110,7 +118,8 @@ export default function EmailPage() {
         },
         body: JSON.stringify({ 
           code: verificationCode,
-          userId: user!.id 
+          userId: user!.id,
+          isInternship: true
         }),
       })
 
@@ -122,8 +131,8 @@ export default function EmailPage() {
         return
       }
 
-      console.log('✅ Email verified successfully')
-      setSuccess('Email verified successfully! Redirecting...')
+      console.log('✅ Internship email verified successfully')
+      setSuccess('Internship email verified successfully! Redirecting...')
 
       // Refresh profile and redirect to worklog
       await refreshProfile()
@@ -132,10 +141,14 @@ export default function EmailPage() {
         window.location.href = '/worklog'
       }, 1000)
     } catch (error) {
-      console.error('❌ Error verifying code:', error)
+      console.error('❌ Error verifying internship code:', error)
       setError('An unexpected error occurred. Please try again.')
       setIsVerifying(false)
     }
+  }
+
+  const handleBackToStandard = () => {
+    router.push('/email')
   }
 
   if (loading) {
@@ -155,8 +168,8 @@ export default function EmailPage() {
       {userProfile && <Navbar user={userProfile} onSignOut={signOut} />}
 
       <PageLayout
-        title="EMAIL MAPPING"
-        subtitle="Email Verification"
+        title="INTERNSHIP PROGRAM"
+        subtitle="Special Email Verification"
       >
         <TextCard title="CURRENT STATUS">
           <TextHierarchy level={1}>
@@ -167,34 +180,34 @@ export default function EmailPage() {
           </TextHierarchy>
           <TextHierarchy level={1}>
             <TextBadge variant={userProfile?.master_email ? "success" : "warning"}>
-              EMAIL
+              INTERNSHIP EMAIL
             </TextBadge> {userProfile?.master_email || 'Not mapped yet'}
           </TextHierarchy>
         </TextCard>
 
-        <TextCard title="MASTERFABRIC EMAIL VERIFICATION">
+        <TextCard title="INTERNSHIP EMAIL VERIFICATION">
           <TextHierarchy level={1} className="mb-4">
-            Enter your MasterFabric email address for verification:
+            Enter your internship email address for verification:
           </TextHierarchy>
 
           {!showVerification ? (
             <form onSubmit={handleSendCode} className="space-y-4">
               <div>
                 <TextHierarchy level={2} className="mb-2">
-                  MASTERFABRIC EMAIL:
+                  INTERNSHIP EMAIL:
                 </TextHierarchy>
                 <div className="flex items-center border border-gray-300 rounded px-3 py-2 bg-white">
                   <input
                     type="email"
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="your.name@masterfabric.co"
+                    placeholder="internship.yourname@masterfabric.co"
                     className="flex-1 outline-none text-sm font-mono"
                     disabled={isSubmitting}
                   />
                 </div>
                 <TextHierarchy level={3} muted className="mt-1">
-                  Must be a @masterfabric.co email address
+                  Must be in format: internship.yourname@masterfabric.co
                 </TextHierarchy>
               </div>
 
@@ -221,7 +234,7 @@ export default function EmailPage() {
                   className="text-base px-8 py-3"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'SENDING CODE...' : 'SEND VERIFICATION CODE'}
+                  {isSubmitting ? 'SENDING CODE...' : 'SEND INTERNSHIP VERIFICATION CODE'}
                 </TextButton>
               </div>
             </form>
@@ -243,7 +256,7 @@ export default function EmailPage() {
                   />
                 </div>
                 <TextHierarchy level={3} muted className="mt-1">
-                  Check your email for the verification code
+                  Check your internship email for the verification code
                 </TextHierarchy>
               </div>
 
@@ -292,34 +305,36 @@ export default function EmailPage() {
 
         <TextCard title="INFORMATION">
           <TextHierarchy level={1} className="mb-3">
-            <TextBadge variant="default">PURPOSE</TextBadge> Link your GitHub account to your email
+            <TextBadge variant="default">PURPOSE</TextBadge> Special verification for internship program participants
           </TextHierarchy>
           <TextHierarchy level={1} className="mb-3">
-            <TextBadge variant="default">SECURITY</TextBadge> This email will be used for verification and access control
+            <TextBadge variant="default">FORMAT</TextBadge> Email must start with "internship." followed by your name
+          </TextHierarchy>
+          <TextHierarchy level={1} className="mb-3">
+            <TextBadge variant="default">EXAMPLE</TextBadge> internship.johndoe@masterfabric.co
           </TextHierarchy>
           <TextHierarchy level={1}>
             <TextBadge variant="default">NEXT STEP</TextBadge> Complete the onboarding checklist
           </TextHierarchy>
         </TextCard>
 
-        <TextCard title="INTERNSHIP PROGRAM">
+        <TextCard title="NEED HELP?">
           <TextHierarchy level={1} className="mb-4">
-            If you are part of the INTERNSHIP PROGRAM, please use the special verification process below.
+            If you came here by mistake or need to use the standard MasterFabric email verification instead:
           </TextHierarchy>
           
           <div className="flex justify-center pt-2">
             <TextButton
-              onClick={() => router.push('/internship-verification')}
+              onClick={handleBackToStandard}
               variant="default"
               className="text-base px-6 py-3 border-2 border-dashed border-gray-400 hover:border-gray-600"
             >
-              IF YOU ARE INTERNSHIP CLICK IT!
+              BACK TO STANDARD EMAIL VERIFICATION
             </TextButton>
           </div>
           
           <TextHierarchy level={3} muted className="mt-3 text-center">
-            This will redirect you to a different verification page for internship participants.
-            If you came here by mistake, you can return to the standard MasterFabric email verification above.
+            This will take you back to the regular MasterFabric email verification process.
           </TextHierarchy>
         </TextCard>
       </PageLayout>

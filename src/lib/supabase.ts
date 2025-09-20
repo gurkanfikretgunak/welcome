@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { createBrowserClient } from '@supabase/ssr'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key'
 
 // Client-side Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -15,8 +15,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // Browser client for auth helpers
 export const createSupabaseClient = () => createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key'
 )
 
 // User profile interface
@@ -244,8 +244,26 @@ export const getAllUsers = async () => {
   try {
     console.log('👥 Getting all users...')
     
-    // For now, we'll use a different approach since RLS policies cause recursion
-    // This will only work for users who have access to their own data
+    // Check if current user is owner first
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error('❌ No authenticated user found')
+      return { data: null, error: new Error('User not authenticated') }
+    }
+
+    // Verify user is owner
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('is_owner')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !userProfile?.is_owner) {
+      console.error('❌ User is not owner')
+      return { data: null, error: new Error('Access denied: Owner privileges required') }
+    }
+
+    // Now get all users - RLS policy should allow this for owners
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -269,6 +287,26 @@ export const getAllChecklistStatuses = async () => {
   try {
     console.log('📋 Getting all checklist statuses...')
     
+    // Check if current user is owner first
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error('❌ No authenticated user found')
+      return { data: null, error: new Error('User not authenticated') }
+    }
+
+    // Verify user is owner
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('is_owner')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !userProfile?.is_owner) {
+      console.error('❌ User is not owner')
+      return { data: null, error: new Error('Access denied: Owner privileges required') }
+    }
+
+    // Now get all checklist statuses - RLS policy should allow this for owners
     const { data, error } = await supabase
       .from('checklist_status')
       .select('*')
@@ -471,7 +509,26 @@ export async function getAllTickets(): Promise<{ data: Ticket[] | null; error: E
   try {
     console.log('🎫 Fetching all tickets (owner)')
     
-    // First, try to get tickets without the user join to avoid RLS recursion
+    // Check if current user is owner first
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error('❌ No authenticated user found')
+      return { data: null, error: new Error('User not authenticated') }
+    }
+
+    // Verify user is owner
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('is_owner')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !userProfile?.is_owner) {
+      console.error('❌ User is not owner')
+      return { data: null, error: new Error('Access denied: Owner privileges required') }
+    }
+
+    // Now get all tickets - RLS policy should allow this for owners
     const { data: ticketsData, error: ticketsError } = await supabase
       .from('tickets')
       .select('*')
@@ -482,7 +539,7 @@ export async function getAllTickets(): Promise<{ data: Ticket[] | null; error: E
       return { data: null, error: ticketsError }
     }
 
-    // If we have tickets, try to get user data separately to avoid RLS issues
+    // If we have tickets, get user data separately to avoid RLS issues
     if (ticketsData && ticketsData.length > 0) {
       const userIds = [...new Set(ticketsData.map(ticket => ticket.user_id))]
       const { data: usersData, error: usersError } = await supabase
@@ -664,7 +721,26 @@ export async function getAllPerformanceGoals(): Promise<{ data: PerformanceGoalW
   try {
     console.log('🎯 Fetching all performance goals (owner)')
 
-    // 1) Fetch goals (no relational join required)
+    // Check if current user is owner first
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error('❌ No authenticated user found')
+      return { data: null, error: new Error('User not authenticated') }
+    }
+
+    // Verify user is owner
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('is_owner')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !userProfile?.is_owner) {
+      console.error('❌ User is not owner')
+      return { data: null, error: new Error('Access denied: Owner privileges required') }
+    }
+
+    // 1) Fetch goals - RLS policy should allow this for owners
     const { data: goals, error: goalsError } = await supabase
       .from('performance_goals')
       .select('*')
@@ -765,6 +841,30 @@ export async function deletePerformanceGoal(goalId: string): Promise<{ error: Er
   } catch (error) {
     console.error('❌ Delete performance goal exception:', error)
     return { error: error as Error }
+  }
+}
+
+// Helper function to verify owner privileges
+export const verifyOwnerAccess = async (): Promise<{ isOwner: boolean; error: Error | null }> => {
+  try {
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return { isOwner: false, error: new Error('User not authenticated') }
+    }
+
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('is_owner')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !userProfile?.is_owner) {
+      return { isOwner: false, error: new Error('Access denied: Owner privileges required') }
+    }
+
+    return { isOwner: true, error: null }
+  } catch (error) {
+    return { isOwner: false, error: error as Error }
   }
 }
 
@@ -873,6 +973,26 @@ export async function getAllDynamicChecklists(): Promise<{ data: ChecklistWithAs
   try {
     console.log('📋 Fetching all dynamic checklists')
     
+    // Check if current user is owner first
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error('❌ No authenticated user found')
+      return { data: null, error: new Error('User not authenticated') }
+    }
+
+    // Verify user is owner
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('is_owner')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !userProfile?.is_owner) {
+      console.error('❌ User is not owner')
+      return { data: null, error: new Error('Access denied: Owner privileges required') }
+    }
+
+    // Now get all dynamic checklists - RLS policy should allow this for owners
     const { data, error } = await supabase
       .from('dynamic_checklists')
       .select(`
@@ -1121,7 +1241,26 @@ export async function getActiveOtpCodes(): Promise<{ data: OtpCode[] | null; err
   try {
     console.log('🔑 Getting active OTP codes')
     
-    // Get all active OTP codes
+    // Check if current user is owner first
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error('❌ No authenticated user found')
+      return { data: null, error: new Error('User not authenticated') }
+    }
+
+    // Verify user is owner
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('is_owner')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !userProfile?.is_owner) {
+      console.error('❌ User is not owner')
+      return { data: null, error: new Error('Access denied: Owner privileges required') }
+    }
+
+    // Now get all active OTP codes - RLS policy should allow this for owners
     const { data, error } = await supabase
       .from('users')
       .select(`
