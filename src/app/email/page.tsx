@@ -303,24 +303,27 @@ export default function EmailPage() {
         </TextCard>
 
         <TextCard title="INTERNSHIP PROGRAM">
-          <TextHierarchy level={1} className="mb-4">
-            If you are part of the INTERNSHIP PROGRAM, please use the special verification process below.
-          </TextHierarchy>
-          
-          <div className="flex justify-center pt-2">
-            <TextButton
-              onClick={() => router.push('/internship-verification')}
-              variant="default"
-              className="text-base px-6 py-3 border-2 border-dashed border-gray-400 hover:border-gray-600"
-            >
-              IF YOU ARE INTERNSHIP CLICK IT!
-            </TextButton>
+          <div className="text-center">
+            <TextHierarchy level={1} className="mb-4 text-center">
+              If you are part of the INTERNSHIP PROGRAM, please use the special verification process below.
+            </TextHierarchy>
+            
+            <div className="flex justify-center pt-2 mb-4">
+              <TextButton
+                onClick={() => router.push('/internship-verification')}
+                variant="default"
+                className="text-base px-6 py-3 border-2 border-dashed border-gray-400 hover:border-gray-600"
+              >
+                IF YOU ARE INTERNSHIP CLICK IT!
+              </TextButton>
+            </div>
+            
+            <TextHierarchy level={3} muted className="text-center">
+              This will redirect you to a different verification page for internship participants.
+              <br />
+              If you came here by mistake, you can return to the standard MasterFabric email verification above.
+            </TextHierarchy>
           </div>
-          
-          <TextHierarchy level={3} muted className="mt-3 text-center">
-            This will redirect you to a different verification page for internship participants.
-            If you came here by mistake, you can return to the standard MasterFabric email verification above.
-          </TextHierarchy>
         </TextCard>
       </PageLayout>
     </div>
