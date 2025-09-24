@@ -10,6 +10,10 @@ import TextCard from '@/components/ui/TextCard'
 import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
+import BottomSheet from '@/components/ui/BottomSheet'
+import StoreSheetContent from '@/components/ui/StoreSheetContent'
+import { getStoreProducts, purchaseStoreProduct, StoreProduct } from '@/lib/supabase'
+import { StoreProductUI } from '@/data/store'
 
 const DEPARTMENTS = [
   'Frontend Development',
@@ -55,6 +59,11 @@ export default function SettingsPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [showSignOutDialog, setShowSignOutDialog] = useState(false)
+  const [showStore, setShowStore] = useState(false)
+  const [storeProducts, setStoreProducts] = useState<StoreProductUI[]>([])
+  const [storeLoading, setStoreLoading] = useState(false)
+  const [storeError, setStoreError] = useState<string | null>(null)
+  const [purchasingProductId, setPurchasingProductId] = useState<string | null>(null)
   
   // Navigation useEffect - all hooks must be at the top
   useEffect(() => {
@@ -77,6 +86,60 @@ export default function SettingsPage() {
       })
     }
   }, [userProfile])
+
+  // Load products when store opens
+  useEffect(() => {
+    const loadProducts = async () => {
+      setStoreLoading(true)
+      setStoreError(null)
+      try {
+        const { data, error } = await getStoreProducts()
+        if (error) {
+          setStoreError(error.message || 'Failed to load store products')
+          setStoreProducts([])
+          return
+        }
+        const mapped: StoreProductUI[] = (data as StoreProduct[]).map((p) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description || null,
+          image_url: p.image_url || null,
+          product_code: p.product_code,
+          point_cost: p.point_cost,
+        }))
+        setStoreProducts(mapped)
+      } catch (e) {
+        setStoreError(e instanceof Error ? e.message : 'Unknown error loading store')
+        setStoreProducts([])
+      } finally {
+        setStoreLoading(false)
+      }
+    }
+
+    if (showStore) {
+      loadProducts()
+    }
+  }, [showStore])
+
+  const handleRedeem = async (productId: string) => {
+    if (!userProfile?.is_store_user) return
+    try {
+      setPurchasingProductId(productId)
+      const { data, error } = await purchaseStoreProduct(productId)
+      if (error) {
+        setStoreError(error.message || 'Purchase failed')
+        return
+      }
+      // refresh user points
+      await refreshProfile()
+      setStoreError(null)
+      setSuccess(`Purchased successfully. Remaining points: ${data?.store_points_remaining}`)
+    } catch (e) {
+      setStoreError(e instanceof Error ? e.message : 'Unknown purchase error')
+    } finally {
+      setPurchasingProductId(null)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -175,6 +238,15 @@ export default function SettingsPage() {
             <TextHierarchy level={1}>
               <TextBadge variant={userProfile?.is_owner ? "success" : "muted"}>ROLE</TextBadge> {userProfile?.is_owner ? 'Owner' : 'Developer'}
             </TextHierarchy>
+            {userProfile?.is_store_user && (
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <TextBadge variant="default">STORE</TextBadge>
+                  <TextBadge variant="success">POINTS: {userProfile?.store_points ?? 0}</TextBadge>
+                </div>
+                <TextButton onClick={() => setShowStore(true)} className="px-4 py-2">OPEN STORE</TextButton>
+              </div>
+            )}
           </div>
         </TextCard>
 
@@ -388,6 +460,22 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+      )}
+      {/* Store Bottom Sheet */}
+      {userProfile?.is_store_user && (
+        <BottomSheet open={showStore} onClose={() => setShowStore(false)}>
+          <StoreSheetContent
+            userEmail={userProfile.master_email || userProfile.personal_email || null}
+            userId={user.id}
+            userTitle={userProfile.role || 'USER'}
+            storePoints={userProfile.store_points || 0}
+            products={storeProducts}
+            onRedeem={handleRedeem}
+            purchasingProductId={purchasingProductId}
+            isLoading={storeLoading}
+            error={storeError}
+          />
+        </BottomSheet>
       )}
     </div>
   )
