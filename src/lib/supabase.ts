@@ -27,6 +27,8 @@ export interface User {
   personal_email?: string
   is_verified: boolean
   is_owner: boolean
+  is_store_user: boolean
+  store_points: number
   created_at: string
   updated_at: string
   first_name?: string
@@ -48,6 +50,39 @@ export interface Worklog {
   category?: string
   created_at: string
   updated_at: string
+}
+
+export interface StoreProduct {
+  id: string
+  name: string
+  description: string | null
+  image_url: string | null
+  product_code: string
+  point_cost: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface StoreTransaction {
+  id: string
+  user_id: string
+  product_id: string
+  point_cost: number
+  points_balance_after: number
+  metadata: Record<string, unknown> | null
+  created_at: string
+}
+
+export interface PurchaseStoreProductResponse {
+  transaction_id: string
+  user_id: string
+  product_id: string
+  product_name: string
+  product_code: string
+  point_cost: number
+  store_points_remaining: number
+  created_at: string
 }
 
 // Get user profile
@@ -278,6 +313,80 @@ export const getAllUsers = async () => {
     return { data, error: null }
   } catch (error) {
     console.error('❌ Get all users exception:', error)
+    return { data: null, error: error as Error }
+  }
+}
+
+export const getStoreProducts = async (): Promise<{ data: StoreProduct[] | null; error: Error | null }> => {
+  try {
+    console.log('🛍️ Fetching store products')
+
+    const { data, error } = await supabase
+      .from('store_products')
+      .select('*')
+      .eq('is_active', true)
+      .order('point_cost', { ascending: true })
+
+    if (error) {
+      console.error('❌ Fetch store products error:', error)
+      return { data: null, error }
+    }
+
+    console.log('✅ Store products fetched:', data?.length || 0)
+    return { data: data || [], error: null }
+  } catch (error) {
+    console.error('❌ Fetch store products exception:', error)
+    return { data: null, error: error as Error }
+  }
+}
+
+export const purchaseStoreProduct = async (productId: string): Promise<{ data: PurchaseStoreProductResponse | null; error: Error | null }> => {
+  try {
+    console.log('🛍️ Purchasing product:', productId)
+
+    const { data, error } = await supabase.rpc<PurchaseStoreProductResponse>('purchase_store_product', {
+      p_product_id: productId
+    })
+
+    if (error) {
+      console.error('❌ Purchase product error:', error)
+      return { data: null, error }
+    }
+
+    const purchaseData = Array.isArray(data) ? data[0] : data
+
+    if (!purchaseData) {
+      const emptyError = new Error('Purchase failed: No data returned')
+      console.error('❌ Purchase product error:', emptyError)
+      return { data: null, error: emptyError }
+    }
+
+    console.log('✅ Purchase completed:', purchaseData)
+    return { data: purchaseData, error: null }
+  } catch (error) {
+    console.error('❌ Purchase product exception:', error)
+    return { data: null, error: error as Error }
+  }
+}
+
+export const getStoreTransactions = async (): Promise<{ data: StoreTransaction[] | null; error: Error | null }> => {
+  try {
+    console.log('🧾 Fetching store transactions')
+
+    const { data, error } = await supabase
+      .from('store_transactions')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('❌ Fetch store transactions error:', error)
+      return { data: null, error }
+    }
+
+    console.log('✅ Store transactions fetched:', data?.length || 0)
+    return { data: data || [], error: null }
+  } catch (error) {
+    console.error('❌ Fetch store transactions exception:', error)
     return { data: null, error: error as Error }
   }
 }

@@ -254,8 +254,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = {
     user,
     userProfile,
-    loading,
     profileLoading,
+    loading,
     signInWithGitHub,
     signOut,
     refreshProfile,

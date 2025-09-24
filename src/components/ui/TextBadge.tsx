@@ -1,3 +1,5 @@
+import clsx from 'clsx'
+
 interface TextBadgeProps {
   children: React.ReactNode
   variant?: 'default' | 'success' | 'warning' | 'error' | 'muted'
@@ -7,22 +9,22 @@ interface TextBadgeProps {
 }
 
 export default function TextBadge({ children, variant = 'default', className = '', blinking = false, rgbEffect = false }: TextBadgeProps) {
-  const variantClasses = {
-    default: '',
-    success: 'success',
-    warning: 'warning', 
-    error: 'error',
-    muted: 'muted'
-  }
-
-  const animationClasses = [
-    blinking ? 'blinking' : '',
-    rgbEffect ? 'rgb-text' : '',
-    className
-  ].filter(Boolean).join(' ');
-
   return (
-    <span className={`info-badge ${variantClasses[variant]} ${animationClasses}`}>
+    <span
+      className={clsx(
+        'info-badge',
+        {
+          default: '',
+          success: 'success',
+          warning: 'warning',
+          error: 'error',
+          muted: 'muted'
+        }[variant],
+        blinking && 'blinking',
+        rgbEffect && 'rgb-text',
+        className
+      )}
+    >
       {children}
     </span>
   )
