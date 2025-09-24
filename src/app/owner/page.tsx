@@ -569,10 +569,10 @@ export default function OwnerPage() {
         </div>
         <button
           onClick={onToggle}
-          className="flex items-center gap-2 px-3 py-1 border border-black bg-white text-black font-mono text-xs hover:bg-black hover:text-white transition-colors"
+          className="p-2 border border-black bg-white text-black hover:bg-black hover:text-white transition-colors"
+          aria-label={isExpanded ? 'Collapse section' : 'Expand section'}
         >
-          {isExpanded ? 'COLLAPSE' : 'EXPAND'}
-          <span className={`transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+          <span className={`transform transition-transform duration-200 text-lg ${isExpanded ? 'rotate-180' : ''}`}>
             ▼
           </span>
         </button>
@@ -590,48 +590,48 @@ export default function OwnerPage() {
         subtitle="Onboarding Progress Overview"
       >
         <TextCard title="SYSTEM OVERVIEW">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
             {/* Total Users */}
-            <div className="text-center p-4 border-2 border-black bg-white">
-              <div className="text-3xl font-bold text-gray-900 mb-2">{stats.total}</div>
-              <div className="text-sm font-mono text-gray-600 uppercase tracking-wide">Total Users</div>
-              <div className="text-xs text-gray-500 mt-1">Registered Developers</div>
+            <div className="text-center p-2 sm:p-4 border-2 border-black bg-white">
+              <div className="text-xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">{stats.total}</div>
+              <div className="text-xs sm:text-sm font-mono text-gray-600 uppercase tracking-wide">Total</div>
+              <div className="text-xs text-gray-500 mt-1 hidden sm:block">Developers</div>
             </div>
 
             {/* Completed Users */}
-            <div className="text-center p-4 border-2 border-green-500 bg-green-50">
-              <div className="text-3xl font-bold text-green-700 mb-2">{stats.completed}</div>
-              <div className="text-sm font-mono text-green-600 uppercase tracking-wide">Completed</div>
-              <div className="text-xs text-green-500 mt-1">
-                {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% Success Rate
+            <div className="text-center p-2 sm:p-4 border-2 border-green-500 bg-green-50">
+              <div className="text-xl sm:text-3xl font-bold text-green-700 mb-1 sm:mb-2">{stats.completed}</div>
+              <div className="text-xs sm:text-sm font-mono text-green-600 uppercase tracking-wide">Done</div>
+              <div className="text-xs text-green-500 mt-1 hidden sm:block">
+                {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% Success
               </div>
             </div>
 
             {/* Active Users */}
-            <div className="text-center p-4 border-2 border-orange-500 bg-orange-50">
-              <div className="text-3xl font-bold text-orange-700 mb-2">{stats.active}</div>
-              <div className="text-sm font-mono text-orange-600 uppercase tracking-wide">Active</div>
-              <div className="text-xs text-orange-500 mt-1">In Progress</div>
+            <div className="text-center p-2 sm:p-4 border-2 border-orange-500 bg-orange-50">
+              <div className="text-xl sm:text-3xl font-bold text-orange-700 mb-1 sm:mb-2">{stats.active}</div>
+              <div className="text-xs sm:text-sm font-mono text-orange-600 uppercase tracking-wide">Active</div>
+              <div className="text-xs text-orange-500 mt-1 hidden sm:block">In Progress</div>
             </div>
 
             {/* Pending Users */}
-            <div className="text-center p-4 border-2 border-red-500 bg-red-50">
-              <div className="text-3xl font-bold text-red-700 mb-2">{stats.pending}</div>
-              <div className="text-sm font-mono text-red-600 uppercase tracking-wide">Pending</div>
-              <div className="text-xs text-red-500 mt-1">Not Started</div>
+            <div className="text-center p-2 sm:p-4 border-2 border-red-500 bg-red-50">
+              <div className="text-xl sm:text-3xl font-bold text-red-700 mb-1 sm:mb-2">{stats.pending}</div>
+              <div className="text-xs sm:text-sm font-mono text-red-600 uppercase tracking-wide">Pending</div>
+              <div className="text-xs text-red-500 mt-1 hidden sm:block">Not Started</div>
             </div>
           </div>
 
           {/* Progress Bar */}
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <div className="flex justify-between items-center">
-              <TextHierarchy level={1} emphasis>ONBOARDING PROGRESS</TextHierarchy>
-              <TextBadge variant="success" className="font-mono text-sm">
-                {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% Complete
+              <TextHierarchy level={1} emphasis className="text-sm sm:text-base">PROGRESS</TextHierarchy>
+              <TextBadge variant="success" className="font-mono text-xs sm:text-sm">
+                {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%
               </TextBadge>
             </div>
             
-            <div className="w-full bg-gray-200 h-4 border border-black">
+            <div className="w-full bg-gray-200 h-3 sm:h-4 border border-black">
               <div 
                 className="bg-green-500 h-full transition-all duration-500 ease-out"
                 style={{ width: `${stats.total > 0 ? (stats.completed / stats.total) * 100 : 0}%` }}
@@ -639,31 +639,31 @@ export default function OwnerPage() {
             </div>
             
             <div className="flex justify-between text-xs font-mono text-gray-600">
-              <span>0 users</span>
-              <span>{stats.completed} of {stats.total} completed</span>
+              <span>0</span>
+              <span>{stats.completed}/{stats.total} done</span>
             </div>
           </div>
 
           {/* Quick Stats */}
-          <div className="mt-6 pt-4 border-t border-gray-200">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+          <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
               <div>
-                <div className="text-lg font-bold text-blue-600">
+                <div className="text-sm sm:text-lg font-bold text-blue-600">
                   {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}%
                 </div>
-                <div className="text-xs font-mono text-gray-600 uppercase">Active Rate</div>
+                <div className="text-xs font-mono text-gray-600 uppercase">Active</div>
               </div>
               <div>
-                <div className="text-lg font-bold text-purple-600">
+                <div className="text-sm sm:text-lg font-bold text-purple-600">
                   {stats.total > 0 ? Math.round(((stats.completed + stats.active) / stats.total) * 100) : 0}%
                 </div>
-                <div className="text-xs font-mono text-gray-600 uppercase">Engagement</div>
+                <div className="text-xs font-mono text-gray-600 uppercase">Engaged</div>
               </div>
               <div>
-                <div className="text-lg font-bold text-gray-600">
+                <div className="text-sm sm:text-lg font-bold text-gray-600">
                   {stats.total > 0 ? Math.round((stats.pending / stats.total) * 100) : 0}%
                 </div>
-                <div className="text-xs font-mono text-gray-600 uppercase">Pending Rate</div>
+                <div className="text-xs font-mono text-gray-600 uppercase">Pending</div>
               </div>
             </div>
           </div>
@@ -809,83 +809,86 @@ export default function OwnerPage() {
                       const hasStarted = user.master_email
 
                       return (
-                        <div key={user.id} className="border-l-2 border-black pl-4">
-                          <TextHierarchy level={1} emphasis>
-                            {user.first_name && user.last_name 
-                              ? `${user.first_name} ${user.last_name}`
-                              : user.github_username || 'Unknown User'
-                            }
-                            {isCompleted && (
-                              <TextBadge variant="success" className="ml-2">
-                                COMPLETED
-                              </TextBadge>
-                            )}
-                            {!hasStarted && (
-                              <TextBadge variant="error" className="ml-2">
-                                NOT STARTED
-                              </TextBadge>
-                            )}
-                          </TextHierarchy>
-
-                          {/* Hover-to-copy User ID like Worklog/Ticket */}
-                          <div className="mt-1">
-                            <div
-                              className="relative inline-block"
-                              onMouseEnter={() => setHoveredUser(user.id)}
-                              onMouseLeave={() => setHoveredUser(null)}
-                            >
-                              <TextBadge variant="muted" className="text-xs px-2 py-1 cursor-pointer">ID: {user.id.substring(0, 8)}...</TextBadge>
-                              {hoveredUser === user.id && (
-                                <div
-                                  className="absolute top-full left-0 mt-1 z-50 bg-white border border-black p-3 shadow-lg min-w-64"
-                                  onMouseEnter={() => setHoveredUser(user.id)}
-                                  onMouseLeave={() => setHoveredUser(null)}
-                                >
-                                  <div className="space-y-2">
-                                    <TextHierarchy level={2} emphasis className="text-xs">FULL ID</TextHierarchy>
-                                    <div className="font-mono text-xs bg-gray-50 p-2 border rounded break-all">{user.id}</div>
-                                    <TextButton
-                                      onClick={() => navigator.clipboard.writeText(user.id)}
-                                      variant="success"
-                                      className="w-full px-2 py-1 text-xs"
-                                    >
-                                      COPY ID
-                                    </TextButton>
-                                  </div>
-                                </div>
+                        <div key={user.id} className="border border-black bg-white p-3 sm:p-4 mb-3">
+                          {/* Header with Name and Status */}
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
+                            <div className="flex-1">
+                              <TextHierarchy level={1} emphasis className="text-sm sm:text-base">
+                                {user.first_name && user.last_name 
+                                  ? `${user.first_name} ${user.last_name}`
+                                  : user.github_username || 'Unknown User'
+                                }
+                              </TextHierarchy>
+                              <div className="text-xs font-mono text-gray-500 mt-1">
+                                ID: {user.id.substring(0, 8)}...
+                              </div>
+                            </div>
+                            <div className="mt-2 sm:mt-0">
+                              {isCompleted && (
+                                <TextBadge variant="success" className="text-xs">
+                                  ✓ COMPLETED
+                                </TextBadge>
+                              )}
+                              {!hasStarted && (
+                                <TextBadge variant="error" className="text-xs">
+                                  ⚠ NOT STARTED
+                                </TextBadge>
+                              )}
+                              {hasStarted && !isCompleted && (
+                                <TextBadge variant="warning" className="text-xs">
+                                  🔄 IN PROGRESS
+                                </TextBadge>
                               )}
                             </div>
                           </div>
 
-                          <TextHierarchy level={2} muted>
-                            <TextBadge variant="muted">GITHUB</TextBadge> {user.github_username || 'N/A'}
-                          </TextHierarchy>
-                          
-                          <TextHierarchy level={2} muted>
-                            <TextBadge variant="muted">EMAIL</TextBadge> {user.master_email || 'Not provided'}
-                          </TextHierarchy>
-                          
-                          <TextHierarchy level={2} muted>
-                            <TextBadge variant="muted">DEPARTMENT</TextBadge> {user.department || 'Not specified'}
-                          </TextHierarchy>
-                          
-                          <TextHierarchy level={2}>
-                            <TextBadge variant="muted">PROGRESS</TextBadge> {user.completedTasks}/{user.totalTasks} tasks ({progressPercentage}%)
-                          </TextHierarchy>
-                          
-                          <TextHierarchy level={2}>
-                            <TextBadge variant={isCompleted ? "success" : "warning"}>REQUIRED</TextBadge> {user.requiredCompleted}/{user.requiredTotal} required tasks
-                          </TextHierarchy>
-                          
-                          <TextHierarchy level={2} muted>
-                            <TextBadge variant="muted">REGISTERED</TextBadge> {new Date(user.created_at).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </TextHierarchy>
+                          {/* Progress Bar */}
+                          <div className="mb-3">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-xs font-mono text-gray-600">PROGRESS</span>
+                              <span className="text-xs font-mono text-gray-600">{progressPercentage}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 h-2 border border-gray-300">
+                              <div 
+                                className={`h-full transition-all duration-500 ${
+                                  isCompleted ? 'bg-green-500' : hasStarted ? 'bg-orange-500' : 'bg-gray-400'
+                                }`}
+                                style={{ width: `${progressPercentage}%` }}
+                              ></div>
+                            </div>
+                            <div className="flex justify-between text-xs font-mono text-gray-500 mt-1">
+                              <span>{user.completedTasks}/{user.totalTasks} tasks</span>
+                              <span>{user.requiredCompleted}/{user.requiredTotal} required</span>
+                            </div>
+                          </div>
+
+                          {/* User Details Grid */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-gray-500 w-16">GITHUB:</span>
+                              <span className="font-mono">{user.github_username || 'N/A'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-gray-500 w-16">EMAIL:</span>
+                              <span className="font-mono truncate">
+                                {user.master_email ? user.master_email.split('@')[0] + '@...' : 'Not provided'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-gray-500 w-16">DEPT:</span>
+                              <span className="font-mono">{user.department || 'Not specified'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-gray-500 w-16">JOINED:</span>
+                              <span className="font-mono">
+                                {new Date(user.created_at).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: '2-digit'
+                                })}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       )
                     })}
