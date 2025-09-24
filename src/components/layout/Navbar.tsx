@@ -36,7 +36,7 @@ export default function Navbar({ user, onSignOut }: NavbarProps) {
     { href: '/checklist', label: 'CHECKLIST', show: !!user && user.master_email },
     { href: '/tickets', label: 'TICKETS', show: !!user && user.master_email },
     { href: '/settings', label: 'SETTINGS', show: !!user && user.master_email },
-    { href: '/owner', label: 'OWNER DASHBOARD', show: isOwner }
+    { href: '/owner', label: 'DASHBOARD', show: isOwner }
   ]
 
   return (

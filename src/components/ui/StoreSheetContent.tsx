@@ -56,7 +56,7 @@ export default function StoreSheetContent({
             )}
           </div>
 
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-start gap-2">
             <span className="font-mono text-xs text-gray-500">STORE POINTS</span>
             <TextBadge variant="success" className="px-3 py-2 font-mono text-base">
               {storePoints}

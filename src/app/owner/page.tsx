@@ -69,6 +69,12 @@ export default function OwnerPage() {
   const [editingProduct, setEditingProduct] = useState<StoreProduct | null>(null)
   const [pointsDelta, setPointsDelta] = useState(0)
   const [pointsUserId, setPointsUserId] = useState('')
+  const [isStoreManagementExpanded, setIsStoreManagementExpanded] = useState(false)
+  const [isUserManagementExpanded, setIsUserManagementExpanded] = useState(true)
+  const [isTicketManagementExpanded, setIsTicketManagementExpanded] = useState(false)
+  const [isPerformanceManagementExpanded, setIsPerformanceManagementExpanded] = useState(false)
+  const [isChecklistManagementExpanded, setIsChecklistManagementExpanded] = useState(false)
+  const [isOtpManagementExpanded, setIsOtpManagementExpanded] = useState(false)
 
   useEffect(() => {
     if (loading) return // Wait for auth to complete
@@ -535,6 +541,46 @@ export default function OwnerPage() {
   const filteredUsers = getFilteredUsers()
   const stats = getOverallStats()
 
+  // Reusable collapsible section component
+  const CollapsibleSection = ({ 
+    title, 
+    isExpanded, 
+    onToggle, 
+    children, 
+    badgeText 
+  }: { 
+    title: string
+    isExpanded: boolean
+    onToggle: () => void
+    children: React.ReactNode
+    badgeText?: string
+  }) => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+        <div className="flex items-center gap-3">
+          <TextHierarchy level={1} emphasis>
+            {title}
+          </TextHierarchy>
+          {badgeText && (
+            <TextBadge variant="muted" className="text-xs">
+              {badgeText}
+            </TextBadge>
+          )}
+        </div>
+        <button
+          onClick={onToggle}
+          className="flex items-center gap-2 px-3 py-1 border border-black bg-white text-black font-mono text-xs hover:bg-black hover:text-white transition-colors"
+        >
+          {isExpanded ? 'COLLAPSE' : 'EXPAND'}
+          <span className={`transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+            ▼
+          </span>
+        </button>
+      </div>
+      {isExpanded && children}
+    </div>
+  )
+
   return (
     <div className="min-h-screen">
       {userProfile && <Navbar user={userProfile} onSignOut={signOut} />}
@@ -560,7 +606,13 @@ export default function OwnerPage() {
 
       {/* Store Management */}
       <TextCard title="STORE MANAGEMENT">
-        <div className="space-y-6">
+        <CollapsibleSection
+          title="STORE MANAGEMENT"
+          isExpanded={isStoreManagementExpanded}
+          onToggle={() => setIsStoreManagementExpanded(!isStoreManagementExpanded)}
+          badgeText={`${storeProducts.length} products`}
+        >
+          <div className="space-y-6">
           {/* Create / Edit Product */}
           <div className="border border-black p-4 bg-white">
             <TextHierarchy level={1} emphasis className="mb-2">
@@ -642,128 +694,141 @@ export default function OwnerPage() {
               </div>
             )}
           </div>
-        </div>
+          </div>
+        </CollapsibleSection>
       </TextCard>
 
-        <TextCard title="FILTER OPTIONS">
-          <div className="flex gap-4">
-            {[
-              { key: 'all', label: 'ALL USERS', count: users.length },
-              { key: 'active', label: 'ACTIVE', count: stats.active },
-              { key: 'completed', label: 'COMPLETED', count: stats.completed }
-            ].map(option => (
-              <button
-                key={option.key}
-                onClick={() => setFilter(option.key as any)}
-                className={`
-                  px-4 py-2 border font-mono text-sm transition-colors
-                  ${filter === option.key 
-                    ? 'bg-black text-white border-black' 
-                    : 'bg-white text-black border-black hover:bg-black hover:text-white'
-                  }
-                `}
-              >
-                {option.label} ({option.count})
-              </button>
-            ))}
-          </div>
-        </TextCard>
-
-        <TextCard title={`USER LIST - ${filter.toUpperCase()}`}>
-          {filteredUsers.length === 0 ? (
-            <TextHierarchy level={1} muted>
-              No users found for the selected filter.
-            </TextHierarchy>
-          ) : (
-            <div className="space-y-4">
-              {filteredUsers.map(user => {
-                const progressPercentage = Math.round((user.completedTasks / user.totalTasks) * 100)
-                const isCompleted = user.requiredCompleted === user.requiredTotal
-                const hasStarted = user.master_email
-
-                return (
-                  <div key={user.id} className="border-l-2 border-black pl-4">
-                    <TextHierarchy level={1} emphasis>
-                      {user.first_name && user.last_name 
-                        ? `${user.first_name} ${user.last_name}`
-                        : user.github_username || 'Unknown User'
+        <TextCard title="USER MANAGEMENT">
+          <CollapsibleSection
+            title="USER MANAGEMENT"
+            isExpanded={isUserManagementExpanded}
+            onToggle={() => setIsUserManagementExpanded(!isUserManagementExpanded)}
+            badgeText={`${users.length} users`}
+          >
+            <div className="space-y-6">
+              <div className="flex gap-4">
+                {[
+                  { key: 'all', label: 'ALL USERS', count: users.length },
+                  { key: 'active', label: 'ACTIVE', count: stats.active },
+                  { key: 'completed', label: 'COMPLETED', count: stats.completed }
+                ].map(option => (
+                  <button
+                    key={option.key}
+                    onClick={() => setFilter(option.key as any)}
+                    className={`
+                      px-4 py-2 border font-mono text-sm transition-colors
+                      ${filter === option.key 
+                        ? 'bg-black text-white border-black' 
+                        : 'bg-white text-black border-black hover:bg-black hover:text-white'
                       }
-                      {isCompleted && (
-                        <TextBadge variant="success" className="ml-2">
-                          COMPLETED
-                        </TextBadge>
-                      )}
-                      {!hasStarted && (
-                        <TextBadge variant="error" className="ml-2">
-                          NOT STARTED
-                        </TextBadge>
-                      )}
-                    </TextHierarchy>
+                    `}
+                  >
+                    {option.label} ({option.count})
+                  </button>
+                ))}
+              </div>
 
-                    {/* Hover-to-copy User ID like Worklog/Ticket */}
-                    <div className="mt-1">
-                      <div
-                        className="relative inline-block"
-                        onMouseEnter={() => setHoveredUser(user.id)}
-                        onMouseLeave={() => setHoveredUser(null)}
-                      >
-                        <TextBadge variant="muted" className="text-xs px-2 py-1 cursor-pointer">ID: {user.id.substring(0, 8)}...</TextBadge>
-                        {hoveredUser === user.id && (
-                          <div
-                            className="absolute top-full left-0 mt-1 z-50 bg-white border border-black p-3 shadow-lg min-w-64"
-                            onMouseEnter={() => setHoveredUser(user.id)}
-                            onMouseLeave={() => setHoveredUser(null)}
-                          >
-                            <div className="space-y-2">
-                              <TextHierarchy level={2} emphasis className="text-xs">FULL ID</TextHierarchy>
-                              <div className="font-mono text-xs bg-gray-50 p-2 border rounded break-all">{user.id}</div>
-                              <TextButton
-                                onClick={() => navigator.clipboard.writeText(user.id)}
-                                variant="success"
-                                className="w-full px-2 py-1 text-xs"
-                              >
-                                COPY ID
-                              </TextButton>
+              <div>
+                <TextHierarchy level={1} emphasis className="mb-4">
+                  USER LIST - {filter.toUpperCase()}
+                </TextHierarchy>
+                {filteredUsers.length === 0 ? (
+                  <TextHierarchy level={1} muted>
+                    No users found for the selected filter.
+                  </TextHierarchy>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredUsers.map(user => {
+                      const progressPercentage = Math.round((user.completedTasks / user.totalTasks) * 100)
+                      const isCompleted = user.requiredCompleted === user.requiredTotal
+                      const hasStarted = user.master_email
+
+                      return (
+                        <div key={user.id} className="border-l-2 border-black pl-4">
+                          <TextHierarchy level={1} emphasis>
+                            {user.first_name && user.last_name 
+                              ? `${user.first_name} ${user.last_name}`
+                              : user.github_username || 'Unknown User'
+                            }
+                            {isCompleted && (
+                              <TextBadge variant="success" className="ml-2">
+                                COMPLETED
+                              </TextBadge>
+                            )}
+                            {!hasStarted && (
+                              <TextBadge variant="error" className="ml-2">
+                                NOT STARTED
+                              </TextBadge>
+                            )}
+                          </TextHierarchy>
+
+                          {/* Hover-to-copy User ID like Worklog/Ticket */}
+                          <div className="mt-1">
+                            <div
+                              className="relative inline-block"
+                              onMouseEnter={() => setHoveredUser(user.id)}
+                              onMouseLeave={() => setHoveredUser(null)}
+                            >
+                              <TextBadge variant="muted" className="text-xs px-2 py-1 cursor-pointer">ID: {user.id.substring(0, 8)}...</TextBadge>
+                              {hoveredUser === user.id && (
+                                <div
+                                  className="absolute top-full left-0 mt-1 z-50 bg-white border border-black p-3 shadow-lg min-w-64"
+                                  onMouseEnter={() => setHoveredUser(user.id)}
+                                  onMouseLeave={() => setHoveredUser(null)}
+                                >
+                                  <div className="space-y-2">
+                                    <TextHierarchy level={2} emphasis className="text-xs">FULL ID</TextHierarchy>
+                                    <div className="font-mono text-xs bg-gray-50 p-2 border rounded break-all">{user.id}</div>
+                                    <TextButton
+                                      onClick={() => navigator.clipboard.writeText(user.id)}
+                                      variant="success"
+                                      className="w-full px-2 py-1 text-xs"
+                                    >
+                                      COPY ID
+                                    </TextButton>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
-                        )}
-                      </div>
-                    </div>
 
-                    <TextHierarchy level={2} muted>
-                      <TextBadge variant="muted">GITHUB</TextBadge> {user.github_username || 'N/A'}
-                    </TextHierarchy>
-                    
-                    <TextHierarchy level={2} muted>
-                      <TextBadge variant="muted">EMAIL</TextBadge> {user.master_email || 'Not provided'}
-                    </TextHierarchy>
-                    
-                    <TextHierarchy level={2} muted>
-                      <TextBadge variant="muted">DEPARTMENT</TextBadge> {user.department || 'Not specified'}
-                    </TextHierarchy>
-                    
-                    <TextHierarchy level={2}>
-                      <TextBadge variant="muted">PROGRESS</TextBadge> {user.completedTasks}/{user.totalTasks} tasks ({progressPercentage}%)
-                    </TextHierarchy>
-                    
-                    <TextHierarchy level={2}>
-                      <TextBadge variant={isCompleted ? "success" : "warning"}>REQUIRED</TextBadge> {user.requiredCompleted}/{user.requiredTotal} required tasks
-                    </TextHierarchy>
-                    
-                    <TextHierarchy level={2} muted>
-                      <TextBadge variant="muted">REGISTERED</TextBadge> {new Date(user.created_at).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </TextHierarchy>
+                          <TextHierarchy level={2} muted>
+                            <TextBadge variant="muted">GITHUB</TextBadge> {user.github_username || 'N/A'}
+                          </TextHierarchy>
+                          
+                          <TextHierarchy level={2} muted>
+                            <TextBadge variant="muted">EMAIL</TextBadge> {user.master_email || 'Not provided'}
+                          </TextHierarchy>
+                          
+                          <TextHierarchy level={2} muted>
+                            <TextBadge variant="muted">DEPARTMENT</TextBadge> {user.department || 'Not specified'}
+                          </TextHierarchy>
+                          
+                          <TextHierarchy level={2}>
+                            <TextBadge variant="muted">PROGRESS</TextBadge> {user.completedTasks}/{user.totalTasks} tasks ({progressPercentage}%)
+                          </TextHierarchy>
+                          
+                          <TextHierarchy level={2}>
+                            <TextBadge variant={isCompleted ? "success" : "warning"}>REQUIRED</TextBadge> {user.requiredCompleted}/{user.requiredTotal} required tasks
+                          </TextHierarchy>
+                          
+                          <TextHierarchy level={2} muted>
+                            <TextBadge variant="muted">REGISTERED</TextBadge> {new Date(user.created_at).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </TextHierarchy>
+                        </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
+                )}
+              </div>
             </div>
-          )}
+          </CollapsibleSection>
         </TextCard>
 
         <TextCard title="CHECKLIST OVERVIEW">
@@ -786,7 +851,13 @@ export default function OwnerPage() {
         </TextCard>
 
         <TextCard title="OTP VERIFICATION CODES" variant="warning">
-          <div className="space-y-4">
+          <CollapsibleSection
+            title="OTP VERIFICATION CODES"
+            isExpanded={isOtpManagementExpanded}
+            onToggle={() => setIsOtpManagementExpanded(!isOtpManagementExpanded)}
+            badgeText={`${otpCodes.length} active codes`}
+          >
+            <div className="space-y-4">
             <div className="flex justify-between items-center">
               <TextHierarchy level={1} emphasis>
                 ACTIVE EMAIL VERIFICATION CODES
@@ -878,7 +949,8 @@ export default function OwnerPage() {
               OTP codes are automatically generated when users verify their MasterFabric email address.
               Codes expire after 10 minutes and are cleared after successful verification.
             </TextHierarchy>
-          </div>
+            </div>
+          </CollapsibleSection>
         </TextCard>
         
         <TextCard variant="muted">
@@ -893,7 +965,13 @@ export default function OwnerPage() {
 
         {/* Ticket Management Section */}
         <TextCard title="TICKET MANAGEMENT">
-          <div className="space-y-4">
+          <CollapsibleSection
+            title="TICKET MANAGEMENT"
+            isExpanded={isTicketManagementExpanded}
+            onToggle={() => setIsTicketManagementExpanded(!isTicketManagementExpanded)}
+            badgeText={`${tickets.length} tickets`}
+          >
+            <div className="space-y-4">
             {/* Minimalist Stats & Filter */}
             <div className="flex flex-wrap items-center justify-between gap-4">
               {/* Compact Stats */}
@@ -1022,12 +1100,19 @@ export default function OwnerPage() {
                 ))
               )}
             </div>
-          </div>
+            </div>
+          </CollapsibleSection>
         </TextCard>
 
         {/* Performance Management Section */}
         <TextCard title="PERFORMANCE GOALS MANAGEMENT">
-          <div className="space-y-6">
+          <CollapsibleSection
+            title="PERFORMANCE GOALS MANAGEMENT"
+            isExpanded={isPerformanceManagementExpanded}
+            onToggle={() => setIsPerformanceManagementExpanded(!isPerformanceManagementExpanded)}
+            badgeText={`${performanceGoals.length} goals`}
+          >
+            <div className="space-y-6">
             {/* Performance Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center p-4 border border-black">
@@ -1200,12 +1285,19 @@ export default function OwnerPage() {
                 })
               )}
             </div>
-          </div>
+            </div>
+          </CollapsibleSection>
         </TextCard>
 
         {/* Dynamic Checklists Management Section */}
         <TextCard title="DYNAMIC CHECKLISTS MANAGEMENT">
-          <div className="space-y-6">
+          <CollapsibleSection
+            title="DYNAMIC CHECKLISTS MANAGEMENT"
+            isExpanded={isChecklistManagementExpanded}
+            onToggle={() => setIsChecklistManagementExpanded(!isChecklistManagementExpanded)}
+            badgeText={`${dynamicChecklists.length} checklists`}
+          >
+            <div className="space-y-6">
             {/* Error/Success Messages */}
             {checklistError && (
               <div className="p-4 bg-red-50 border border-red-200 rounded">
@@ -1423,7 +1515,8 @@ export default function OwnerPage() {
                 ))
               )}
             </div>
-          </div>
+            </div>
+          </CollapsibleSection>
         </TextCard>
       </PageLayout>
 

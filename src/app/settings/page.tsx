@@ -250,11 +250,7 @@ export default function SettingsPage() {
               <TextBadge variant={userProfile?.is_owner ? "success" : "muted"}>ROLE</TextBadge> {userProfile?.is_owner ? 'Owner' : 'Developer'}
             </TextHierarchy>
             {userProfile?.is_store_user && (
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <TextBadge variant="default">STORE</TextBadge>
-                  <TextBadge variant="success">POINTS: {userProfile?.store_points ?? 0}</TextBadge>
-                </div>
+              <div className="mt-2 flex justify-end">
                 <TextButton onClick={() => setShowStore(true)} className="px-4 py-2">OPEN STORE</TextButton>
               </div>
             )}
