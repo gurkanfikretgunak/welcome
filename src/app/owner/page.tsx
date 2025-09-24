@@ -590,18 +590,83 @@ export default function OwnerPage() {
         subtitle="Onboarding Progress Overview"
       >
         <TextCard title="SYSTEM OVERVIEW">
-          <TextHierarchy level={1}>
-            <TextBadge variant="muted">TOTAL USERS</TextBadge> {stats.total} registered developers
-          </TextHierarchy>
-          <TextHierarchy level={1}>
-            <TextBadge variant="success">COMPLETED</TextBadge> {stats.completed} users finished onboarding
-          </TextHierarchy>
-          <TextHierarchy level={1}>
-            <TextBadge variant="warning">ACTIVE</TextBadge> {stats.active} users in progress
-          </TextHierarchy>
-          <TextHierarchy level={1}>
-            <TextBadge variant="error">PENDING</TextBadge> {stats.pending} users not started
-          </TextHierarchy>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Total Users */}
+            <div className="text-center p-4 border-2 border-black bg-white">
+              <div className="text-3xl font-bold text-gray-900 mb-2">{stats.total}</div>
+              <div className="text-sm font-mono text-gray-600 uppercase tracking-wide">Total Users</div>
+              <div className="text-xs text-gray-500 mt-1">Registered Developers</div>
+            </div>
+
+            {/* Completed Users */}
+            <div className="text-center p-4 border-2 border-green-500 bg-green-50">
+              <div className="text-3xl font-bold text-green-700 mb-2">{stats.completed}</div>
+              <div className="text-sm font-mono text-green-600 uppercase tracking-wide">Completed</div>
+              <div className="text-xs text-green-500 mt-1">
+                {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% Success Rate
+              </div>
+            </div>
+
+            {/* Active Users */}
+            <div className="text-center p-4 border-2 border-orange-500 bg-orange-50">
+              <div className="text-3xl font-bold text-orange-700 mb-2">{stats.active}</div>
+              <div className="text-sm font-mono text-orange-600 uppercase tracking-wide">Active</div>
+              <div className="text-xs text-orange-500 mt-1">In Progress</div>
+            </div>
+
+            {/* Pending Users */}
+            <div className="text-center p-4 border-2 border-red-500 bg-red-50">
+              <div className="text-3xl font-bold text-red-700 mb-2">{stats.pending}</div>
+              <div className="text-sm font-mono text-red-600 uppercase tracking-wide">Pending</div>
+              <div className="text-xs text-red-500 mt-1">Not Started</div>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <TextHierarchy level={1} emphasis>ONBOARDING PROGRESS</TextHierarchy>
+              <TextBadge variant="success" className="font-mono text-sm">
+                {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% Complete
+              </TextBadge>
+            </div>
+            
+            <div className="w-full bg-gray-200 h-4 border border-black">
+              <div 
+                className="bg-green-500 h-full transition-all duration-500 ease-out"
+                style={{ width: `${stats.total > 0 ? (stats.completed / stats.total) * 100 : 0}%` }}
+              ></div>
+            </div>
+            
+            <div className="flex justify-between text-xs font-mono text-gray-600">
+              <span>0 users</span>
+              <span>{stats.completed} of {stats.total} completed</span>
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-lg font-bold text-blue-600">
+                  {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}%
+                </div>
+                <div className="text-xs font-mono text-gray-600 uppercase">Active Rate</div>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-purple-600">
+                  {stats.total > 0 ? Math.round(((stats.completed + stats.active) / stats.total) * 100) : 0}%
+                </div>
+                <div className="text-xs font-mono text-gray-600 uppercase">Engagement</div>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-gray-600">
+                  {stats.total > 0 ? Math.round((stats.pending / stats.total) * 100) : 0}%
+                </div>
+                <div className="text-xs font-mono text-gray-600 uppercase">Pending Rate</div>
+              </div>
+            </div>
+          </div>
         </TextCard>
 
       {/* Store Management */}
