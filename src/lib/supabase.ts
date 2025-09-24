@@ -344,9 +344,9 @@ export const purchaseStoreProduct = async (productId: string): Promise<{ data: P
   try {
     console.log('🛍️ Purchasing product:', productId)
 
-    const { data, error } = await supabase.rpc<PurchaseStoreProductResponse>('purchase_store_product', {
+    const { data, error } = await (supabase.rpc('purchase_store_product', {
       p_product_id: productId
-    })
+    }) as unknown as Promise<{ data: PurchaseStoreProductResponse[] | PurchaseStoreProductResponse | null; error: any }>)
 
     if (error) {
       console.error('❌ Purchase product error:', error)
