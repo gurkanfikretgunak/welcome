@@ -22,14 +22,14 @@ export default function Footer() {
         <div>
           © {currentYear} All rights reserved by MasterFabric.
         </div>
-        <div 
+        <button 
           onClick={() => setShowSystemInfo(true)} 
-          className="cursor-pointer p-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center"
+          className="border border-black bg-white px-3 py-1 font-mono text-xs hover:bg-black hover:text-white transition-colors flex items-center gap-2"
           title="View System Information"
         >
           <ComputerIcon />
-          <span className="ml-1 text-xs">SYSTEM</span>
-        </div>
+          <span>SYSTEM</span>
+        </button>
       </div>
       
       {/* System Info Dialog */}
@@ -111,60 +111,67 @@ function SystemInfoDialog({ onClose }: { onClose: () => void }) {
   });
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
       <div 
-        className="p-6 rounded max-w-md w-full border border-black"
-        style={{ 
-          backgroundColor: '#ffffff',
-          backdropFilter: 'none',
-          WebkitBackdropFilter: 'none',
-          background: '#ffffff'
-        }} 
+        className="bg-white border border-black p-6 max-w-lg w-full mx-4"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-bold tracking-wide">SYSTEM INFORMATION</h2>
-          <button 
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-lg"
-          >
-            ✕
-          </button>
-        </div>
-        
-        <div className="border border-black p-4 mb-6" style={{ backgroundColor: '#ffffff', background: '#ffffff' }}>
-          <div className="grid grid-cols-2 gap-y-3 text-left bg-white" style={{ position: 'relative', zIndex: 10 }}>
-            <div className="muted text-xs bg-white">BROWSER</div>
-            <div className="text-sm bg-white">{systemInfo.browser}</div>
-            
-            <div className="muted text-xs bg-white">DEVICE</div>
-            <div className="text-sm bg-white">{systemInfo.device}</div>
-            
-            <div className="muted text-xs bg-white">OS</div>
-            <div className="text-sm bg-white">{systemInfo.os}</div>
-            
-            <div className="muted text-xs bg-white">NETWORK</div>
-            <div className="text-sm bg-white">{systemInfo.network}</div>
-            
-            <div className="muted text-xs bg-white">RESOLUTION</div>
-            <div className="text-sm bg-white">{systemInfo.screenResolution}</div>
-            
-            <div className="muted text-xs bg-white">MEMORY</div>
-            <div className="text-sm bg-white">{systemInfo.memory}</div>
-            
-            <div className="muted text-xs bg-white">PERFORMANCE</div>
-            <div className="text-sm bg-white">{systemInfo.performance}</div>
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex justify-between items-center">
+            <h2 className="font-mono text-lg font-bold uppercase tracking-wide">SYSTEM INFORMATION</h2>
+            <button 
+              onClick={onClose}
+              className="border border-black bg-white px-3 py-1 font-mono text-xs hover:bg-black hover:text-white transition-colors"
+            >
+              CLOSE
+            </button>
           </div>
-        </div>
-        
-        <div className="text-center bg-white">
-          <button 
-            onClick={onClose}
-            className="border border-black px-6 py-2 rounded hover:bg-gray-50 text-sm tracking-wide bg-white"
-            style={{ backgroundColor: '#ffffff', position: 'relative' }}
-          >
-            CLOSE
-          </button>
+          
+          {/* System Info Grid */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+              <span className="font-mono text-xs text-gray-600 uppercase tracking-wide">BROWSER</span>
+              <span className="font-mono text-sm">{systemInfo.browser}</span>
+            </div>
+            
+            <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+              <span className="font-mono text-xs text-gray-600 uppercase tracking-wide">DEVICE</span>
+              <span className="font-mono text-sm">{systemInfo.device}</span>
+            </div>
+            
+            <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+              <span className="font-mono text-xs text-gray-600 uppercase tracking-wide">OPERATING SYSTEM</span>
+              <span className="font-mono text-sm">{systemInfo.os}</span>
+            </div>
+            
+            <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+              <span className="font-mono text-xs text-gray-600 uppercase tracking-wide">NETWORK</span>
+              <span className="font-mono text-sm">{systemInfo.network}</span>
+            </div>
+            
+            <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+              <span className="font-mono text-xs text-gray-600 uppercase tracking-wide">SCREEN RESOLUTION</span>
+              <span className="font-mono text-sm">{systemInfo.screenResolution}</span>
+            </div>
+            
+            <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+              <span className="font-mono text-xs text-gray-600 uppercase tracking-wide">MEMORY</span>
+              <span className="font-mono text-sm">{systemInfo.memory}</span>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-xs text-gray-600 uppercase tracking-wide">PERFORMANCE</span>
+              <span className="font-mono text-sm">{systemInfo.performance}</span>
+            </div>
+          </div>
+          
+          {/* Footer Note */}
+          <div className="pt-4 border-t border-gray-200">
+            <p className="font-mono text-xs text-gray-500 text-center">
+              System information collected for debugging and optimization purposes.
+            </p>
+          </div>
         </div>
       </div>
     </div>
