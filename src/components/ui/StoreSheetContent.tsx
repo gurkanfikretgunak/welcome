@@ -17,6 +17,7 @@ interface StoreSheetContentProps {
   // optional: history support (provided by parent)
   history?: Array<{
     id: string
+    product_id?: string
     product_name: string
     product_code: string
     point_cost: number
@@ -128,18 +129,41 @@ export default function StoreSheetContent({
                 <p className="font-mono text-xs text-gray-500">Your recent redemptions will appear here.</p>
               </div>
             ) : (
-              history.map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between border border-black bg-white p-3">
-                  <div className="text-left">
-                    <div className="font-mono text-sm">{tx.product_name}</div>
-                    <div className="font-mono text-xs text-gray-500">{tx.product_code} • {new Date(tx.created_at).toLocaleString()}</div>
+              history.map((tx) => {
+                // Find the product to get its image
+                const product = products.find(p => p.id === tx.product_id || p.name === tx.product_name)
+                return (
+                  <div key={tx.id} className="flex items-center gap-3 border border-black bg-white p-3">
+                    {/* Product Thumbnail */}
+                    <div className="flex-shrink-0 w-12 h-12 border border-gray-300 bg-gray-50 flex items-center justify-center">
+                      {product?.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={product.image_url}
+                          alt={tx.product_name}
+                          className="w-full h-full object-contain p-1"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div className="w-6 h-6 bg-yellow-400 border border-yellow-600"></div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Product Info */}
+                    <div className="flex-1 text-left">
+                      <div className="font-mono text-sm">{tx.product_name}</div>
+                      <div className="font-mono text-xs text-gray-500">{tx.product_code} • {new Date(tx.created_at).toLocaleString()}</div>
+                    </div>
+                    
+                    {/* Status and Points */}
+                    <div className="flex items-center gap-2">
+                      <TextBadge variant={tx.status === 'completed' ? 'success' : 'warning'} className="font-mono text-xs uppercase">{tx.status}</TextBadge>
+                      <TextBadge variant="muted" className="font-mono text-xs">-{tx.point_cost} pts</TextBadge>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <TextBadge variant={tx.status === 'completed' ? 'success' : 'warning'} className="font-mono text-xs uppercase">{tx.status}</TextBadge>
-                    <TextBadge variant="muted" className="font-mono text-xs">-{tx.point_cost} pts</TextBadge>
-                  </div>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
         )}
