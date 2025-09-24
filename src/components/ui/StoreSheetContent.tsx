@@ -53,7 +53,7 @@ export default function StoreSheetContent({
         </div>
 
         <p className="font-mono text-xs uppercase tracking-wide text-gray-500">
-          Owner tarafından tanımlanan mağaza ürünlerini görebilir ve puanlarınızı kullanarak hızlıca satın alabilirsiniz. Satın alımlarınız puan bakiyenizden anında düşer.
+          View store items defined by the owner and quickly redeem using your points. Purchases are deducted from your balance instantly.
         </p>
       </header>
 

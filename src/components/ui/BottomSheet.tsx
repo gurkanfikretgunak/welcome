@@ -40,7 +40,7 @@ export default function BottomSheet({ open, onClose, children }: BottomSheetProp
       />
 
       <div
-        className={`${open ? 'translate-y-0' : 'translate-y-full'} relative max-h-[85vh] overflow-y-auto border-t-2 border-black bg-white p-6 shadow-2xl transition-transform duration-300`}
+        className={`${open ? 'translate-y-0' : 'translate-y-full'} relative max-h-[85vh] overflow-y-auto border-t-2 border-black bg-white p-6 pt-14 shadow-2xl transition-transform duration-300`}
         ref={contentRef}
         tabIndex={-1}
       >
@@ -51,7 +51,7 @@ export default function BottomSheet({ open, onClose, children }: BottomSheetProp
         >
           CLOSE
         </button>
-        <div className="pr-4">
+        <div className="pr-1 sm:pr-2 md:pr-4">
           {children}
         </div>
       </div>
