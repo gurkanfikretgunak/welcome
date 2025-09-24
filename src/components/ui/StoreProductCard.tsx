@@ -52,7 +52,10 @@ export default function StoreProductCard({ product, onRedeem, loading = false, d
           <TextBadge variant="success" className="font-mono text-sm">
             {formatPointDisplay(product.point_cost)}
           </TextBadge>
-
+          <div className="flex items-center gap-2">
+            <TextBadge variant={product as any && (product as any).quantity === 0 ? 'error' : 'muted'} className="font-mono text-xs">
+              STOCK: {(product as any).quantity ?? '-'}
+            </TextBadge>
           <TextButton
             onClick={handleRedeemClick}
             disabled={disabled || loading}
@@ -61,6 +64,7 @@ export default function StoreProductCard({ product, onRedeem, loading = false, d
           >
             {loading ? 'PROCESSING...' : 'REDEEM'}
           </TextButton>
+          </div>
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ export interface StoreProductUI {
   image_url: string | null
   product_code: string
   point_cost: number
+  quantity?: number
 }
 
 export const formatPointDisplay = (points: number) => `${points} POINTS`

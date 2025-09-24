@@ -12,7 +12,7 @@ import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
 import BottomSheet from '@/components/ui/BottomSheet'
 import StoreSheetContent from '@/components/ui/StoreSheetContent'
-import { getStoreProducts, purchaseStoreProduct, StoreProduct } from '@/lib/supabase'
+import { getStoreProducts, purchaseStoreProduct, getStoreTransactions, StoreProduct, StoreTransaction } from '@/lib/supabase'
 import { StoreProductUI } from '@/data/store'
 
 const DEPARTMENTS = [
@@ -64,6 +64,7 @@ export default function SettingsPage() {
   const [storeLoading, setStoreLoading] = useState(false)
   const [storeError, setStoreError] = useState<string | null>(null)
   const [purchasingProductId, setPurchasingProductId] = useState<string | null>(null)
+  const [history, setHistory] = useState<StoreTransaction[] | null>(null)
   
   // Navigation useEffect - all hooks must be at the top
   useEffect(() => {
@@ -93,11 +94,17 @@ export default function SettingsPage() {
       setStoreLoading(true)
       setStoreError(null)
       try {
-        const { data, error } = await getStoreProducts()
+        const [{ data, error }, { data: txData, error: txError }] = await Promise.all([
+          getStoreProducts(),
+          getStoreTransactions()
+        ])
         if (error) {
           setStoreError(error.message || 'Failed to load store products')
           setStoreProducts([])
           return
+        }
+        if (!txError) {
+          setHistory(txData || [])
         }
         const mapped: StoreProductUI[] = (data as StoreProduct[]).map((p) => ({
           id: p.id,
@@ -106,6 +113,7 @@ export default function SettingsPage() {
           image_url: p.image_url || null,
           product_code: p.product_code,
           point_cost: p.point_cost,
+          quantity: p.quantity,
         }))
         setStoreProducts(mapped)
       } catch (e) {
@@ -132,6 +140,9 @@ export default function SettingsPage() {
       }
       // refresh user points
       await refreshProfile()
+      // refresh history as well
+      const { data: txData } = await getStoreTransactions()
+      setHistory(txData || [])
       setStoreError(null)
       setSuccess(`Purchased successfully. Remaining points: ${data?.store_points_remaining}`)
     } catch (e) {
@@ -474,6 +485,7 @@ export default function SettingsPage() {
             purchasingProductId={purchasingProductId}
             isLoading={storeLoading}
             error={storeError}
+            history={(history || []) as any}
           />
         </BottomSheet>
       )}

@@ -2,6 +2,7 @@ import TextBadge from './TextBadge'
 import TextButton from './TextButton'
 import StoreProductCard from './StoreProductCard'
 import { StoreProductUI } from '@/data/store'
+import React from 'react'
 
 interface StoreSheetContentProps {
   userEmail: string | null
@@ -13,6 +14,15 @@ interface StoreSheetContentProps {
   purchasingProductId: string | null
   isLoading: boolean
   error: string | null
+  // optional: history support (provided by parent)
+  history?: Array<{
+    id: string
+    product_name: string
+    product_code: string
+    point_cost: number
+    status: 'completed' | 'cancelled'
+    created_at: string
+  }>
 }
 
 export default function StoreSheetContent({
@@ -24,8 +34,10 @@ export default function StoreSheetContent({
   onRedeem,
   purchasingProductId,
   isLoading,
-  error
+  error,
+  history
 }: StoreSheetContentProps) {
+  const [activeTab, setActiveTab] = React.useState<'redeem' | 'used'>('redeem')
   return (
     <div className="space-y-6">
       <header className="space-y-4">
@@ -59,7 +71,20 @@ export default function StoreSheetContent({
 
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-mono text-sm font-semibold uppercase tracking-wide">ÜRÜNLER</h2>
+          <div className="flex gap-2">
+            <button
+              className={`px-3 py-1 border font-mono text-xs ${activeTab === 'redeem' ? 'bg-black text-white border-black' : 'bg-white text-black border-black'}`}
+              onClick={() => setActiveTab('redeem')}
+            >
+              REDEEM
+            </button>
+            <button
+              className={`px-3 py-1 border font-mono text-xs ${activeTab === 'used' ? 'bg-black text-white border-black' : 'bg-white text-black border-black'}`}
+              onClick={() => setActiveTab('used')}
+            >
+              USED
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -70,28 +95,52 @@ export default function StoreSheetContent({
           </div>
         )}
 
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <TextBadge variant="muted">YÜKLENİYOR...</TextBadge>
-          </div>
-        ) : products.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 border border-dashed border-gray-300 py-12">
-            <TextBadge variant="muted" className="font-mono text-xs">
-              MAĞAZA ÜRÜNÜ BULUNAMADI
-            </TextBadge>
-            <p className="font-mono text-xs text-gray-500">Owner mağazaya ürün eklediğinde burada belirecek.</p>
-          </div>
+        {activeTab === 'redeem' ? (
+          isLoading ? (
+            <div className="flex justify-center py-12">
+              <TextBadge variant="muted">LOADING...</TextBadge>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-3 border border-dashed border-gray-300 py-12">
+              <TextBadge variant="muted" className="font-mono text-xs">
+                NO STORE PRODUCTS FOUND
+              </TextBadge>
+              <p className="font-mono text-xs text-gray-500">Items will appear here when the owner adds them to the store.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {products.map((product) => (
+                <StoreProductCard
+                  key={product.id}
+                  product={product}
+                  onRedeem={onRedeem}
+                  disabled={storePoints < product.point_cost}
+                  loading={purchasingProductId === product.id}
+                />
+              ))}
+            </div>
+          )
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {products.map((product) => (
-              <StoreProductCard
-                key={product.id}
-                product={product}
-                onRedeem={onRedeem}
-                disabled={storePoints < product.point_cost}
-                loading={purchasingProductId === product.id}
-              />
-            ))}
+          <div className="space-y-3">
+            {!history || history.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 border border-dashed border-gray-300 py-12">
+                <TextBadge variant="muted" className="font-mono text-xs">NO REDEEM HISTORY</TextBadge>
+                <p className="font-mono text-xs text-gray-500">Your recent redemptions will appear here.</p>
+              </div>
+            ) : (
+              history.map((tx) => (
+                <div key={tx.id} className="flex items-center justify-between border border-black bg-white p-3">
+                  <div className="text-left">
+                    <div className="font-mono text-sm">{tx.product_name}</div>
+                    <div className="font-mono text-xs text-gray-500">{tx.product_code} • {new Date(tx.created_at).toLocaleString()}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <TextBadge variant={tx.status === 'completed' ? 'success' : 'warning'} className="font-mono text-xs uppercase">{tx.status}</TextBadge>
+                    <TextBadge variant="muted" className="font-mono text-xs">-{tx.point_cost} pts</TextBadge>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
       </section>

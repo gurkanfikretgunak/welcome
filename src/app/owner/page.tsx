@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
-import { getAllUsers, getAllChecklistStatuses, getAllTickets, updateTicket, Ticket, getAllPerformanceGoals, createPerformanceGoal, updatePerformanceGoal, deletePerformanceGoal, PerformanceGoalWithUser, getCurrentMonthYear, calculatePerformancePercentage, getAllDynamicChecklists, createDynamicChecklist, updateDynamicChecklist, deleteDynamicChecklist, DynamicChecklist, ChecklistWithAssignments, getActiveOtpCodes, OtpCode } from '@/lib/supabase'
+import { getAllUsers, getAllChecklistStatuses, getAllTickets, updateTicket, Ticket, getAllPerformanceGoals, createPerformanceGoal, updatePerformanceGoal, deletePerformanceGoal, PerformanceGoalWithUser, getCurrentMonthYear, calculatePerformancePercentage, getAllDynamicChecklists, createDynamicChecklist, updateDynamicChecklist, deleteDynamicChecklist, DynamicChecklist, ChecklistWithAssignments, getActiveOtpCodes, OtpCode, getStoreProducts, createStoreProduct, updateStoreProduct, deleteStoreProduct, getAllStoreTransactions, adjustUserPoints, StoreProduct, StoreTransaction } from '@/lib/supabase'
 import { ONBOARDING_CHECKLIST, CATEGORY_LABELS } from '@/data/checklist'
 import Navbar from '@/components/layout/Navbar'
 import PageLayout from '@/components/layout/PageLayout'
@@ -57,6 +57,18 @@ export default function OwnerPage() {
   const [otpCodes, setOtpCodes] = useState<OtpCode[]>([])
   const [isLoadingOtp, setIsLoadingOtp] = useState(false)
   const [otpError, setOtpError] = useState<string | null>(null)
+  // Store management state
+  const [storeProducts, setStoreProducts] = useState<StoreProduct[]>([])
+  const [storeTx, setStoreTx] = useState<StoreTransaction[]>([])
+  const [storeForm, setStoreForm] = useState({
+    name: '', description: '', image_url: '', product_code: '', point_cost: 0, quantity: 0, is_active: true
+  })
+  const [storeSaving, setStoreSaving] = useState(false)
+  const [storeMessage, setStoreMessage] = useState<string | null>(null)
+  const [storeErrorMsg, setStoreErrorMsg] = useState<string | null>(null)
+  const [editingProduct, setEditingProduct] = useState<StoreProduct | null>(null)
+  const [pointsDelta, setPointsDelta] = useState(0)
+  const [pointsUserId, setPointsUserId] = useState('')
 
   useEffect(() => {
     if (loading) return // Wait for auth to complete
@@ -106,16 +118,18 @@ export default function OwnerPage() {
 
   const loadOwnerData = async () => {
     try {
-      const [usersResult, checklistResult, ticketsResult, performanceResult, dynamicChecklistsResult] = await Promise.all([
+      const [usersResult, checklistResult, ticketsResult, performanceResult, dynamicChecklistsResult, storeProductsResult, storeTxResult] = await Promise.all([
         getAllUsers(),
         getAllChecklistStatuses(),
         getAllTickets(),
         getAllPerformanceGoals(),
-        getAllDynamicChecklists()
+        getAllDynamicChecklists(),
+        getStoreProducts(),
+        getAllStoreTransactions()
       ])
 
-      if (usersResult.error || checklistResult.error || ticketsResult.error || performanceResult.error || dynamicChecklistsResult.error) {
-        const error = usersResult.error || checklistResult.error || ticketsResult.error || performanceResult.error || dynamicChecklistsResult.error
+      if (usersResult.error || checklistResult.error || ticketsResult.error || performanceResult.error || dynamicChecklistsResult.error || storeProductsResult.error || storeTxResult.error) {
+        const error = usersResult.error || checklistResult.error || ticketsResult.error || performanceResult.error || dynamicChecklistsResult.error || storeProductsResult.error || storeTxResult.error
         console.error('Error loading owner data:', error)
         
         // More detailed error messages
@@ -125,6 +139,8 @@ export default function OwnerPage() {
         if (ticketsResult.error) errorMessage += `Tickets: ${ticketsResult.error.message}; `
         if (performanceResult.error) errorMessage += `Performance: ${performanceResult.error.message}; `
         if (dynamicChecklistsResult.error) errorMessage += `Dynamic Checklists: ${dynamicChecklistsResult.error.message}; `
+        if (storeProductsResult.error) errorMessage += `Store Products: ${storeProductsResult.error.message}; `
+        if (storeTxResult.error) errorMessage += `Store Transactions: ${storeTxResult.error.message}; `
         
         setChecklistError(errorMessage)
         return
@@ -135,6 +151,8 @@ export default function OwnerPage() {
       const ticketsData = ticketsResult.data || []
       const performanceData = performanceResult.data || []
       const dynamicChecklistsData = dynamicChecklistsResult.data || []
+      const storeProductsData = (storeProductsResult.data || []) as StoreProduct[]
+      const storeTxData = (storeTxResult.data || []) as StoreTransaction[]
 
       // Process checklist data by user
       const userProgress = usersData.map(user => {
@@ -160,10 +178,80 @@ export default function OwnerPage() {
       setTickets(ticketsData)
       setPerformanceGoals(performanceData)
       setDynamicChecklists(dynamicChecklistsData)
+      setStoreProducts(storeProductsData)
+      setStoreTx(storeTxData)
     } catch (error) {
       console.error('Error loading owner data:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleSaveProduct = async () => {
+    try {
+      setStoreSaving(true)
+      setStoreErrorMsg(null)
+      setStoreMessage(null)
+      if (editingProduct) {
+        const { error } = await updateStoreProduct(editingProduct.id, {
+          ...editingProduct,
+          ...storeForm,
+          point_cost: Number(storeForm.point_cost),
+          quantity: Number(storeForm.quantity)
+        } as any)
+        if (error) throw error
+        setStoreMessage('Product updated')
+      } else {
+        const { error } = await createStoreProduct({
+          name: storeForm.name,
+          description: storeForm.description,
+          image_url: storeForm.image_url,
+          product_code: storeForm.product_code,
+          point_cost: Number(storeForm.point_cost),
+          quantity: Number(storeForm.quantity),
+          is_active: storeForm.is_active
+        })
+        if (error) throw error
+        setStoreMessage('Product created')
+      }
+      await loadOwnerData()
+      setEditingProduct(null)
+      setStoreForm({ name: '', description: '', image_url: '', product_code: '', point_cost: 0, quantity: 0, is_active: true })
+    } catch (e: any) {
+      setStoreErrorMsg(e?.message || 'Save failed')
+    } finally {
+      setStoreSaving(false)
+    }
+  }
+
+  const handleEditProduct = (p: StoreProduct) => {
+    setEditingProduct(p)
+    setStoreForm({
+      name: p.name,
+      description: p.description || '',
+      image_url: p.image_url || '',
+      product_code: p.product_code,
+      point_cost: p.point_cost,
+      quantity: p.quantity,
+      is_active: p.is_active
+    })
+  }
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm('Delete this product?')) return
+    const { error } = await deleteStoreProduct(id)
+    if (!error) {
+      await loadOwnerData()
+    }
+  }
+
+  const handleAdjustPoints = async () => {
+    if (!pointsUserId || pointsDelta === 0) return
+    const { error } = await adjustUserPoints(pointsUserId, pointsDelta)
+    if (!error) {
+      setPointsDelta(0)
+      setPointsUserId('')
+      await loadOwnerData()
     }
   }
 
@@ -469,6 +557,93 @@ export default function OwnerPage() {
             <TextBadge variant="error">PENDING</TextBadge> {stats.pending} users not started
           </TextHierarchy>
         </TextCard>
+
+      {/* Store Management */}
+      <TextCard title="STORE MANAGEMENT">
+        <div className="space-y-6">
+          {/* Create / Edit Product */}
+          <div className="border border-black p-4 bg-white">
+            <TextHierarchy level={1} emphasis className="mb-2">
+              {editingProduct ? 'EDIT PRODUCT' : 'CREATE PRODUCT'}
+            </TextHierarchy>
+            {storeErrorMsg && (
+              <TextHierarchy level={2} className="text-red-600">{storeErrorMsg}</TextHierarchy>
+            )}
+            {storeMessage && (
+              <TextHierarchy level={2} className="text-green-600">{storeMessage}</TextHierarchy>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <input className="border border-black p-2 font-mono text-sm" placeholder="Name" value={storeForm.name} onChange={e=>setStoreForm({...storeForm, name: e.target.value})} />
+              <input className="border border-black p-2 font-mono text-sm" placeholder="Product Code" value={storeForm.product_code} onChange={e=>setStoreForm({...storeForm, product_code: e.target.value})} />
+              <input className="border border-black p-2 font-mono text-sm" placeholder="Image URL" value={storeForm.image_url} onChange={e=>setStoreForm({...storeForm, image_url: e.target.value})} />
+              <input className="border border-black p-2 font-mono text-sm md:col-span-3" placeholder="Description" value={storeForm.description} onChange={e=>setStoreForm({...storeForm, description: e.target.value})} />
+              <input type="number" className="border border-black p-2 font-mono text-sm" placeholder="Point Cost" value={storeForm.point_cost} onChange={e=>setStoreForm({...storeForm, point_cost: Number(e.target.value)})} />
+              <input type="number" className="border border-black p-2 font-mono text-sm" placeholder="Quantity" value={storeForm.quantity} onChange={e=>setStoreForm({...storeForm, quantity: Number(e.target.value)})} />
+              <select className="border border-black p-2 font-mono text-sm" value={storeForm.is_active ? '1':'0'} onChange={e=>setStoreForm({...storeForm, is_active: e.target.value==='1'})}>
+                <option value="1">Active</option>
+                <option value="0">Inactive</option>
+              </select>
+            </div>
+            <div className="mt-3 flex gap-2">
+              <TextButton onClick={handleSaveProduct} disabled={storeSaving} variant="success">{storeSaving ? 'SAVING...' : 'SAVE'}</TextButton>
+              {editingProduct && (
+                <TextButton onClick={()=>{setEditingProduct(null); setStoreForm({ name:'', description:'', image_url:'', product_code:'', point_cost:0, quantity:0, is_active:true })}} variant="default">CANCEL</TextButton>
+              )}
+            </div>
+          </div>
+
+          {/* Products List */}
+          <div className="space-y-2">
+            <TextHierarchy level={1} emphasis>PRODUCTS</TextHierarchy>
+            {storeProducts.length === 0 ? (
+              <TextHierarchy level={2} muted>No products</TextHierarchy>
+            ) : (
+              storeProducts.map(p => (
+                <div key={p.id} className="flex items-center justify-between border border-black bg-white p-3">
+                  <div>
+                    <div className="font-mono text-sm">{p.name} <span className="text-gray-500">({p.product_code})</span></div>
+                    <div className="font-mono text-xs text-gray-600">{p.point_cost} pts • stock: {p.quantity} • {p.is_active ? 'active' : 'inactive'}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <TextButton onClick={()=>handleEditProduct(p)} className="px-3 py-1">EDIT</TextButton>
+                    <TextButton onClick={()=>handleDeleteProduct(p.id)} variant="error" className="px-3 py-1">DELETE</TextButton>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Points Management */}
+          <div className="space-y-2">
+            <TextHierarchy level={1} emphasis>USER POINTS</TextHierarchy>
+            <div className="flex flex-wrap gap-2">
+              <input className="border border-black p-2 font-mono text-sm flex-1" placeholder="User ID" value={pointsUserId} onChange={e=>setPointsUserId(e.target.value)} />
+              <input type="number" className="border border-black p-2 font-mono text-sm w-40" placeholder="Delta (e.g. 100)" value={pointsDelta} onChange={e=>setPointsDelta(Number(e.target.value))} />
+              <TextButton onClick={handleAdjustPoints} variant="success" className="px-4 py-2">APPLY</TextButton>
+            </div>
+          </div>
+
+          {/* Transactions */}
+          <div className="space-y-2">
+            <TextHierarchy level={1} emphasis>TRANSACTIONS</TextHierarchy>
+            {storeTx.length === 0 ? (
+              <TextHierarchy level={2} muted>No transactions</TextHierarchy>
+            ) : (
+              <div className="grid grid-cols-1 gap-2">
+                {storeTx.map(tx => (
+                  <div key={tx.id} className="flex items-center justify-between border border-black bg-white p-3">
+                    <div className="text-left">
+                      <div className="font-mono text-sm">{tx.product_id}</div>
+                      <div className="font-mono text-xs text-gray-500">{new Date(tx.created_at).toLocaleString()} • -{tx.point_cost} pts</div>
+                    </div>
+                    <TextBadge variant={tx.status === 'completed' ? 'success' : 'warning'} className="font-mono text-xs uppercase">{tx.status}</TextBadge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </TextCard>
 
         <TextCard title="FILTER OPTIONS">
           <div className="flex gap-4">
