@@ -111,7 +111,11 @@ function SystemInfoDialog({ onClose }: { onClose: () => void }) {
   });
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+    <div 
+      className="fixed inset-0 flex items-center justify-center z-50" 
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
+      onClick={onClose}
+    >
       <div 
         className="bg-white border border-black p-6 max-w-lg w-full mx-4"
         onClick={e => e.stopPropagation()}
