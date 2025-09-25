@@ -768,7 +768,22 @@ export default function OwnerPage() {
 
           {/* Transactions */}
           <div className="space-y-2">
-            <TextHierarchy level={1} emphasis>TRANSACTIONS</TextHierarchy>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <TextHierarchy level={1} emphasis>TRANSACTIONS</TextHierarchy>
+                <div className="flex items-center gap-2">
+                  <TextBadge variant="default" className="text-xs">
+                    {storeTx.length} total
+                  </TextBadge>
+                  <TextBadge variant="success" className="text-xs">
+                    {storeTx.filter(tx => tx.status === 'completed').length} completed
+                  </TextBadge>
+                  <TextBadge variant="warning" className="text-xs">
+                    {storeTx.filter(tx => tx.status === 'cancelled').length} cancelled
+                  </TextBadge>
+                </div>
+              </div>
+            </div>
             {storeTx.length === 0 ? (
               <TextHierarchy level={2} muted>No transactions</TextHierarchy>
             ) : (
@@ -786,7 +801,7 @@ export default function OwnerPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <TextBadge 
-                        variant={tx.status === 'completed' ? 'success' : 'warning'} 
+                        variant={tx.status === 'completed' ? 'success' : tx.status === 'cancelled' ? 'warning' : 'default'} 
                         className="font-mono text-xs uppercase"
                       >
                         {tx.status}
