@@ -476,6 +476,28 @@ export const getAllStoreTransactions = async (): Promise<{ data: StoreTransactio
   }
 }
 
+export const deleteStoreTransaction = async (transactionId: string): Promise<{ error: Error | null }> => {
+  try {
+    console.log('🗑️ Deleting store transaction:', transactionId)
+
+    const { error } = await supabase
+      .from('store_transactions')
+      .delete()
+      .eq('id', transactionId)
+
+    if (error) {
+      console.error('❌ Delete transaction error:', error)
+      return { error }
+    }
+
+    console.log('✅ Transaction deleted successfully')
+    return { error: null }
+  } catch (error) {
+    console.error('❌ Delete transaction exception:', error)
+    return { error: error as Error }
+  }
+}
+
 export const adjustUserPoints = async (userId: string, delta: number): Promise<{ data: any | null; error: Error | null }> => {
   try {
     const { data: current, error: getErr } = await supabase

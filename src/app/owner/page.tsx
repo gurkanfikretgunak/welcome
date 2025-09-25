@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
-import { getAllUsers, getAllChecklistStatuses, getAllTickets, updateTicket, Ticket, getAllPerformanceGoals, createPerformanceGoal, updatePerformanceGoal, deletePerformanceGoal, PerformanceGoalWithUser, getCurrentMonthYear, calculatePerformancePercentage, getAllDynamicChecklists, createDynamicChecklist, updateDynamicChecklist, deleteDynamicChecklist, DynamicChecklist, ChecklistWithAssignments, getActiveOtpCodes, OtpCode, getStoreProducts, createStoreProduct, updateStoreProduct, deleteStoreProduct, getAllStoreTransactions, adjustUserPoints, StoreProduct, StoreTransaction } from '@/lib/supabase'
+import { getAllUsers, getAllChecklistStatuses, getAllTickets, updateTicket, Ticket, getAllPerformanceGoals, createPerformanceGoal, updatePerformanceGoal, deletePerformanceGoal, PerformanceGoalWithUser, getCurrentMonthYear, calculatePerformancePercentage, getAllDynamicChecklists, createDynamicChecklist, updateDynamicChecklist, deleteDynamicChecklist, DynamicChecklist, ChecklistWithAssignments, getActiveOtpCodes, OtpCode, getStoreProducts, createStoreProduct, updateStoreProduct, deleteStoreProduct, getAllStoreTransactions, deleteStoreTransaction, adjustUserPoints, StoreProduct, StoreTransaction } from '@/lib/supabase'
 import { ONBOARDING_CHECKLIST, CATEGORY_LABELS } from '@/data/checklist'
 import Navbar from '@/components/layout/Navbar'
 import PageLayout from '@/components/layout/PageLayout'
@@ -258,6 +258,32 @@ export default function OwnerPage() {
       setPointsDelta(0)
       setPointsUserId('')
       await loadOwnerData()
+    }
+  }
+
+  const handleDeleteTransaction = async (transactionId: string) => {
+    if (!confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
+      return
+    }
+    
+    try {
+      setStoreErrorMsg(null)
+      setStoreMessage(null)
+      
+      const { error } = await deleteStoreTransaction(transactionId)
+      
+      if (error) {
+        setStoreErrorMsg(`Failed to delete transaction: ${error.message}`)
+        return
+      }
+      
+      setStoreMessage('Transaction deleted successfully')
+      await loadOwnerData() // Reload data to refresh the transactions list
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setStoreMessage(null), 3000)
+    } catch (e: any) {
+      setStoreErrorMsg(e?.message || 'Delete failed')
     }
   }
 
@@ -749,11 +775,30 @@ export default function OwnerPage() {
               <div className="grid grid-cols-1 gap-2">
                 {storeTx.map(tx => (
                   <div key={tx.id} className="flex items-center justify-between border border-black bg-white p-3">
-                    <div className="text-left">
+                    <div className="text-left flex-1">
                       <div className="font-mono text-sm">{tx.product_id}</div>
-                      <div className="font-mono text-xs text-gray-500">{new Date(tx.created_at).toLocaleString()} • -{tx.point_cost} pts</div>
+                      <div className="font-mono text-xs text-gray-500">
+                        {new Date(tx.created_at).toLocaleString()} • -{tx.point_cost} pts
+                      </div>
+                      <div className="font-mono text-xs text-gray-400 mt-1">
+                        User: {tx.user_id.substring(0, 8)}...
+                      </div>
                     </div>
-                    <TextBadge variant={tx.status === 'completed' ? 'success' : 'warning'} className="font-mono text-xs uppercase">{tx.status}</TextBadge>
+                    <div className="flex items-center gap-2">
+                      <TextBadge 
+                        variant={tx.status === 'completed' ? 'success' : 'warning'} 
+                        className="font-mono text-xs uppercase"
+                      >
+                        {tx.status}
+                      </TextBadge>
+                      <TextButton
+                        onClick={() => handleDeleteTransaction(tx.id)}
+                        variant="error"
+                        className="px-3 py-1 text-xs"
+                      >
+                        DELETE
+                      </TextButton>
+                    </div>
                   </div>
                 ))}
               </div>
