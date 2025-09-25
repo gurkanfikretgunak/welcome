@@ -75,6 +75,8 @@ export default function OwnerPage() {
   const [isPerformanceManagementExpanded, setIsPerformanceManagementExpanded] = useState(false)
   const [isChecklistManagementExpanded, setIsChecklistManagementExpanded] = useState(false)
   const [isOtpManagementExpanded, setIsOtpManagementExpanded] = useState(false)
+  const [showDeleteTransactionDialog, setShowDeleteTransactionDialog] = useState(false)
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     if (loading) return // Wait for auth to complete
@@ -261,16 +263,20 @@ export default function OwnerPage() {
     }
   }
 
-  const handleDeleteTransaction = async (transactionId: string) => {
-    if (!confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
-      return
-    }
+  const handleDeleteTransaction = (transactionId: string) => {
+    setTransactionToDelete(transactionId)
+    setShowDeleteTransactionDialog(true)
+  }
+
+  const handleConfirmDeleteTransaction = async () => {
+    if (!transactionToDelete) return
     
     try {
       setStoreErrorMsg(null)
       setStoreMessage(null)
+      setShowDeleteTransactionDialog(false)
       
-      const { error } = await deleteStoreTransaction(transactionId)
+      const { error } = await deleteStoreTransaction(transactionToDelete)
       
       if (error) {
         setStoreErrorMsg(`Failed to delete transaction: ${error.message}`)
@@ -284,7 +290,14 @@ export default function OwnerPage() {
       setTimeout(() => setStoreMessage(null), 3000)
     } catch (e: any) {
       setStoreErrorMsg(e?.message || 'Delete failed')
+    } finally {
+      setTransactionToDelete(null)
     }
+  }
+
+  const handleCancelDeleteTransaction = () => {
+    setShowDeleteTransactionDialog(false)
+    setTransactionToDelete(null)
   }
 
   const getFilteredUsers = () => {
@@ -1800,6 +1813,49 @@ export default function OwnerPage() {
                 setSelectedExistingChecklist(null)
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Delete Transaction Confirmation Dialog */}
+      {showDeleteTransactionDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-white border border-black p-6 max-w-md w-full mx-4">
+            <div className="space-y-4">
+              <div>
+                <TextHierarchy level={1} emphasis className="mb-2">
+                  DELETE TRANSACTION
+                </TextHierarchy>
+                <TextHierarchy level={2} muted>
+                  Are you sure you want to delete this transaction? This action cannot be undone and will permanently remove the transaction from the system.
+                </TextHierarchy>
+              </div>
+              
+              {transactionToDelete && (
+                <div className="p-3 border border-gray-300 bg-gray-50">
+                  <TextHierarchy level={2} className="font-mono text-xs text-gray-600">
+                    TRANSACTION ID: {transactionToDelete.substring(0, 8)}...
+                  </TextHierarchy>
+                </div>
+              )}
+              
+              <div className="flex gap-3 justify-end">
+                <TextButton
+                  onClick={handleCancelDeleteTransaction}
+                  variant="default"
+                  className="px-4 py-2"
+                >
+                  CANCEL
+                </TextButton>
+                <TextButton
+                  onClick={handleConfirmDeleteTransaction}
+                  variant="error"
+                  className="px-4 py-2"
+                >
+                  DELETE TRANSACTION
+                </TextButton>
+              </div>
+            </div>
           </div>
         </div>
       )}
