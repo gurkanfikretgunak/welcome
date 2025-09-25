@@ -165,20 +165,63 @@ export default function ChecklistPage() {
         subtitle="Step 4 of 4 - Complete Integration Tasks"
       >
         <TextCard title="PROGRESS OVERVIEW">
-          <TextHierarchy level={1}>
-            <TextBadge variant="default">USER ID</TextBadge> {user?.id}
-          </TextHierarchy>
-          <TextHierarchy level={1}>
-            <TextBadge variant="success">TOTAL PROGRESS</TextBadge> {stats.completed}/{stats.total} items completed
-          </TextHierarchy>
-          <TextHierarchy level={1}>
-            <TextBadge variant={stats.completedRequired === stats.required ? "success" : "warning"}>
-              REQUIRED TASKS
-            </TextBadge> {stats.completedRequired}/{stats.required} required items completed
-          </TextHierarchy>
-          <TextHierarchy level={1}>
-            <TextBadge variant="default">COMPLETION RATE</TextBadge> {Math.round((stats.completed / stats.total) * 100)}%
-          </TextHierarchy>
+          <div className="space-y-4">
+            {/* User ID */}
+            <div className="flex items-center gap-3">
+              <TextBadge variant="default" className="text-xs">USER ID</TextBadge>
+              <span className="font-mono text-sm">{user?.id}</span>
+            </div>
+
+            {/* Progress Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Total Progress */}
+              <div className="text-center p-3 border border-black bg-white">
+                <div className="text-2xl font-bold text-gray-900 mb-1">{stats.completed}/{stats.total}</div>
+                <div className="text-xs font-mono text-gray-600 uppercase tracking-wide">Total Progress</div>
+                <div className="text-xs text-gray-500 mt-1">Items Completed</div>
+              </div>
+
+              {/* Required Tasks */}
+              <div className={`text-center p-3 border-2 ${stats.completedRequired === stats.required ? 'border-green-500 bg-green-50' : 'border-orange-500 bg-orange-50'}`}>
+                <div className={`text-2xl font-bold mb-1 ${stats.completedRequired === stats.required ? 'text-green-700' : 'text-orange-700'}`}>
+                  {stats.completedRequired}/{stats.required}
+                </div>
+                <div className="text-xs font-mono uppercase tracking-wide">Required Tasks</div>
+                <div className="text-xs mt-1">
+                  {stats.completedRequired === stats.required ? 'All Required Done' : 'In Progress'}
+                </div>
+              </div>
+
+              {/* Completion Rate */}
+              <div className="text-center p-3 border border-black bg-white">
+                <div className="text-2xl font-bold text-blue-600 mb-1">
+                  {Math.round((stats.completed / stats.total) * 100)}%
+                </div>
+                <div className="text-xs font-mono text-gray-600 uppercase tracking-wide">Completion Rate</div>
+                <div className="text-xs text-gray-500 mt-1">Overall Progress</div>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="font-mono text-xs text-gray-600 uppercase tracking-wide">OVERALL PROGRESS</span>
+                <span className="font-mono text-xs text-gray-600">
+                  {Math.round((stats.completed / stats.total) * 100)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 h-3 border border-gray-300">
+                <div 
+                  className="bg-green-500 h-full transition-all duration-500"
+                  style={{ width: `${(stats.completed / stats.total) * 100}%` }}
+                ></div>
+              </div>
+              <div className="flex justify-between text-xs font-mono text-gray-500">
+                <span>0 items</span>
+                <span>{stats.completed} of {stats.total} completed</span>
+              </div>
+            </div>
+          </div>
         </TextCard>
 
         {Object.entries(groupedItems).map(([category, items]) => (
