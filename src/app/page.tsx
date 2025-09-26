@@ -28,7 +28,18 @@ export default function Home() {
     network: '',
     memory: '',
     performance: '',
-    screenResolution: ''
+    screenResolution: '',
+    networkDetails: {
+      connectionType: '',
+      downlink: '',
+      uplink: '',
+      rtt: '',
+      effectiveType: '',
+      saveData: false,
+      ip: '',
+      latency: '',
+      networkStatus: 'Checking...'
+    }
   })
 
   // Check for auth success parameter
@@ -76,10 +87,34 @@ export default function Home() {
       const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|Windows Phone/i.test(userAgent);
       const deviceInfo = isMobile ? 'Mobile' : 'Desktop';
 
+      // Enhanced Network Information
       const connectionInfo = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
       let networkInfo = 'Unknown Network';
+      let networkDetails = {
+        connectionType: 'Unknown',
+        downlink: 'Unknown',
+        uplink: 'Unknown',
+        rtt: 'Unknown',
+        effectiveType: 'Unknown',
+        saveData: false,
+        ip: 'Detecting...',
+        latency: 'Measuring...',
+        networkStatus: 'Checking...'
+      };
+
       if (connectionInfo) {
         networkInfo = `${connectionInfo.effectiveType || 'Unknown'} - ${connectionInfo.downlink || '?'} Mbps`;
+        networkDetails = {
+          connectionType: connectionInfo.type || 'Unknown',
+          downlink: connectionInfo.downlink ? `${connectionInfo.downlink} Mbps` : 'Unknown',
+          uplink: connectionInfo.uplink ? `${connectionInfo.uplink} Mbps` : 'Unknown',
+          rtt: connectionInfo.rtt ? `${connectionInfo.rtt}ms` : 'Unknown',
+          effectiveType: connectionInfo.effectiveType || 'Unknown',
+          saveData: connectionInfo.saveData || false,
+          ip: 'Detecting...',
+          latency: 'Measuring...',
+          networkStatus: navigator.onLine ? 'Online' : 'Offline'
+        };
       }
 
       let memoryInfo = 'Unknown Memory';
@@ -105,10 +140,14 @@ export default function Home() {
         network: networkInfo,
         memory: memoryInfo,
         performance: perfInfo,
-        screenResolution: screenRes
+        screenResolution: screenRes,
+        networkDetails
       };
 
       setSystemInfo(newSystemInfo);
+
+      // Perform additional network diagnostics
+      performNetworkDiagnostics(newSystemInfo);
 
       try {
         localStorage.setItem('systemInfo', JSON.stringify(newSystemInfo));
@@ -117,6 +156,53 @@ export default function Home() {
       }
     }
   }, []);
+
+  // Enhanced network diagnostics function
+  const performNetworkDiagnostics = async (currentInfo: any) => {
+    try {
+      // Test latency to a reliable endpoint
+      const startTime = performance.now();
+      const response = await fetch('/api/version', { 
+        method: 'HEAD',
+        cache: 'no-cache'
+      });
+      const endTime = performance.now();
+      const latency = Math.round(endTime - startTime);
+
+      // Get IP information
+      let ipInfo = 'Unknown';
+      try {
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipResponse.json();
+        ipInfo = ipData.ip;
+      } catch (e) {
+        console.warn('Could not fetch IP info:', e);
+      }
+
+      // Update system info with network diagnostics
+      setSystemInfo(prev => ({
+        ...prev,
+        networkDetails: {
+          ...prev.networkDetails,
+          latency: `${latency}ms`,
+          ip: ipInfo,
+          networkStatus: response.ok ? 'Connected' : 'Limited'
+        }
+      }));
+
+    } catch (error) {
+      console.warn('Network diagnostics failed:', error);
+      setSystemInfo(prev => ({
+        ...prev,
+        networkDetails: {
+          ...prev.networkDetails,
+          latency: 'Failed',
+          ip: 'Unknown',
+          networkStatus: 'Error'
+        }
+      }));
+    }
+  };
 
   // Initial loading animation effect
   useEffect(() => {
@@ -235,8 +321,8 @@ export default function Home() {
         )}
 
         {showBadge === 'LOADING...' && (
-          <div className="mt-8 text-xs text-center max-w-md">
-            <div className="grid grid-cols-2 gap-2 text-left">
+          <div className="mt-8 text-xs text-center max-w-2xl">
+            <div className="grid grid-cols-2 gap-2 text-left mb-6">
               <div className="muted">BROWSER</div>
               <div>{systemInfo.browser}</div>
 
@@ -257,6 +343,50 @@ export default function Home() {
 
               <div className="muted">PERFORMANCE</div>
               <div>{systemInfo.performance}</div>
+            </div>
+
+            {/* Enhanced Network Information Section */}
+            <div className="border-t border-gray-600 pt-4 mb-4">
+              <div className="text-xs muted mb-3 text-center">
+                NETWORK DIAGNOSTICS
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-left">
+                <div className="muted">CONNECTION TYPE</div>
+                <div>{systemInfo.networkDetails.effectiveType.toUpperCase()}</div>
+
+                <div className="muted">DOWNLINK SPEED</div>
+                <div>{systemInfo.networkDetails.downlink}</div>
+
+                <div className="muted">NETWORK RTT</div>
+                <div>{systemInfo.networkDetails.rtt}</div>
+
+                <div className="muted">SERVER LATENCY</div>
+                <div className={systemInfo.networkDetails.latency.includes('ms') ? 'text-green-400' : 'text-yellow-400'}>
+                  {systemInfo.networkDetails.latency}
+                </div>
+
+                <div className="muted">PUBLIC IP</div>
+                <div className={systemInfo.networkDetails.ip.includes('.') ? 'text-green-400' : 'text-yellow-400'}>
+                  {systemInfo.networkDetails.ip}
+                </div>
+
+                <div className="muted">STATUS</div>
+                <div className={
+                  systemInfo.networkDetails.networkStatus === 'Connected' ? 'text-green-400' :
+                  systemInfo.networkDetails.networkStatus === 'Online' ? 'text-blue-400' :
+                  systemInfo.networkDetails.networkStatus === 'Error' ? 'text-red-400' :
+                  'text-yellow-400'
+                }>
+                  {systemInfo.networkDetails.networkStatus.toUpperCase()}
+                </div>
+
+                {systemInfo.networkDetails.saveData && (
+                  <>
+                    <div className="muted">DATA SAVER</div>
+                    <div className="text-orange-400">ENABLED</div>
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="mt-4 text-center text-xs muted">
