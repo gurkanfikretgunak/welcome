@@ -1534,3 +1534,410 @@ export async function getActiveOtpCodes(): Promise<{ data: OtpCode[] | null; err
     return { data: null, error: error as Error }
   }
 }
+
+// Events interfaces
+export interface Event {
+  id: string
+  title: string
+  description?: string
+  event_date: string
+  location?: string
+  max_participants?: number
+  is_published: boolean
+  is_active: boolean
+  created_by?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface EventParticipant {
+  id: string
+  event_id: string
+  reference_number: string
+  full_name: string
+  email: string
+  title?: string
+  company?: string
+  gdpr_consent: boolean
+  registration_date: string
+  created_at: string
+  updated_at: string
+}
+
+export interface EventWithParticipants extends Event {
+  participant_count: number
+}
+
+// Events functions
+export async function getPublishedEvents(): Promise<{ data: Event[] | null; error: Error | null }> {
+  try {
+    console.log('📅 Fetching published events')
+    
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('is_published', true)
+      .eq('is_active', true)
+      .gte('event_date', new Date().toISOString())
+      .order('event_date', { ascending: true })
+
+    if (error) {
+      console.error('❌ Fetch published events error:', error)
+      return { data: null, error }
+    }
+
+    console.log('✅ Published events fetched:', data?.length || 0)
+    return { data: data || [], error: null }
+  } catch (error) {
+    console.error('❌ Fetch published events exception:', error)
+    return { data: null, error: error as Error }
+  }
+}
+
+export async function getEventById(eventId: string): Promise<{ data: Event | null; error: Error | null }> {
+  try {
+    console.log('📅 Fetching event:', eventId)
+    
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', eventId)
+      .eq('is_published', true)
+      .eq('is_active', true)
+      .single()
+
+    if (error) {
+      console.error('❌ Fetch event error:', error)
+      return { data: null, error }
+    }
+
+    console.log('✅ Event fetched successfully:', data.id)
+    return { data, error: null }
+  } catch (error) {
+    console.error('❌ Fetch event exception:', error)
+    return { data: null, error: error as Error }
+  }
+}
+
+export async function createEvent(eventData: {
+  title: string
+  description?: string
+  event_date: string
+  location?: string
+  max_participants?: number
+}): Promise<{ data: Event | null; error: Error | null }> {
+  try {
+    console.log('📅 Creating event:', eventData.title)
+    
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error('❌ No authenticated user found')
+      return { data: null, error: new Error('User not authenticated') }
+    }
+
+    // Verify user is owner
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('is_owner')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !userProfile?.is_owner) {
+      console.error('❌ User is not owner')
+      return { data: null, error: new Error('Access denied: Owner privileges required') }
+    }
+
+    const { data, error } = await supabase
+      .from('events')
+      .insert({
+        ...eventData,
+        created_by: user.id
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('❌ Create event error:', error)
+      return { data: null, error }
+    }
+
+    console.log('✅ Event created successfully:', data.id)
+    return { data, error: null }
+  } catch (error) {
+    console.error('❌ Create event exception:', error)
+    return { data: null, error: error as Error }
+  }
+}
+
+export async function updateEvent(
+  eventId: string,
+  updates: {
+    title?: string
+    description?: string
+    event_date?: string
+    location?: string
+    max_participants?: number
+    is_published?: boolean
+  }
+): Promise<{ data: Event | null; error: Error | null }> {
+  try {
+    console.log('📅 Updating event:', eventId)
+    
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error('❌ No authenticated user found')
+      return { data: null, error: new Error('User not authenticated') }
+    }
+
+    // Verify user is owner
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('is_owner')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !userProfile?.is_owner) {
+      console.error('❌ User is not owner')
+      return { data: null, error: new Error('Access denied: Owner privileges required') }
+    }
+
+    const { data, error } = await supabase
+      .from('events')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', eventId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('❌ Update event error:', error)
+      return { data: null, error }
+    }
+
+    console.log('✅ Event updated successfully:', data.id)
+    return { data, error: null }
+  } catch (error) {
+    console.error('❌ Update event exception:', error)
+    return { data: null, error: error as Error }
+  }
+}
+
+export async function deleteEvent(eventId: string): Promise<{ error: Error | null }> {
+  try {
+    console.log('📅 Deleting event:', eventId)
+    
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error('❌ No authenticated user found')
+      return { error: new Error('User not authenticated') }
+    }
+
+    // Verify user is owner
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('is_owner')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !userProfile?.is_owner) {
+      console.error('❌ User is not owner')
+      return { error: new Error('Access denied: Owner privileges required') }
+    }
+
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId)
+
+    if (error) {
+      console.error('❌ Delete event error:', error)
+      return { error }
+    }
+
+    console.log('✅ Event deleted successfully:', eventId)
+    return { error: null }
+  } catch (error) {
+    console.error('❌ Delete event exception:', error)
+    return { error: error as Error }
+  }
+}
+
+export async function getOwnerEvents(): Promise<{ data: EventWithParticipants[] | null; error: Error | null }> {
+  try {
+    console.log('📅 Fetching owner events')
+    
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error('❌ No authenticated user found')
+      return { data: null, error: new Error('User not authenticated') }
+    }
+
+    // Verify user is owner
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('is_owner')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !userProfile?.is_owner) {
+      console.error('❌ User is not owner')
+      return { data: null, error: new Error('Access denied: Owner privileges required') }
+    }
+
+    const { data, error } = await supabase
+      .from('events')
+      .select(`
+        *,
+        participants:event_participants(count)
+      `)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('❌ Fetch owner events error:', error)
+      return { data: null, error }
+    }
+
+    // Process data to include participant count
+    const eventsWithCounts = data?.map(event => ({
+      ...event,
+      participant_count: event.participants?.[0]?.count || 0
+    })) || []
+
+    console.log('✅ Owner events fetched:', eventsWithCounts.length)
+    return { data: eventsWithCounts, error: null }
+  } catch (error) {
+    console.error('❌ Fetch owner events exception:', error)
+    return { data: null, error: error as Error }
+  }
+}
+
+export async function getEventParticipants(eventId: string): Promise<{ data: EventParticipant[] | null; error: Error | null }> {
+  try {
+    console.log('👥 Fetching event participants:', eventId)
+    
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error('❌ No authenticated user found')
+      return { data: null, error: new Error('User not authenticated') }
+    }
+
+    // Verify user is owner
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('is_owner')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !userProfile?.is_owner) {
+      console.error('❌ User is not owner')
+      return { data: null, error: new Error('Access denied: Owner privileges required') }
+    }
+
+    const { data, error } = await supabase
+      .from('event_participants')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('registration_date', { ascending: false })
+
+    if (error) {
+      console.error('❌ Fetch event participants error:', error)
+      return { data: null, error }
+    }
+
+    console.log('✅ Event participants fetched:', data?.length || 0)
+    return { data: data || [], error: null }
+  } catch (error) {
+    console.error('❌ Fetch event participants exception:', error)
+    return { data: null, error: error as Error }
+  }
+}
+
+export async function registerForEvent(registrationData: {
+  event_id: string
+  full_name: string
+  email: string
+  title?: string
+  company?: string
+  gdpr_consent: boolean
+}): Promise<{ data: any | null; error: Error | null }> {
+  try {
+    console.log('📝 Registering for event:', registrationData.event_id)
+    
+    const { data, error } = await supabase.rpc('register_for_event', {
+      p_event_id: registrationData.event_id,
+      p_full_name: registrationData.full_name,
+      p_email: registrationData.email,
+      p_title: registrationData.title || null,
+      p_company: registrationData.company || null,
+      p_gdpr_consent: registrationData.gdpr_consent
+    })
+
+    if (error) {
+      console.error('❌ Register for event error:', error)
+      return { data: null, error }
+    }
+
+    const registrationResult = Array.isArray(data) ? data[0] : data
+
+    console.log('✅ Event registration successful:', registrationResult?.reference_number)
+    return { data: registrationResult, error: null }
+  } catch (error) {
+    console.error('❌ Register for event exception:', error)
+    return { data: null, error: error as Error }
+  }
+}
+
+export async function getParticipantByReference(referenceNumber: string): Promise<{ data: any | null; error: Error | null }> {
+  try {
+    console.log('🎫 Getting participant by reference:', referenceNumber)
+    
+    const { data, error } = await supabase.rpc('get_participant_by_reference', {
+      p_reference_number: referenceNumber
+    })
+
+    if (error) {
+      console.error('❌ Get participant by reference error:', error)
+      return { data: null, error }
+    }
+
+    const participantData = Array.isArray(data) ? data[0] : data
+
+    if (!participantData) {
+      return { data: null, error: new Error('Participant not found') }
+    }
+
+    console.log('✅ Participant fetched successfully:', participantData.reference_number)
+    return { data: participantData, error: null }
+  } catch (error) {
+    console.error('❌ Get participant by reference exception:', error)
+    return { data: null, error: error as Error }
+  }
+}
+
+export async function getParticipantsByEmail(email: string): Promise<{ data: any[] | null; error: Error | null }> {
+  try {
+    console.log('📧 Getting participants by email:', email)
+    
+    const { data, error } = await supabase.rpc('get_participants_by_email', {
+      p_email: email
+    })
+
+    if (error) {
+      console.error('❌ Get participants by email error:', error)
+      return { data: null, error }
+    }
+
+    console.log('✅ Participants fetched successfully:', data?.length || 0)
+    return { data: data || [], error: null }
+  } catch (error) {
+    console.error('❌ Get participants by email exception:', error)
+    return { data: null, error: error as Error }
+  }
+}

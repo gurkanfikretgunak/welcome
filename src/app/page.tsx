@@ -465,6 +465,21 @@ export default function Home() {
           )}
         </TextCard>
 
+        <TextCard title="UPCOMING EVENTS">
+          <TextHierarchy level={1} className="mb-3">
+            Join our community events and connect with fellow developers.
+          </TextHierarchy>
+          <div className="flex gap-3">
+            <TextButton
+              variant="success"
+              onClick={() => router.push('/events')}
+              className="text-base px-6 py-3"
+            >
+              VIEW EVENTS →
+            </TextButton>
+          </div>
+        </TextCard>
+
         <TextCard title="SYSTEM INFORMATION">
           <TextHierarchy level={1} className="mb-3">
             <TextBadge variant="default">INTERFACE</TextBadge> Text-based UI with whitespace hierarchy

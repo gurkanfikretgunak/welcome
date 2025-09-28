@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 type SystemInfoProps = {
   browser: string;
@@ -15,12 +16,21 @@ type SystemInfoProps = {
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const [showSystemInfo, setShowSystemInfo] = useState(false);
+  const router = useRouter();
   
   return (
     <div className="relative mt-8 p-4 text-sm muted border-t border-gray-100">
       <div className="flex justify-between items-center">
-        <div>
-          © {currentYear} All rights reserved by MasterFabric.
+        <div className="flex items-center gap-4">
+          <span>© {currentYear} All rights reserved by MasterFabric.</span>
+          <button 
+            onClick={() => router.push('/events')}
+            className="border border-black bg-white px-3 py-1 font-mono text-xs hover:bg-black hover:text-white transition-colors flex items-center gap-2"
+            title="View Events"
+          >
+            <EventIcon />
+            <span>EVENTS</span>
+          </button>
         </div>
         <button 
           onClick={() => setShowSystemInfo(true)} 
@@ -56,6 +66,27 @@ function ComputerIcon() {
       <rect x="2" y="3" width="20" height="14" rx="2"></rect>
       <line x1="8" y1="21" x2="16" y2="21"></line>
       <line x1="12" y1="17" x2="12" y2="21"></line>
+    </svg>
+  );
+}
+
+function EventIcon() {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width="16" 
+      height="16" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="16" y1="2" x2="16" y2="6"></line>
+      <line x1="8" y1="2" x2="8" y2="6"></line>
+      <line x1="3" y1="10" x2="21" y2="10"></line>
     </svg>
   );
 }
