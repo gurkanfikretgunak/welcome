@@ -46,6 +46,7 @@ export default function OwnerEventsPage() {
   const [error, setError] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState<Participant | null>(null)
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null)
 
   useEffect(() => {
     if (!loading && userProfile) {
@@ -220,6 +221,23 @@ export default function OwnerEventsPage() {
           </TextCard>
         )}
 
+        {editingEvent && (
+          <TextCard title="EDIT EVENT">
+            <EditEventForm 
+              event={editingEvent}
+              onUpdated={() => { 
+                setEditingEvent(null)
+                fetchEvents()
+                // If the edited event is currently selected, refresh its data
+                if (selectedEvent?.id === editingEvent.id) {
+                  setSelectedEvent(null)
+                }
+              }}
+              onCancel={() => setEditingEvent(null)}
+            />
+          </TextCard>
+        )}
+
         {/* Error Message */}
         {error && (
           <TextCard title="ERROR" variant="error">
@@ -266,7 +284,7 @@ export default function OwnerEventsPage() {
                       </TextBadge>
                       <TextButton
                         variant="default"
-                        onClick={() => {/* TODO: Edit functionality */}}
+                        onClick={() => setEditingEvent(event)}
                         className="text-xs"
                       >
                         ✏️ EDIT
@@ -456,6 +474,125 @@ export default function OwnerEventsPage() {
         </div>
       )}
     </div>
+  )
+}
+
+function EditEventForm({ event, onUpdated, onCancel }: { 
+  event: Event
+  onUpdated: () => void
+  onCancel: () => void
+}) {
+  const [form, setForm] = useState({
+    title: event.title,
+    description: event.description || '',
+    event_date: event.event_date.slice(0, 16), // Format for datetime-local
+    location: event.location || '',
+    max_participants: event.max_participants?.toString() || '' as number | string,
+  })
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    try {
+      const { error } = await updateEvent(event.id, {
+        title: form.title,
+        description: form.description || undefined,
+        event_date: form.event_date,
+        location: form.location || undefined,
+        max_participants: form.max_participants ? Number(form.max_participants) : undefined,
+      })
+      
+      if (error) throw error
+      
+      onUpdated()
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <TextHierarchy level={2} className="mb-2">TITLE</TextHierarchy>
+        <input
+          name="title"
+          value={form.title}
+          onChange={handleChange}
+          className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
+          placeholder="Event title"
+          required
+        />
+      </div>
+      <div>
+        <TextHierarchy level={2} className="mb-2">DESCRIPTION</TextHierarchy>
+        <textarea
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+          className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
+          placeholder="Event description"
+          rows={3}
+        />
+      </div>
+      <div>
+        <TextHierarchy level={2} className="mb-2">DATE/TIME</TextHierarchy>
+        <input
+          type="datetime-local"
+          name="event_date"
+          value={form.event_date}
+          onChange={handleChange}
+          className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
+          required
+        />
+      </div>
+      <div>
+        <TextHierarchy level={2} className="mb-2">LOCATION</TextHierarchy>
+        <input
+          name="location"
+          value={form.location}
+          onChange={handleChange}
+          className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
+          placeholder="Event location"
+        />
+      </div>
+      <div>
+        <TextHierarchy level={2} className="mb-2">MAX PARTICIPANTS (optional)</TextHierarchy>
+        <input
+          type="number"
+          name="max_participants"
+          value={form.max_participants}
+          onChange={handleChange}
+          className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
+          placeholder="Leave empty for unlimited"
+          min="1"
+        />
+      </div>
+      {error && (
+        <div className="bg-red-900/20 border border-red-600 p-3 rounded">
+          <TextHierarchy level={2} className="text-red-400">
+            Error: {error}
+          </TextHierarchy>
+        </div>
+      )}
+      <div className="flex gap-3">
+        <TextButton type="submit" variant="success" disabled={submitting} className="flex-1">
+          {submitting ? 'UPDATING...' : 'UPDATE EVENT'}
+        </TextButton>
+        <TextButton type="button" variant="default" onClick={onCancel} disabled={submitting}>
+          CANCEL
+        </TextButton>
+      </div>
+    </form>
   )
 }
 
