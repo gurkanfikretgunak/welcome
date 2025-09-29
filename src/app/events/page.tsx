@@ -69,6 +69,11 @@ export default function EventsPage() {
 
   const handleRegistrationSuccess = (data: RegistrationData) => {
     setRegistrationData(data)
+    // Redirect directly to ticket view page for better UX
+    if (data?.reference_number) {
+      router.push(`/ticketview/${data.reference_number}`)
+      return
+    }
     setCurrentView('tickets')
   }
 

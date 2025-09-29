@@ -31,6 +31,7 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel }: Ev
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target
@@ -43,15 +44,7 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel }: Ev
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.full_name || !formData.email || !formData.gdpr_consent) {
-      setError('Full name, email, and GDPR consent are required')
-      return
-    }
-
-    if (!recaptchaToken) {
-      setError('Please complete the reCAPTCHA verification')
-      return
-    }
+    if (!isValid) return
 
     setLoading(true)
     setError(null)
@@ -83,6 +76,12 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel }: Ev
       setLoading(false)
     }
   }
+
+  const isValid =
+    !!formData.full_name &&
+    !!formData.email && emailRegex.test(formData.email) &&
+    !!formData.gdpr_consent &&
+    !!recaptchaToken
 
   const eventDate = new Date(event.event_date)
   const formatDate = (date: Date) => {
@@ -227,7 +226,7 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel }: Ev
             <TextButton
               type="submit"
               variant="success"
-              disabled={loading}
+              disabled={loading || !isValid}
               className="flex-1"
             >
               {loading ? 'REGISTERING...' : 'REGISTER'}
