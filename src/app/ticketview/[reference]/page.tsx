@@ -50,20 +50,38 @@ export default function TicketView({ params }: { params: Promise<{ reference: st
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <TextBadge variant="default">LOADING TICKET...</TextBadge>
+      <div className="min-h-screen flex flex-col">
+        <header className="border-b-2 border-black bg-white">
+          <div className="max-w-6xl mx-auto px-4 py-4">
+            <h1 className="text-2xl font-mono font-bold text-center">
+              MASTERFABRIC WELCOME
+            </h1>
+          </div>
+        </header>
+        <div className="flex-1 flex items-center justify-center">
+          <TextBadge variant="default">LOADING TICKET...</TextBadge>
+        </div>
       </div>
     )
   }
 
   if (error || !participant) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <TextCard variant="error">
-          <TextHierarchy level={1} muted>
-            {error || 'Ticket not found'}
-          </TextHierarchy>
-        </TextCard>
+      <div className="min-h-screen flex flex-col">
+        <header className="border-b-2 border-black bg-white">
+          <div className="max-w-6xl mx-auto px-4 py-4">
+            <h1 className="text-2xl font-mono font-bold text-center">
+              MASTERFABRIC WELCOME
+            </h1>
+          </div>
+        </header>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <TextCard variant="error">
+            <TextHierarchy level={1} muted>
+              {error || 'Ticket not found'}
+            </TextHierarchy>
+          </TextCard>
+        </div>
       </div>
     )
   }
@@ -77,30 +95,50 @@ export default function TicketView({ params }: { params: Promise<{ reference: st
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + '\n' + ticketUrl)}`
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <EventTicket participant={participant} hideAvatar enableShare />
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <header className="border-b-2 border-black bg-white">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <h1 className="text-2xl font-mono font-bold text-center">
+            MASTERFABRIC WELCOME
+          </h1>
+        </div>
+      </header>
 
-        {/* Notices under the ticket */}
-        <div className="mt-4 space-y-2 text-center">
-          <TextCard variant="muted">
-            <TextHierarchy level={2} muted>
-              - Please keep your reference number confidential.
-            </TextHierarchy>
-            <TextHierarchy level={2} muted>
-              - Present the QR code at the entrance for validation.
-            </TextHierarchy>
-            <TextHierarchy level={2} muted>
-              - For any issues, contact the event organizer.
-            </TextHierarchy>
-          </TextCard>
-          <div className="flex justify-center">
-            <TextButton variant="default" onClick={() => window.location.href = '/'}>
-              ← BACK TO WELCOME
-            </TextButton>
+      <div className="flex-1 flex flex-col items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <EventTicket participant={participant} hideAvatar enableShare />
+
+          {/* Notices under the ticket */}
+          <div className="mt-4 space-y-2 text-center">
+            <TextCard variant="muted">
+              <TextHierarchy level={2} muted>
+                - Please keep your reference number confidential.
+              </TextHierarchy>
+              <TextHierarchy level={2} muted>
+                - Present the QR code at the entrance for validation.
+              </TextHierarchy>
+              <TextHierarchy level={2} muted>
+                - For any issues, contact the event organizer.
+              </TextHierarchy>
+            </TextCard>
+            <div className="flex justify-center">
+              <TextButton variant="default" onClick={() => window.location.href = '/'}>
+                ← BACK TO WELCOME
+              </TextButton>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="border-t border-black p-4 mt-8">
+        <div className="max-w-6xl mx-auto text-center">
+          <TextHierarchy level={2} muted>
+            © 2025 MasterFabric. All rights reserved.
+          </TextHierarchy>
+        </div>
+      </footer>
     </div>
   )
 }

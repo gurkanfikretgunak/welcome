@@ -74,6 +74,15 @@ export default function PublicEventView({ params }: { params: Promise<{ id: stri
   if (countdown !== null) {
     return (
       <div className="min-h-screen flex flex-col">
+        {/* Header */}
+        <header className="border-b-2 border-black bg-white">
+          <div className="max-w-6xl mx-auto px-4 py-4">
+            <h1 className="text-2xl font-mono font-bold text-center">
+              MASTERFABRIC WELCOME
+            </h1>
+          </div>
+        </header>
+
         <div className="flex-1 flex items-center justify-center p-4">
           <TextCard variant="success" title="REGISTRATION SUCCESSFUL! 🎉">
             <div className="text-center space-y-4">
@@ -104,6 +113,15 @@ export default function PublicEventView({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <header className="border-b-2 border-black bg-white">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <h1 className="text-2xl font-mono font-bold text-center">
+            MASTERFABRIC WELCOME
+          </h1>
+        </div>
+      </header>
+
       <div className="flex-1 p-4">
         <div className="max-w-xl mx-auto space-y-4">
           {/* Ticket Lookup Section */}

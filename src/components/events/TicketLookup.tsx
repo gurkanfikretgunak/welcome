@@ -23,6 +23,7 @@ interface Participant {
 }
 
 export default function TicketLookup() {
+  const [isExpanded, setIsExpanded] = useState(false)
   const [lookupType, setLookupType] = useState<'reference' | 'email'>('reference')
   const [referenceNumber, setReferenceNumber] = useState('')
   const [email, setEmail] = useState('')
@@ -101,7 +102,19 @@ export default function TicketLookup() {
   return (
     <div className="space-y-6">
       <TextCard title="TICKET LOOKUP">
-        <div className="space-y-4">
+        {/* Collapsible Toggle Button */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full flex items-center justify-between mb-4 p-3 bg-gray-100 hover:bg-gray-200 border border-gray-300 transition-colors"
+        >
+          <TextHierarchy level={2} emphasis>
+            🔍 {isExpanded ? 'HIDE TICKET SEARCH' : 'SEARCH FOR YOUR TICKET'}
+          </TextHierarchy>
+          <span className="text-xl font-bold">{isExpanded ? '▲' : '▼'}</span>
+        </button>
+
+        {isExpanded && (
+          <div className="space-y-4">
           {/* Lookup Type Selection */}
           <div className="flex gap-3">
             <TextButton
@@ -176,9 +189,9 @@ export default function TicketLookup() {
           )}
 
           {/* No Results */}
-          {!loading && !error && participants.length === 0 && (
-            <div className="bg-yellow-900/20 border border-yellow-600 p-3 rounded">
-              <TextHierarchy level={2} className="text-yellow-400">
+          {!loading && !error && participants.length === 0 && (referenceNumber || email) && (
+            <div className="bg-white border-2 border-gray-600 p-4 rounded">
+              <TextHierarchy level={2} emphasis>
                 <TextBadge variant="warning">NO TICKETS FOUND</TextBadge>
               </TextHierarchy>
               <TextHierarchy level={2} muted className="mt-2">
@@ -190,6 +203,7 @@ export default function TicketLookup() {
             </div>
           )}
         </div>
+        )}
       </TextCard>
 
       {/* Display Tickets */}
