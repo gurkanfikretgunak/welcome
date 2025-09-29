@@ -138,7 +138,7 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel }: Ev
               value={formData.full_name}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 bg-black border border-gray-600 text-white font-mono text-sm focus:border-green-500 focus:outline-none"
+              className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
               placeholder="Enter your full name"
             />
           </div>
@@ -154,7 +154,7 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel }: Ev
               value={formData.email}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 bg-black border border-gray-600 text-white font-mono text-sm focus:border-green-500 focus:outline-none"
+              className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
               placeholder="Enter your email address"
             />
           </div>
@@ -169,7 +169,7 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel }: Ev
               name="title"
               value={formData.title}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 bg-black border border-gray-600 text-white font-mono text-sm focus:border-green-500 focus:outline-none"
+              className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
               placeholder="e.g., Software Developer, Manager"
             />
           </div>
@@ -184,7 +184,7 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel }: Ev
               name="company"
               value={formData.company}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 bg-black border border-gray-600 text-white font-mono text-sm focus:border-green-500 focus:outline-none"
+              className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
               placeholder="Enter your company name"
             />
           </div>

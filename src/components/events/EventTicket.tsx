@@ -37,11 +37,11 @@ export default function EventTicket({ participant }: EventTicketProps) {
         }
         
         const qrCodeUrl = await QRCode.toDataURL(JSON.stringify(qrData), {
-          width: 200,
+          width: 220,
           margin: 2,
           color: {
-            dark: '#00ff00',
-            light: '#000000'
+            dark: '#000000',
+            light: '#FFFFFF'
           }
         })
         setQrCodeDataUrl(qrCodeUrl)
@@ -80,11 +80,11 @@ export default function EventTicket({ participant }: EventTicketProps) {
           {/* QR Code */}
           {qrCodeDataUrl && (
             <div className="flex justify-center mb-4">
-              <div className="bg-white p-4 rounded">
-                <img 
-                  src={qrCodeDataUrl} 
-                  alt="Event Ticket QR Code" 
-                  className="w-48 h-48"
+              <div className="bg-white p-3 rounded border border-gray-300">
+                <img
+                  src={qrCodeDataUrl}
+                  alt="Event Ticket QR Code"
+                  className="w-52 h-52"
                 />
               </div>
             </div>
@@ -113,7 +113,7 @@ export default function EventTicket({ participant }: EventTicketProps) {
           </div>
 
           {/* Participant Info */}
-          <div className="border-t border-gray-600 pt-3">
+          <div className="border-t border-gray-600 pt-3 text-left">
             <div className="flex items-center gap-3 mb-3">
               {/* Avatar */}
               <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white font-mono font-bold text-lg">

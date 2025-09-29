@@ -146,7 +146,7 @@ export default function TicketLookup() {
                   value={referenceNumber}
                   onChange={(e) => setReferenceNumber(e.target.value.toUpperCase())}
                   placeholder="Enter your reference number"
-                  className="w-full px-3 py-2 bg-black border border-gray-600 text-white font-mono text-sm focus:border-green-500 focus:outline-none uppercase"
+                  className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none uppercase"
                 />
               </div>
             ) : (
@@ -159,7 +159,7 @@ export default function TicketLookup() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email address"
-                  className="w-full px-3 py-2 bg-black border border-gray-600 text-white font-mono text-sm focus:border-green-500 focus:outline-none"
+                  className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
                 />
               </div>
             )}

@@ -42,6 +42,7 @@ export default function OwnerEventsPage() {
   const [loadingEvents, setLoadingEvents] = useState(true)
   const [loadingParticipants, setLoadingParticipants] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
 
   useEffect(() => {
     if (!loading && userProfile) {
@@ -92,6 +93,12 @@ export default function OwnerEventsPage() {
   }
 
   const handleEventSelect = (event: Event) => {
+    if (selectedEvent && selectedEvent.id === event.id) {
+      // collapse if clicking the same card
+      setSelectedEvent(null)
+      setParticipants([])
+      return
+    }
     setSelectedEvent(event)
     fetchParticipants(event.id)
   }
@@ -195,16 +202,19 @@ export default function OwnerEventsPage() {
               ← BACK TO EVENTS
             </TextButton>
             <TextButton
-              variant="success"
-              onClick={() => {
-                // TODO: Implement create event form
-                alert('Create event form will be implemented')
-              }}
+              variant={createOpen ? 'warning' : 'success'}
+              onClick={() => setCreateOpen(v => !v)}
             >
-              CREATE NEW EVENT
+              {createOpen ? 'HIDE CREATE FORM' : 'CREATE NEW EVENT'}
             </TextButton>
           </div>
         </TextCard>
+
+        {createOpen && (
+          <TextCard title="CREATE EVENT">
+            <CreateEventForm onCreated={() => { setCreateOpen(false); fetchEvents() }} />
+          </TextCard>
+        )}
 
         {/* Error Message */}
         {error && (
@@ -250,6 +260,9 @@ export default function OwnerEventsPage() {
                           <TextBadge variant={event.is_active ? 'success' : 'error'}>
                             {event.is_active ? 'ACTIVE' : 'INACTIVE'}
                           </TextBadge>
+                          <span className="text-xs muted">
+                            {selectedEvent?.id === event.id ? '▼' : '►'}
+                          </span>
                         </div>
                       </div>
                       <TextHierarchy level={2} muted>
@@ -372,5 +385,117 @@ export default function OwnerEventsPage() {
         </div>
       </PageLayout>
     </div>
+  )
+}
+
+function CreateEventForm({ onCreated }: { onCreated: () => void }) {
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    event_date: '',
+    location: '',
+    max_participants: '' as number | string,
+  })
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: form.title,
+          description: form.description || null,
+          event_date: form.event_date,
+          location: form.location || null,
+          max_participants: form.max_participants ? Number(form.max_participants) : null,
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to create event')
+      onCreated()
+      setForm({ title: '', description: '', event_date: '', location: '', max_participants: '' })
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <TextHierarchy level={2} className="mb-2">TITLE</TextHierarchy>
+        <input
+          name="title"
+          value={form.title}
+          onChange={handleChange}
+          className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
+          placeholder="Event title"
+          required
+        />
+      </div>
+      <div>
+        <TextHierarchy level={2} className="mb-2">DESCRIPTION</TextHierarchy>
+        <textarea
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+          className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
+          placeholder="Event description"
+          rows={3}
+        />
+      </div>
+      <div>
+        <TextHierarchy level={2} className="mb-2">DATE/TIME</TextHierarchy>
+        <input
+          type="datetime-local"
+          name="event_date"
+          value={form.event_date}
+          onChange={handleChange}
+          className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
+          required
+        />
+      </div>
+      <div>
+        <TextHierarchy level={2} className="mb-2">LOCATION</TextHierarchy>
+        <input
+          name="location"
+          value={form.location}
+          onChange={handleChange}
+          className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
+          placeholder="Location or Online"
+        />
+      </div>
+      <div>
+        <TextHierarchy level={2} className="mb-2">MAX PARTICIPANTS</TextHierarchy>
+        <input
+          type="number"
+          name="max_participants"
+          value={form.max_participants}
+          onChange={handleChange}
+          className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
+          placeholder="Leave empty for unlimited"
+          min={0}
+        />
+      </div>
+      {error && (
+        <TextHierarchy level={2} className="text-red-400">{error}</TextHierarchy>
+      )}
+      <div className="flex gap-3">
+        <TextButton type="submit" variant="success" disabled={submitting}>
+          {submitting ? 'CREATING...' : 'CREATE EVENT'}
+        </TextButton>
+      </div>
+    </form>
   )
 }
