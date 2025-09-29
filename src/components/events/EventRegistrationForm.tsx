@@ -113,15 +113,39 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel }: Ev
         </div>
 
         {/* GDPR Notice */}
-        <div className="bg-yellow-900/20 border border-yellow-600 p-3 rounded">
-          <TextHierarchy level={2} className="text-yellow-400">
+        <div className="bg-white border border-gray-600 p-4 rounded">
+          <TextHierarchy level={2} className="mb-2">
             <TextBadge variant="warning">GDPR NOTICE</TextBadge>
           </TextHierarchy>
-          <TextHierarchy level={2} muted className="mt-2">
-            By registering for this event, you consent to the processing of your personal data 
-            (name, email, title, company) for event management purposes. Your data will be 
-            stored securely and used only for this event. You can request data deletion at any time.
-          </TextHierarchy>
+          <div className="space-y-2 text-left">
+            <TextHierarchy level={2} muted>
+              By registering for this event, you explicitly consent to the processing of your personal data
+              for event management purposes in accordance with GDPR and applicable data protection laws.
+            </TextHierarchy>
+            <TextHierarchy level={2} muted>
+              Scope of processing: name, email address, job title (optional), company (optional), registration
+              timestamp and a system-generated reference number. This information is used to manage attendance,
+              verify your ticket at the entrance, and communicate event-related updates.
+            </TextHierarchy>
+            <TextHierarchy level={2} muted>
+              Legal basis: your consent (GDPR Art. 6(1)(a)). You may withdraw consent at any time without
+              affecting the lawfulness of processing based on consent before its withdrawal.
+            </TextHierarchy>
+            <TextHierarchy level={2} muted>
+              Retention: data will be retained only for the minimum period necessary to operate the event and
+              fulfill any legal obligations (e.g., audit requests), after which it will be securely deleted or
+              anonymized.
+            </TextHierarchy>
+            <TextHierarchy level={2} muted>
+              Your rights: access, rectification, erasure, restriction, objection, and data portability. To exercise
+              these rights or to request deletion of your data, contact the event organizer using the contact details
+              provided in the event materials.
+            </TextHierarchy>
+            <TextHierarchy level={2} muted>
+              Data sharing: personal data is not sold. It may be shared with trusted processors strictly for
+              ticketing and communication (e.g., email service), under appropriate data processing agreements.
+            </TextHierarchy>
+          </div>
         </div>
 
         {/* Registration Form */}

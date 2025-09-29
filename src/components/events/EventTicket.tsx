@@ -24,7 +24,7 @@ interface EventTicketProps {
   enableShare?: boolean
 }
 
-export default function EventTicket({ participant, hideAvatar = false, enableShare = false }: EventTicketProps) {
+export default function EventTicket({ participant, hideAvatar = true, enableShare = false }: EventTicketProps) {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('')
   const [showShare, setShowShare] = useState(false)
 

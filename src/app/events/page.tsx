@@ -38,7 +38,7 @@ interface RegistrationData {
 }
 
 export default function EventsPage() {
-  const { user, userProfile, loading } = useAuth()
+  const { user, userProfile, loading, signOut } = useAuth()
   const router = useRouter()
   const [currentView, setCurrentView] = useState<'list' | 'register' | 'tickets'>('list')
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
@@ -103,7 +103,7 @@ export default function EventsPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar user={userProfile} onSignOut={() => {}} />
+      <Navbar user={userProfile} onSignOut={() => signOut()} />
       
       <PageLayout
         title="EVENTS"

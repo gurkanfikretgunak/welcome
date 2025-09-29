@@ -397,25 +397,7 @@ export default function SettingsPage() {
           </form>
         </TextCard>
 
-        <div className="border border-black p-6 bg-white">
-          <TextHierarchy level={1} emphasis className="mb-4">
-            SESSION MANAGEMENT
-          </TextHierarchy>
-          
-          <TextHierarchy level={1} muted className="mb-4">
-            Signing out will end your current session and redirect you to the login page.
-          </TextHierarchy>
-          
-          <div className="flex justify-center">
-            <TextButton
-              onClick={handleSignOutClick}
-              variant="error"
-              className="px-8 py-3"
-            >
-              SIGN OUT
-            </TextButton>
-          </div>
-        </div>
+        {/* Session management section removed to avoid duplicate sign-out action */}
 
         <TextCard variant="muted">
           <TextHierarchy level={1} muted>
