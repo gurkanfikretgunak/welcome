@@ -5,6 +5,7 @@ import TextBadge from '@/components/ui/TextBadge'
 import TextCard from '@/components/ui/TextCard'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import EventRegistrationForm from '@/components/events/EventRegistrationForm'
+import { getEventById } from '@/lib/supabase'
 
 interface EventData {
   id: string
@@ -15,16 +16,7 @@ interface EventData {
   max_participants?: number
 }
 
-interface ParticipantInfo {
-  participant_id: string
-  reference_number: string
-  event_id: string
-  event_title: string
-  event_date: string
-  event_location?: string
-}
-
-export default function PublicEventView({ params }: { params: Promise<{ reference: string }> }) {
+export default function PublicEventView({ params }: { params: Promise<{ id: string }> }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [event, setEvent] = useState<EventData | null>(null)
@@ -32,16 +24,12 @@ export default function PublicEventView({ params }: { params: Promise<{ referenc
   useEffect(() => {
     const load = async () => {
       try {
-        const { reference } = await params
-        const res = await fetch(`/api/events/participants/reference/${reference}`)
-        const data = await res.json()
-        if (!res.ok || !data?.participant) throw new Error(data.error || 'Event not found')
-
-        const p: ParticipantInfo = data.participant
-        const evRes = await fetch(`/api/events/${p.event_id}`)
-        const evData = await evRes.json()
-        if (!evRes.ok || !evData?.event) throw new Error('Event not available')
-        setEvent(evData.event)
+        const { id } = await params
+        const { data, error } = await getEventById(id)
+        
+        if (error || !data) throw error || new Error('Event not found')
+        
+        setEvent(data)
       } catch (e) {
         setError((e as Error).message)
       } finally {

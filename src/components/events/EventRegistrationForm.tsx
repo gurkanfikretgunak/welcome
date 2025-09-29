@@ -6,6 +6,7 @@ import TextCard from '@/components/ui/TextCard'
 import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
+import { registerForEvent } from '@/lib/supabase'
 
 interface Event {
   id: string
@@ -51,25 +52,16 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel, subm
     setError(null)
 
     try {
-      const response = await fetch('/api/events/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          event_id: event.id,
-          ...formData,
-          recaptcha_token: recaptchaToken
-        })
+      const { data, error } = await registerForEvent({
+        event_id: event.id,
+        ...formData
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed')
+      if (error) {
+        throw error
       }
 
-      onSuccess(data.registration)
+      onSuccess(data)
     } catch (err) {
       console.error('Registration error:', err)
       setError(err instanceof Error ? err.message : 'Registration failed')

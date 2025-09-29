@@ -1550,24 +1550,6 @@ export interface Event {
   updated_at: string
 }
 
-export interface EventParticipant {
-  id: string
-  event_id: string
-  reference_number: string
-  full_name: string
-  email: string
-  title?: string
-  company?: string
-  gdpr_consent: boolean
-  registration_date: string
-  created_at: string
-  updated_at: string
-}
-
-export interface EventWithParticipants extends Event {
-  participant_count: number
-}
-
 // Events functions
 export async function getPublishedEvents(): Promise<{ data: Event[] | null; error: Error | null }> {
   try {
@@ -1619,6 +1601,7 @@ export async function getEventById(eventId: string): Promise<{ data: Event | nul
   }
 }
 
+// Owner-only functions (protected by RLS)
 export async function createEvent(eventData: {
   title: string
   description?: string
@@ -1629,23 +1612,9 @@ export async function createEvent(eventData: {
   try {
     console.log('📅 Creating event:', eventData.title)
     
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      console.error('❌ No authenticated user found')
-      return { data: null, error: new Error('User not authenticated') }
-    }
-
-    // Verify user is owner
-    const { data: userProfile, error: profileError } = await supabase
-      .from('users')
-      .select('is_owner')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError || !userProfile?.is_owner) {
-      console.error('❌ User is not owner')
-      return { data: null, error: new Error('Access denied: Owner privileges required') }
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { data: null, error: new Error('Not authenticated') }
     }
 
     const { data, error } = await supabase
@@ -1662,7 +1631,7 @@ export async function createEvent(eventData: {
       return { data: null, error }
     }
 
-    console.log('✅ Event created successfully:', data.id)
+    console.log('✅ Event created:', data.id)
     return { data, error: null }
   } catch (error) {
     console.error('❌ Create event exception:', error)
@@ -1672,43 +1641,22 @@ export async function createEvent(eventData: {
 
 export async function updateEvent(
   eventId: string,
-  updates: {
-    title?: string
-    description?: string
-    event_date?: string
-    location?: string
-    max_participants?: number
-    is_published?: boolean
-  }
+  updates: Partial<{
+    title: string
+    description: string
+    event_date: string
+    location: string
+    max_participants: number
+    is_published: boolean
+    is_active: boolean
+  }>
 ): Promise<{ data: Event | null; error: Error | null }> {
   try {
     console.log('📅 Updating event:', eventId)
     
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      console.error('❌ No authenticated user found')
-      return { data: null, error: new Error('User not authenticated') }
-    }
-
-    // Verify user is owner
-    const { data: userProfile, error: profileError } = await supabase
-      .from('users')
-      .select('is_owner')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError || !userProfile?.is_owner) {
-      console.error('❌ User is not owner')
-      return { data: null, error: new Error('Access denied: Owner privileges required') }
-    }
-
     const { data, error } = await supabase
       .from('events')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
+      .update(updates)
       .eq('id', eventId)
       .select()
       .single()
@@ -1718,7 +1666,7 @@ export async function updateEvent(
       return { data: null, error }
     }
 
-    console.log('✅ Event updated successfully:', data.id)
+    console.log('✅ Event updated:', data.id)
     return { data, error: null }
   } catch (error) {
     console.error('❌ Update event exception:', error)
@@ -1730,25 +1678,6 @@ export async function deleteEvent(eventId: string): Promise<{ error: Error | nul
   try {
     console.log('📅 Deleting event:', eventId)
     
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      console.error('❌ No authenticated user found')
-      return { error: new Error('User not authenticated') }
-    }
-
-    // Verify user is owner
-    const { data: userProfile, error: profileError } = await supabase
-      .from('users')
-      .select('is_owner')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError || !userProfile?.is_owner) {
-      console.error('❌ User is not owner')
-      return { error: new Error('Access denied: Owner privileges required') }
-    }
-
     const { error } = await supabase
       .from('events')
       .delete()
@@ -1759,7 +1688,7 @@ export async function deleteEvent(eventId: string): Promise<{ error: Error | nul
       return { error }
     }
 
-    console.log('✅ Event deleted successfully:', eventId)
+    console.log('✅ Event deleted')
     return { error: null }
   } catch (error) {
     console.error('❌ Delete event exception:', error)
@@ -1767,35 +1696,14 @@ export async function deleteEvent(eventId: string): Promise<{ error: Error | nul
   }
 }
 
-export async function getOwnerEvents(): Promise<{ data: EventWithParticipants[] | null; error: Error | null }> {
+export async function getOwnerEvents(): Promise<{ data: Event[] | null; error: Error | null }> {
   try {
-    console.log('📅 Fetching owner events')
+    console.log('📅 Fetching all events (owner)')
     
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      console.error('❌ No authenticated user found')
-      return { data: null, error: new Error('User not authenticated') }
-    }
-
-    // Verify user is owner
-    const { data: userProfile, error: profileError } = await supabase
-      .from('users')
-      .select('is_owner')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError || !userProfile?.is_owner) {
-      console.error('❌ User is not owner')
-      return { data: null, error: new Error('Access denied: Owner privileges required') }
-    }
-
+    // RLS policy will check if user is owner
     const { data, error } = await supabase
       .from('events')
-      .select(`
-        *,
-        participants:event_participants(count)
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -1803,43 +1711,18 @@ export async function getOwnerEvents(): Promise<{ data: EventWithParticipants[] 
       return { data: null, error }
     }
 
-    // Process data to include participant count
-    const eventsWithCounts = data?.map(event => ({
-      ...event,
-      participant_count: event.participants?.[0]?.count || 0
-    })) || []
-
-    console.log('✅ Owner events fetched:', eventsWithCounts.length)
-    return { data: eventsWithCounts, error: null }
+    console.log('✅ Owner events fetched:', data?.length || 0)
+    return { data: data || [], error: null }
   } catch (error) {
     console.error('❌ Fetch owner events exception:', error)
     return { data: null, error: error as Error }
   }
 }
 
-export async function getEventParticipants(eventId: string): Promise<{ data: EventParticipant[] | null; error: Error | null }> {
+export async function getEventParticipants(eventId: string): Promise<{ data: any[] | null; error: Error | null }> {
   try {
     console.log('👥 Fetching event participants:', eventId)
     
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      console.error('❌ No authenticated user found')
-      return { data: null, error: new Error('User not authenticated') }
-    }
-
-    // Verify user is owner
-    const { data: userProfile, error: profileError } = await supabase
-      .from('users')
-      .select('is_owner')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError || !userProfile?.is_owner) {
-      console.error('❌ User is not owner')
-      return { data: null, error: new Error('Access denied: Owner privileges required') }
-    }
-
     const { data, error } = await supabase
       .from('event_participants')
       .select('*')
@@ -1847,18 +1730,19 @@ export async function getEventParticipants(eventId: string): Promise<{ data: Eve
       .order('registration_date', { ascending: false })
 
     if (error) {
-      console.error('❌ Fetch event participants error:', error)
+      console.error('❌ Fetch participants error:', error)
       return { data: null, error }
     }
 
-    console.log('✅ Event participants fetched:', data?.length || 0)
+    console.log('✅ Participants fetched:', data?.length || 0)
     return { data: data || [], error: null }
   } catch (error) {
-    console.error('❌ Fetch event participants exception:', error)
+    console.error('❌ Fetch participants exception:', error)
     return { data: null, error: error as Error }
   }
 }
 
+// Public functions (protected by RLS)
 export async function registerForEvent(registrationData: {
   event_id: string
   full_name: string
@@ -1870,6 +1754,7 @@ export async function registerForEvent(registrationData: {
   try {
     console.log('📝 Registering for event:', registrationData.event_id)
     
+    // Use RPC function for registration logic
     const { data, error } = await supabase.rpc('register_for_event', {
       p_event_id: registrationData.event_id,
       p_full_name: registrationData.full_name,
@@ -1880,16 +1765,15 @@ export async function registerForEvent(registrationData: {
     })
 
     if (error) {
-      console.error('❌ Register for event error:', error)
+      console.error('❌ Register error:', error)
       return { data: null, error }
     }
 
-    const registrationResult = Array.isArray(data) ? data[0] : data
-
-    console.log('✅ Event registration successful:', registrationResult?.reference_number)
-    return { data: registrationResult, error: null }
+    const result = Array.isArray(data) ? data[0] : data
+    console.log('✅ Registration successful:', result?.reference_number)
+    return { data: result, error: null }
   } catch (error) {
-    console.error('❌ Register for event exception:', error)
+    console.error('❌ Register exception:', error)
     return { data: null, error: error as Error }
   }
 }
@@ -1903,20 +1787,19 @@ export async function getParticipantByReference(referenceNumber: string): Promis
     })
 
     if (error) {
-      console.error('❌ Get participant by reference error:', error)
+      console.error('❌ Get participant error:', error)
       return { data: null, error }
     }
 
-    const participantData = Array.isArray(data) ? data[0] : data
-
-    if (!participantData) {
+    const result = Array.isArray(data) ? data[0] : data
+    if (!result) {
       return { data: null, error: new Error('Participant not found') }
     }
 
-    console.log('✅ Participant fetched successfully:', participantData.reference_number)
-    return { data: participantData, error: null }
+    console.log('✅ Participant found:', result.reference_number)
+    return { data: result, error: null }
   } catch (error) {
-    console.error('❌ Get participant by reference exception:', error)
+    console.error('❌ Get participant exception:', error)
     return { data: null, error: error as Error }
   }
 }
@@ -1930,14 +1813,14 @@ export async function getParticipantsByEmail(email: string): Promise<{ data: any
     })
 
     if (error) {
-      console.error('❌ Get participants by email error:', error)
+      console.error('❌ Get participants error:', error)
       return { data: null, error }
     }
 
-    console.log('✅ Participants fetched successfully:', data?.length || 0)
+    console.log('✅ Participants found:', data?.length || 0)
     return { data: data || [], error: null }
   } catch (error) {
-    console.error('❌ Get participants by email exception:', error)
+    console.error('❌ Get participants exception:', error)
     return { data: null, error: error as Error }
   }
 }

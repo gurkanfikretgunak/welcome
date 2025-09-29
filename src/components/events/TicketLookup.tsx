@@ -6,6 +6,7 @@ import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
 import EventTicket from './EventTicket'
+import { getParticipantByReference, getParticipantsByEmail } from '@/lib/supabase'
 
 interface Participant {
   participant_id: string
@@ -39,14 +40,13 @@ export default function TicketLookup() {
     setError(null)
 
     try {
-      const response = await fetch(`/api/events/participants/reference/${referenceNumber}`)
-      const data = await response.json()
+      const { data, error } = await getParticipantByReference(referenceNumber)
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Participant not found')
+      if (error) {
+        throw error
       }
 
-      setParticipants([data.participant])
+      setParticipants(data ? [data] : [])
     } catch (err) {
       console.error('Reference lookup error:', err)
       setError(err instanceof Error ? err.message : 'Failed to find participant')
@@ -73,21 +73,13 @@ export default function TicketLookup() {
     setError(null)
 
     try {
-      const response = await fetch('/api/events/participants/email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email })
-      })
+      const { data, error } = await getParticipantsByEmail(email)
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to find participants')
+      if (error) {
+        throw error
       }
 
-      setParticipants(data.participants || [])
+      setParticipants(data || [])
     } catch (err) {
       console.error('Email lookup error:', err)
       setError(err instanceof Error ? err.message : 'Failed to find participants')

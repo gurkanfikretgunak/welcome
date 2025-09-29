@@ -13,6 +13,7 @@ import EventList from '@/components/events/EventList'
 import EventRegistrationForm from '@/components/events/EventRegistrationForm'
 import TicketLookup from '@/components/events/TicketLookup'
 import EventTicket from '@/components/events/EventTicket'
+import { getEventById } from '@/lib/supabase'
 
 interface Event {
   id: string
@@ -51,20 +52,22 @@ export default function EventsPage() {
     }
   }, [userProfile, loading])
 
-  const handleRegister = (eventId: string) => {
-    // Find the event details
-    // For now, we'll fetch it from the API
-    fetch(`/api/events/${eventId}`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.event) {
-          setSelectedEvent(data.event)
-          setCurrentView('register')
-        }
-      })
-      .catch(error => {
+  const handleRegister = async (eventId: string) => {
+    try {
+      const { data, error } = await getEventById(eventId)
+      
+      if (error) {
         console.error('Error fetching event:', error)
-      })
+        return
+      }
+      
+      if (data) {
+        setSelectedEvent(data)
+        setCurrentView('register')
+      }
+    } catch (error) {
+      console.error('Error fetching event:', error)
+    }
   }
 
   const handleRegistrationSuccess = (data: RegistrationData) => {

@@ -7,6 +7,7 @@ import TextCard from '@/components/ui/TextCard'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextButton from '@/components/ui/TextButton'
 import EventTicket from '@/components/events/EventTicket'
+import { getParticipantByReference } from '@/lib/supabase'
 
 interface ParticipantTicketData {
   participant_id: string
@@ -33,10 +34,11 @@ export default function TicketView({ params }: { params: Promise<{ reference: st
     const fetchTicket = async () => {
       try {
         const { reference } = await params
-        const res = await fetch(`/api/events/participants/reference/${reference}`)
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Ticket not found')
-        setParticipant(data.participant)
+        const { data, error } = await getParticipantByReference(reference)
+        
+        if (error || !data) throw error || new Error('Ticket not found')
+        
+        setParticipant(data)
       } catch (e) {
         setError((e as Error).message)
       } finally {

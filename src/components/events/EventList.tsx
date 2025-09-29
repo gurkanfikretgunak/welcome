@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import EventCard from './EventCard'
 import TextCard from '@/components/ui/TextCard'
 import TextHierarchy from '@/components/ui/TextHierarchy'
+import { getPublishedEvents } from '@/lib/supabase'
 
 interface Event {
   id: string
@@ -32,14 +33,13 @@ export default function EventList({ onRegister, showRegisterButton = true, hideW
     const fetchEvents = async () => {
       try {
         setLoading(true)
-        const response = await fetch('/api/events')
+        const { data, error } = await getPublishedEvents()
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch events')
+        if (error) {
+          throw error
         }
         
-        const data = await response.json()
-        setEvents(data.events || [])
+        setEvents(data || [])
       } catch (err) {
         console.error('Error fetching events:', err)
         setError(err instanceof Error ? err.message : 'Failed to fetch events')

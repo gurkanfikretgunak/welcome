@@ -9,6 +9,7 @@ import TextCard from '@/components/ui/TextCard'
 import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
+import { getOwnerEvents, getEventParticipants, updateEvent, deleteEvent, createEvent } from '@/lib/supabase'
 
 interface Event {
   id: string
@@ -57,14 +58,24 @@ export default function OwnerEventsPage() {
   const fetchEvents = async () => {
     try {
       setLoadingEvents(true)
-      const response = await fetch('/api/events/owner')
+      const { data, error } = await getOwnerEvents()
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch events')
+      if (error) {
+        throw error
       }
       
-      const data = await response.json()
-      setEvents(data.events || [])
+      // Get participant counts for each event
+      const eventsWithCounts = await Promise.all(
+        (data || []).map(async (event) => {
+          const { data: participants } = await getEventParticipants(event.id)
+          return {
+            ...event,
+            participant_count: participants?.length || 0
+          }
+        })
+      )
+      
+      setEvents(eventsWithCounts)
     } catch (err) {
       console.error('Error fetching events:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch events')
@@ -76,14 +87,13 @@ export default function OwnerEventsPage() {
   const fetchParticipants = async (eventId: string) => {
     try {
       setLoadingParticipants(true)
-      const response = await fetch(`/api/events/${eventId}/participants`)
+      const { data, error } = await getEventParticipants(eventId)
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch participants')
+      if (error) {
+        throw error
       }
       
-      const data = await response.json()
-      setParticipants(data.participants || [])
+      setParticipants(data || [])
     } catch (err) {
       console.error('Error fetching participants:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch participants')
@@ -105,18 +115,12 @@ export default function OwnerEventsPage() {
 
   const handlePublishToggle = async (eventId: string, currentStatus: boolean) => {
     try {
-      const response = await fetch(`/api/events/${eventId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          is_published: !currentStatus
-        })
+      const { error } = await updateEvent(eventId, {
+        is_published: !currentStatus
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to update event')
+      if (error) {
+        throw error
       }
 
       // Refresh events list
@@ -133,12 +137,10 @@ export default function OwnerEventsPage() {
     }
 
     try {
-      const response = await fetch(`/api/events/${eventId}`, {
-        method: 'DELETE'
-      })
+      const { error } = await deleteEvent(eventId)
 
-      if (!response.ok) {
-        throw new Error('Failed to delete event')
+      if (error) {
+        throw error
       }
 
       // Refresh events list
@@ -409,19 +411,16 @@ function CreateEventForm({ onCreated }: { onCreated: () => void }) {
     setSubmitting(true)
     setError(null)
     try {
-      const res = await fetch('/api/events', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: form.title,
-          description: form.description || null,
-          event_date: form.event_date,
-          location: form.location || null,
-          max_participants: form.max_participants ? Number(form.max_participants) : null,
-        })
+      const { error } = await createEvent({
+        title: form.title,
+        description: form.description || undefined,
+        event_date: form.event_date,
+        location: form.location || undefined,
+        max_participants: form.max_participants ? Number(form.max_participants) : undefined,
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to create event')
+      
+      if (error) throw error
+      
       onCreated()
       setForm({ title: '', description: '', event_date: '', location: '', max_participants: '' })
     } catch (e) {
