@@ -18,9 +18,10 @@ interface EventRegistrationFormProps {
   event: Event
   onSuccess: (registrationData: any) => void
   onCancel: () => void
+  submitLabel?: string
 }
 
-export default function EventRegistrationForm({ event, onSuccess, onCancel }: EventRegistrationFormProps) {
+export default function EventRegistrationForm({ event, onSuccess, onCancel, submitLabel = 'REGISTER' }: EventRegistrationFormProps) {
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -253,7 +254,7 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel }: Ev
               disabled={loading || !isValid}
               className="flex-1"
             >
-              {loading ? 'REGISTERING...' : 'REGISTER'}
+              {loading ? `${submitLabel}ING...` : submitLabel}
             </TextButton>
             <TextButton
               type="button"
