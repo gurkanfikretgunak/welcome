@@ -77,45 +77,10 @@ export default function TicketView({ params }: { params: Promise<{ reference: st
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <EventTicket participant={participant} />
+        <EventTicket participant={participant} hideAvatar enableShare />
 
         {/* Notices under the ticket */}
         <div className="mt-4 space-y-2">
-          <div className="flex justify-center">
-            <TextButton variant="default" onClick={() => setShowShare(true)}>
-              SHARE TICKET
-            </TextButton>
-          </div>
-
-          {showShare && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }} onClick={() => setShowShare(false)}>
-              <div className="bg-white border border-black p-6 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-mono font-bold text-sm tracking-wider">SHARE TICKET</h3>
-                  <button className="border border-black px-2 py-1 text-xs font-mono" onClick={() => setShowShare(false)}>CLOSE</button>
-                </div>
-                <div className="space-y-3">
-                  <a className="block border border-black px-3 py-2 font-mono text-sm hover:bg-black hover:text-white" href={xUrl} target="_blank" rel="noopener noreferrer">Share on X</a>
-                  <a className="block border border-black px-3 py-2 font-mono text-sm hover:bg-black hover:text-white" href={linkedinUrl} target="_blank" rel="noopener noreferrer">Share on LinkedIn</a>
-                  <a className="block border border-black px-3 py-2 font-mono text-sm hover:bg-black hover:text-white" href={whatsappUrl} target="_blank" rel="noopener noreferrer">Share on WhatsApp</a>
-                  <button
-                    className="w-full border border-black px-3 py-2 font-mono text-sm hover:bg-black hover:text-white"
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(ticketUrl)
-                        alert('Link copied to clipboard')
-                      } catch {
-                        prompt('Copy ticket URL:', ticketUrl)
-                      }
-                    }}
-                  >
-                    Copy Link
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           <TextCard variant="muted">
             <TextHierarchy level={2} muted>
               - Please keep your reference number confidential.

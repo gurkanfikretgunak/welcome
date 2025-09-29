@@ -319,6 +319,27 @@ export default function Home() {
     await signInWithGitHub()
   }
 
+  const handleShareEvents = async () => {
+    try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : ''
+      const url = `${origin}/events`
+      const title = 'Upcoming Events'
+      const text = 'Join our upcoming events and connect with the community. View details here:'
+      if (typeof navigator !== 'undefined' && (navigator as any).share) {
+        await (navigator as any).share({ title, text, url })
+        return
+      }
+      await navigator.clipboard.writeText(`${text} ${url}`)
+      alert('Events link copied to clipboard')
+    } catch (e) {
+      console.warn('Share failed, showing fallback prompt')
+      const origin = typeof window !== 'undefined' ? window.location.origin : ''
+      const url = `${origin}/events`
+      // eslint-disable-next-line no-alert
+      prompt('Copy events URL:', url)
+    }
+  }
+
 
 
   // Show initial loading animation
@@ -487,6 +508,18 @@ export default function Home() {
           maxItems={3}
           section
         />
+
+        {events.length > 0 && (
+          <div className="flex justify-center mt-3">
+            <TextButton
+              variant="default"
+              onClick={handleShareEvents}
+              className="text-xs px-4 py-2"
+            >
+              SHARE EVENTS
+            </TextButton>
+          </div>
+        )}
 
         <TextCard title="SYSTEM INFORMATION">
           <TextHierarchy level={1} className="mb-3">

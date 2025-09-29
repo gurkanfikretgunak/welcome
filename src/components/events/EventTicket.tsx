@@ -20,10 +20,13 @@ interface EventTicketProps {
     event_location?: string
     registration_date: string
   }
+  hideAvatar?: boolean
+  enableShare?: boolean
 }
 
-export default function EventTicket({ participant }: EventTicketProps) {
+export default function EventTicket({ participant, hideAvatar = false, enableShare = false }: EventTicketProps) {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('')
+  const [showShare, setShowShare] = useState(false)
 
   // Generate QR code (encode public ticket view URL)
   useEffect(() => {
@@ -71,6 +74,14 @@ export default function EventTicket({ participant }: EventTicketProps) {
       .substring(0, 2)
   }
 
+  const origin = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || '')
+  const ticketUrl = `${origin}/ticketview/${participant.reference_number}`
+  const dateStr = new Date(participant.event_date).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  const shareText = `${participant.full_name} will attend "${participant.event_title}" on ${dateStr}. View the digital ticket here:`
+  const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(ticketUrl)}`
+  const linkedinUrl = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(ticketUrl)}&title=${encodeURIComponent(participant.event_title)}`
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + '\n' + ticketUrl)}`
+
   return (
     <div className="max-w-md mx-auto">
       <TextCard title="EVENT TICKET" className="text-center">
@@ -113,10 +124,11 @@ export default function EventTicket({ participant }: EventTicketProps) {
           {/* Participant Info */}
           <div className="border-t border-gray-600 pt-3 text-left">
             <div className="flex items-center gap-3 mb-3">
-              {/* Avatar */}
-              <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white font-mono font-bold text-lg">
-                {getInitials(participant.full_name)}
-              </div>
+              {!hideAvatar && (
+                <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white font-mono font-bold text-lg">
+                  {getInitials(participant.full_name)}
+                </div>
+              )}
               <div>
                 <TextHierarchy level={1} emphasis>
                   {participant.full_name}
@@ -152,6 +164,45 @@ export default function EventTicket({ participant }: EventTicketProps) {
               CONFIRMED
             </TextBadge>
           </div>
+
+          {enableShare && (
+            <div className="pt-2">
+              <button
+                className="border border-black bg-white px-3 py-2 font-mono text-xs hover:bg-black hover:text-white"
+                onClick={() => setShowShare(true)}
+              >
+                SHARE TICKET
+              </button>
+              {showShare && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }} onClick={() => setShowShare(false)}>
+                  <div className="bg-white border border-black p-6 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-mono font-bold text-sm tracking-wider">SHARE TICKET</h3>
+                      <button className="border border-black px-2 py-1 text-xs font-mono" onClick={() => setShowShare(false)}>CLOSE</button>
+                    </div>
+                    <div className="space-y-3">
+                      <a className="block border border-black px-3 py-2 font-mono text-sm hover:bg-black hover:text-white" href={xUrl} target="_blank" rel="noopener noreferrer">Share on X</a>
+                      <a className="block border border-black px-3 py-2 font-mono text-sm hover:bg-black hover:text-white" href={linkedinUrl} target="_blank" rel="noopener noreferrer">Share on LinkedIn</a>
+                      <a className="block border border-black px-3 py-2 font-mono text-sm hover:bg-black hover:text-white" href={whatsappUrl} target="_blank" rel="noopener noreferrer">Share on WhatsApp</a>
+                      <button
+                        className="w-full border border-black px-3 py-2 font-mono text-sm hover:bg-black hover:text-white"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(ticketUrl)
+                            alert('Link copied to clipboard')
+                          } catch {
+                            prompt('Copy ticket URL:', ticketUrl)
+                          }
+                        }}
+                      >
+                        Copy Link
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </TextCard>
     </div>
