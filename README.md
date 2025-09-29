@@ -1,42 +1,108 @@
-# MasterFabric Welcome
+<div align="center"><h1>MasterFabric Welcome</h1>
+<p>Developer onboarding portal built with Next.js and Supabase</p></div>
 
-Developer onboarding system for MasterFabric team.
+## Overview
 
-## What it does
+This app streamlines onboarding and internal ops:
 
-Guides new developers through the complete onboarding process:
+- GitHub login and profile setup
+- Company email verification (OTP)
+- Dynamic onboarding checklist and worklogs
+- Events (owner management, public registration, tickets)
+- Support tickets and settings
 
-1. **Login** - GitHub authentication
-2. **Profile** - Personal information setup
-3. **Email** - Company email verification
-4. **Tasks** - Complete onboarding checklist
-5. **Dashboard** - Admin monitoring for team leads
+## App Routes
 
-## Tech
+- `/` Home
+- `/events` Public events list
+- `/events/owner` Owner dashboard for events
+- `/eventview/[id]` Event details (public)
+- `/ticketview/[reference]` Ticket view (public)
+- `/tickets` User tickets
+- `/profile` User profile
+- `/bio` Basic info form
+- `/email` Company email verification
+- `/worklog` Worklog entry
+- `/settings` User settings
 
-- Next.js 15 + TypeScript
-- Supabase (database + auth)
+API endpoints (App Router):
+
+- `api/send-verification-code`, `api/verify-email-code`
+- `api/worklogs`, `api/worklogs/[id]`
+- `api/version`, `api/welcome-text`, `api/process-overview`
+
+## Tech Stack
+
+- Next.js 15 + React 19 + TypeScript
+- Supabase (database + auth + RLS)
 - Tailwind CSS
+- Sentry for error monitoring
 
-## Setup
+## Scripts
 
 ```bash
-pnpm install
-cp env.example .env.local
-# Add your Supabase and GitHub OAuth credentials
-pnpm dev
+# local development
+npm run dev
+
+# production build
+npm run build && npm start
+
+# lint and type-check
+npm run lint
+npm run type-check
 ```
+
+## Getting Started
+
+```bash
+npm install
+cp env.example .env.local
+# Fill .env.local with your Supabase + GitHub OAuth credentials
+npm run dev
+```
+
+Required envs (see `env.example`):
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
+- (optional) Sentry if you enable monitoring:
+-   - `NEXT_PUBLIC_SENTRY_DSN`
+-   - `SENTRY_AUTH_TOKEN`
+-   - `SENTRY_ORG`
+-   - `SENTRY_PROJECT`
+- reCAPTCHA (optional):
+-   - `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`
+-   - `RECAPTCHA_SECRET_KEY`
 
 ## Database
 
-Run `database/schema/supabase-schema.sql` in your Supabase project.
+Apply SQL in Supabase (in this order as needed):
 
-## Owner Access
+## Development Notes
 
-```sql
-UPDATE users SET is_owner = true WHERE id = 'your-user-id';
-```
+- Error boundaries: `src/app/error.tsx`, `src/app/global-error.tsx`
+- Supabase helpers and data access: `src/lib/supabase.ts`
+- Sentry helpers: `src/lib/sentry.ts`
+- UI components: `src/components/*`
 
----
+### Monitoring (Sentry)
+
+Sentry is integrated for error tracking and source maps.
+
+1. Set env vars (see above).
+2. Build will automatically upload source maps during `npm run build`.
+3. Error boundaries will report exceptions to Sentry.
+
+Note: Next.js may deprecate `sentry.client.config.ts` under Turbopack; this repo includes client/server config files and `instrumentation.ts`.
+
+## Contributing
+
+Issues and PRs are welcome. Please run `npm run lint` and `npm run type-check` before submitting.
+
+## License
+
+MIT
+
 
 Built for MasterFabric development team.
