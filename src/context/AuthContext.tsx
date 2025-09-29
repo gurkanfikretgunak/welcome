@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase, User as UserProfile } from '@/lib/supabase'
+import { captureException, setUser as setSentryUser } from '@/lib/sentry'
 
 interface AuthContextType {
   user: User | null
@@ -48,6 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false)
       } catch (error) {
         console.error('❌ Auth initialization error:', error)
+        captureException(error, {
+          tags: { context: 'auth', operation: 'initialization' }
+        })
         setLoading(false)
       }
     }
@@ -105,6 +109,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('❌ Profile load error:', error.message || error)
+        captureException(error, {
+          tags: { context: 'auth', operation: 'load_profile' },
+          extra: { userId },
+          level: 'warning'
+        })
         // Create profile if it doesn't exist
         try {
           const newProfile = await createUserProfile(userId)
@@ -113,14 +122,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } catch (createError) {
           console.error('❌ Profile creation error:', createError)
+          captureException(createError, {
+            tags: { context: 'auth', operation: 'create_profile' },
+            extra: { userId }
+          })
         }
         return
       }
 
       console.log('✅ Profile loaded:', data)
       setUserProfile(data)
+      // Set user context in Sentry
+      setSentryUser({
+        id: data.id,
+        email: data.master_email || data.personal_email,
+        username: data.github_username
+      })
     } catch (error) {
       console.error('❌ Profile load exception:', error)
+      captureException(error, {
+        tags: { context: 'auth', operation: 'load_profile_exception' },
+        extra: { userId }
+      })
     } finally {
       setProfileLoading(false)
     }
@@ -181,6 +204,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         console.error('❌ Profile creation error:', error)
         console.error('❌ Error details:', error.message, error.details, error.hint)
+        captureException(error, {
+          tags: { context: 'auth', operation: 'insert_profile' },
+          extra: { 
+            userId, 
+            errorMessage: error.message,
+            errorDetails: error.details,
+            errorHint: error.hint
+          }
+        })
         return null
       }
 
@@ -189,6 +221,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return data
     } catch (error) {
       console.error('❌ Profile creation exception:', error)
+      captureException(error, {
+        tags: { context: 'auth', operation: 'create_profile_exception' },
+        extra: { userId }
+      })
       return null
     }
   }
@@ -209,6 +245,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { data, error }
     } catch (error) {
       console.error('❌ GitHub sign in exception:', error)
+      captureException(error, {
+        tags: { context: 'auth', operation: 'github_signin' }
+      })
       return { data: null, error }
     }
   }
@@ -235,6 +274,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('❌ Sign out error:', error)
+      captureException(error, {
+        tags: { context: 'auth', operation: 'signout' }
+      })
+      // Clear Sentry user context
+      setSentryUser(null)
     }
   }
 

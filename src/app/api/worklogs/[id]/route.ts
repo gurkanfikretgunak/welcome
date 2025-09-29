@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { captureException } from '@/lib/sentry'
 
 export async function PUT(
   request: NextRequest,
@@ -64,7 +65,10 @@ export async function PUT(
       .single()
 
     if (error) {
-      console.error('Error updating worklog:', error)
+      captureException(error, {
+        tags: { api: 'worklogs', operation: 'update' },
+        extra: { userId: user.id, worklogId: id }
+      })
       return NextResponse.json(
         { error: 'Failed to update worklog' },
         { status: 500 }
@@ -73,7 +77,10 @@ export async function PUT(
 
     return NextResponse.json({ data })
   } catch (error) {
-    console.error('Error in worklog PUT API:', error)
+    captureException(error, {
+      tags: { api: 'worklogs', operation: 'put' },
+      extra: { method: 'PUT' }
+    })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -123,7 +130,10 @@ export async function DELETE(
       .eq('user_id', user.id)
 
     if (error) {
-      console.error('Error deleting worklog:', error)
+      captureException(error, {
+        tags: { api: 'worklogs', operation: 'delete' },
+        extra: { userId: user.id, worklogId: id }
+      })
       return NextResponse.json(
         { error: 'Failed to delete worklog' },
         { status: 500 }
@@ -132,7 +142,10 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error in worklog DELETE API:', error)
+    captureException(error, {
+      tags: { api: 'worklogs', operation: 'delete_catch' },
+      extra: { method: 'DELETE' }
+    })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

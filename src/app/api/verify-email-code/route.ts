@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { captureException, captureMessage } from '@/lib/sentry'
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,7 +49,10 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (userError) {
-      console.error('Error fetching user data:', userError)
+      captureException(userError, {
+        tags: { api: 'verify-email-code', operation: 'fetch_user' },
+        extra: { userId }
+      })
       return NextResponse.json(
         { error: 'Failed to fetch user data' },
         { status: 500 }
@@ -103,7 +107,10 @@ export async function POST(request: NextRequest) {
       .eq('id', userId)
 
     if (updateError) {
-      console.error('Error updating user profile:', updateError)
+      captureException(updateError, {
+        tags: { api: 'verify-email-code', operation: 'update_profile' },
+        extra: { userId, email: verificationEmail, isInternship }
+      })
       return NextResponse.json(
         { error: 'Failed to update profile' },
         { status: 500 }
@@ -123,13 +130,22 @@ export async function POST(request: NextRequest) {
     const emailType = isInternship ? 'Internship' : 'Standard'
     console.log(`✅ ${emailType} email verified successfully for user ${userId}`)
     
+    captureMessage(`Email verified successfully`, {
+      level: 'info',
+      tags: { api: 'verify-email-code', emailType },
+      extra: { userId, email: verificationEmail }
+    })
+    
     return NextResponse.json({ 
       success: true, 
       message: `${emailType} email verified successfully` 
     })
     
   } catch (error) {
-    console.error('Error verifying code:', error)
+    captureException(error, {
+      tags: { api: 'verify-email-code', operation: 'verify' },
+      extra: { method: 'POST' }
+    })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

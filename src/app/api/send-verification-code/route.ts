@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { captureException, captureMessage } from '@/lib/sentry'
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,7 +67,10 @@ export async function POST(request: NextRequest) {
       .eq('id', userId)
 
     if (updateError) {
-      console.error('Error storing verification code:', updateError)
+      captureException(updateError, {
+        tags: { api: 'send-verification-code', operation: 'store_code' },
+        extra: { userId, email, isInternship }
+      })
       return NextResponse.json(
         { error: 'Failed to generate verification code' },
         { status: 500 }
@@ -78,6 +82,12 @@ export async function POST(request: NextRequest) {
     const emailType = isInternship ? 'Internship' : 'Standard'
     console.log(`📧 ${emailType} verification code for ${email}: ${verificationCode}`)
     
+    captureMessage(`Verification code sent to ${email}`, {
+      level: 'info',
+      tags: { api: 'send-verification-code', emailType },
+      extra: { userId, email }
+    })
+    
     return NextResponse.json({ 
       success: true, 
       message: 'Verification code sent',
@@ -86,7 +96,10 @@ export async function POST(request: NextRequest) {
     })
     
   } catch (error) {
-    console.error('Error sending verification code:', error)
+    captureException(error, {
+      tags: { api: 'send-verification-code', operation: 'send' },
+      extra: { method: 'POST' }
+    })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

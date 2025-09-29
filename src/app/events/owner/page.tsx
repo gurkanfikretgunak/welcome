@@ -11,6 +11,7 @@ import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
 import EventTicket from '@/components/events/EventTicket'
 import { getOwnerEvents, getEventParticipants, updateEvent, deleteEvent, createEvent } from '@/lib/supabase'
+import { captureException } from '@/lib/sentry'
 
 interface Event {
   id: string
@@ -81,6 +82,9 @@ export default function OwnerEventsPage() {
       setEvents(eventsWithCounts)
     } catch (err) {
       console.error('Error fetching events:', err)
+      captureException(err, {
+        tags: { page: 'events-owner', operation: 'fetch_events' }
+      })
       setError(err instanceof Error ? err.message : 'Failed to fetch events')
     } finally {
       setLoadingEvents(false)
@@ -99,6 +103,10 @@ export default function OwnerEventsPage() {
       setParticipants(data || [])
     } catch (err) {
       console.error('Error fetching participants:', err)
+      captureException(err, {
+        tags: { page: 'events-owner', operation: 'fetch_participants' },
+        extra: { eventId }
+      })
       setError(err instanceof Error ? err.message : 'Failed to fetch participants')
     } finally {
       setLoadingParticipants(false)
@@ -130,6 +138,10 @@ export default function OwnerEventsPage() {
       fetchEvents()
     } catch (err) {
       console.error('Error updating event:', err)
+      captureException(err, {
+        tags: { page: 'events-owner', operation: 'update_event' },
+        extra: { eventId }
+      })
       setError(err instanceof Error ? err.message : 'Failed to update event')
     }
   }
@@ -152,6 +164,10 @@ export default function OwnerEventsPage() {
       setParticipants([])
     } catch (err) {
       console.error('Error deleting event:', err)
+      captureException(err, {
+        tags: { page: 'events-owner', operation: 'delete_event' },
+        extra: { eventId }
+      })
       setError(err instanceof Error ? err.message : 'Failed to delete event')
     }
   }
@@ -369,6 +385,10 @@ export default function OwnerEventsPage() {
                                       }
                                     } catch (err) {
                                       console.error('Delete participant error:', err)
+                                      captureException(err, {
+                                        tags: { page: 'events-owner', operation: 'delete_participant' },
+                                        extra: { participantId: participant.id }
+                                      })
                                       alert('Failed to remove participant')
                                     }
                                   }

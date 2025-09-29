@@ -7,6 +7,7 @@ import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
 import { registerForEvent } from '@/lib/supabase'
+import { captureException, startTransaction, addBreadcrumb } from '@/lib/sentry'
 
 interface Event {
   id: string
@@ -51,6 +52,13 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel, subm
     setLoading(true)
     setError(null)
 
+    // Start performance tracking
+    const transaction = startTransaction('Event Registration', 'event.register')
+    addBreadcrumb('Event registration started', {
+      eventId: event.id,
+      eventTitle: event.title
+    })
+
     try {
       const { data, error } = await registerForEvent({
         event_id: event.id,
@@ -61,9 +69,26 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel, subm
         throw error
       }
 
+      addBreadcrumb('Event registration successful', {
+        eventId: event.id,
+        participantEmail: formData.email
+      })
+      transaction.finish()
       onSuccess(data)
     } catch (err) {
       console.error('Registration error:', err)
+      captureException(err, {
+        tags: { 
+          component: 'EventRegistrationForm',
+          operation: 'register'
+        },
+        extra: {
+          eventId: event.id,
+          eventTitle: event.title,
+          email: formData.email
+        }
+      })
+      transaction.finish()
       setError(err instanceof Error ? err.message : 'Registration failed')
     } finally {
       setLoading(false)

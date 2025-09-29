@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { captureException } from '@/lib/sentry'
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,7 +41,10 @@ export async function GET(request: NextRequest) {
       .order('date', { ascending: false })
 
     if (error) {
-      console.error('Error fetching worklogs:', error)
+      captureException(error, {
+        tags: { api: 'worklogs', operation: 'fetch' },
+        extra: { userId: user.id }
+      })
       return NextResponse.json(
         { error: 'Failed to fetch worklogs' },
         { status: 500 }
@@ -49,7 +53,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data })
   } catch (error) {
-    console.error('Error in worklogs API:', error)
+    captureException(error, {
+      tags: { api: 'worklogs', operation: 'get' },
+      extra: { method: 'GET' }
+    })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -115,7 +122,10 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Error creating worklog:', error)
+      captureException(error, {
+        tags: { api: 'worklogs', operation: 'create' },
+        extra: { userId: user.id, title }
+      })
       return NextResponse.json(
         { error: 'Failed to create worklog' },
         { status: 500 }
@@ -124,7 +134,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data })
   } catch (error) {
-    console.error('Error in worklogs POST API:', error)
+    captureException(error, {
+      tags: { api: 'worklogs', operation: 'post' },
+      extra: { method: 'POST' }
+    })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
