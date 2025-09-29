@@ -73,7 +73,7 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel, subm
         eventId: event.id,
         participantEmail: formData.email
       })
-      transaction.finish()
+      transaction.end()
       onSuccess(data)
     } catch (err) {
       console.error('Registration error:', err)
@@ -88,7 +88,7 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel, subm
           email: formData.email
         }
       })
-      transaction.finish()
+      transaction.end()
       setError(err instanceof Error ? err.message : 'Registration failed')
     } finally {
       setLoading(false)

@@ -83,7 +83,7 @@ export function addBreadcrumb(
  * Starts a performance transaction
  */
 export function startTransaction(name: string, op: string) {
-  return Sentry.startTransaction({
+  return Sentry.startInactiveSpan({
     name,
     op,
   })
