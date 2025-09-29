@@ -21,6 +21,7 @@ interface Event {
   location?: string
   max_participants?: number
   participant_count: number
+  is_upcoming?: boolean
   is_published: boolean
   is_active: boolean
   created_at: string
@@ -508,6 +509,7 @@ function EditEventForm({ event, onUpdated, onCancel }: {
     event_date: event.event_date.slice(0, 16), // Format for datetime-local
     location: event.location || '',
     max_participants: event.max_participants?.toString() || '' as number | string,
+    is_upcoming: event.is_upcoming ?? true,
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -515,6 +517,10 @@ function EditEventForm({ event, onUpdated, onCancel }: {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
+  }
+  const handleCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target
+    setForm(prev => ({ ...prev, [name]: checked }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -528,6 +534,7 @@ function EditEventForm({ event, onUpdated, onCancel }: {
         event_date: form.event_date,
         location: form.location || undefined,
         max_participants: form.max_participants ? Number(form.max_participants) : undefined,
+        is_upcoming: form.is_upcoming,
       })
       
       if (error) throw error
@@ -597,6 +604,15 @@ function EditEventForm({ event, onUpdated, onCancel }: {
           min="1"
         />
       </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          name="is_upcoming"
+          checked={form.is_upcoming}
+          onChange={handleCheckbox}
+        />
+        <TextHierarchy level={2}>Show in upcoming</TextHierarchy>
+      </div>
       {error && (
         <div className="bg-red-900/20 border border-red-600 p-3 rounded">
           <TextHierarchy level={2} className="text-red-400">
@@ -623,6 +639,7 @@ function CreateEventForm({ onCreated }: { onCreated: () => void }) {
     event_date: '',
     location: '',
     max_participants: '' as number | string,
+    is_upcoming: true,
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -630,6 +647,10 @@ function CreateEventForm({ onCreated }: { onCreated: () => void }) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
+  }
+  const handleCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target
+    setForm(prev => ({ ...prev, [name]: checked }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -643,12 +664,13 @@ function CreateEventForm({ onCreated }: { onCreated: () => void }) {
         event_date: form.event_date,
         location: form.location || undefined,
         max_participants: form.max_participants ? Number(form.max_participants) : undefined,
+        is_upcoming: form.is_upcoming,
       })
       
       if (error) throw error
       
       onCreated()
-      setForm({ title: '', description: '', event_date: '', location: '', max_participants: '' })
+      setForm({ title: '', description: '', event_date: '', location: '', max_participants: '', is_upcoming: true })
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -712,6 +734,15 @@ function CreateEventForm({ onCreated }: { onCreated: () => void }) {
           placeholder="Leave empty for unlimited"
           min={0}
         />
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          name="is_upcoming"
+          checked={form.is_upcoming}
+          onChange={handleCheckbox}
+        />
+        <TextHierarchy level={2}>Show in upcoming</TextHierarchy>
       </div>
       {error && (
         <TextHierarchy level={2} className="text-red-400">{error}</TextHierarchy>

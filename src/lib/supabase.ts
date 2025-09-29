@@ -1543,6 +1543,7 @@ export interface Event {
   event_date: string
   location?: string
   max_participants?: number
+  is_upcoming?: boolean
   is_published: boolean
   is_active: boolean
   created_by?: string
@@ -1560,6 +1561,7 @@ export async function getPublishedEvents(): Promise<{ data: Event[] | null; erro
       .select('*')
       .eq('is_published', true)
       .eq('is_active', true)
+      .eq('is_upcoming', true)
       .gte('event_date', new Date().toISOString())
       .order('event_date', { ascending: true })
 
@@ -1608,6 +1610,7 @@ export async function createEvent(eventData: {
   event_date: string
   location?: string
   max_participants?: number
+  is_upcoming?: boolean
 }): Promise<{ data: Event | null; error: Error | null }> {
   try {
     console.log('📅 Creating event:', eventData.title)
@@ -1647,6 +1650,7 @@ export async function updateEvent(
     event_date: string
     location: string
     max_participants: number
+    is_upcoming: boolean
     is_published: boolean
     is_active: boolean
   }>
