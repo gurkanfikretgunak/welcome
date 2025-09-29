@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
@@ -7,16 +9,6 @@
   --warning: #eab308;
   --error: #ea580c;
   --muted: #6b7280;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-error: var(--error);
-  --color-muted: var(--muted);
-  --font-mono: var(--font-jetbrains-mono);
 }
 
 body {
