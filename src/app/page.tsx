@@ -8,6 +8,7 @@ import Navbar from '@/components/layout/Navbar'
 import PageLayout from '@/components/layout/PageLayout'
 import TextCard from '@/components/ui/TextCard'
 import TextButton from '@/components/ui/TextButton'
+import EventList from '@/components/events/EventList'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
 
@@ -479,22 +480,13 @@ export default function Home() {
           )}
         </TextCard>
 
-        {events.length > 0 && (
-          <TextCard title="UPCOMING EVENTS">
-            <TextHierarchy level={1} className="mb-3">
-              Join our community events and connect with fellow developers.
-            </TextHierarchy>
-            <div className="flex gap-3">
-              <TextButton
-                variant="success"
-                onClick={() => router.push('/events')}
-                className="text-base px-6 py-3"
-              >
-                VIEW EVENTS →
-              </TextButton>
-            </div>
-          </TextCard>
-        )}
+        <EventList
+          onRegister={() => router.push('/events')}
+          showRegisterButton={false}
+          hideWhenEmpty
+          maxItems={3}
+          section
+        />
 
         <TextCard title="SYSTEM INFORMATION">
           <TextHierarchy level={1} className="mb-3">

@@ -18,9 +18,12 @@ interface Event {
 interface EventListProps {
   onRegister: (eventId: string) => void
   showRegisterButton?: boolean
+  hideWhenEmpty?: boolean
+  maxItems?: number
+  section?: boolean
 }
 
-export default function EventList({ onRegister, showRegisterButton = true }: EventListProps) {
+export default function EventList({ onRegister, showRegisterButton = true, hideWhenEmpty = false, maxItems, section = false }: EventListProps) {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -48,29 +51,30 @@ export default function EventList({ onRegister, showRegisterButton = true }: Eve
     fetchEvents()
   }, [])
 
-  if (loading) {
-    return (
-      <TextCard title="EVENTS">
-        <TextHierarchy level={1} muted>
-          Loading events...
-        </TextHierarchy>
-      </TextCard>
-    )
-  }
+  const contentLoading = (
+    <TextCard title={section ? 'UPCOMING EVENTS' : 'EVENTS'}>
+      <TextHierarchy level={1} muted>
+        Loading events...
+      </TextHierarchy>
+    </TextCard>
+  )
 
-  if (error) {
-    return (
-      <TextCard title="EVENTS" variant="error">
-        <TextHierarchy level={1} muted>
-          Error: {error}
-        </TextHierarchy>
-      </TextCard>
-    )
-  }
+  const contentError = (
+    <TextCard title={section ? 'UPCOMING EVENTS' : 'EVENTS'} variant="error">
+      <TextHierarchy level={1} muted>
+        Error: {error}
+      </TextHierarchy>
+    </TextCard>
+  )
 
-  if (events.length === 0) {
+  const visibleEvents = typeof maxItems === 'number' ? events.slice(0, maxItems) : events
+
+  if (loading) return section ? contentLoading : contentLoading
+  if (error) return section ? contentError : contentError
+  if (visibleEvents.length === 0 && hideWhenEmpty) return null
+  if (visibleEvents.length === 0) {
     return (
-      <TextCard title="EVENTS">
+      <TextCard title={section ? 'UPCOMING EVENTS' : 'EVENTS'}>
         <TextHierarchy level={1} muted>
           No upcoming events available.
         </TextHierarchy>
@@ -78,9 +82,9 @@ export default function EventList({ onRegister, showRegisterButton = true }: Eve
     )
   }
 
-  return (
+  const list = (
     <div className="space-y-4">
-      {events.map((event) => (
+      {visibleEvents.map((event) => (
         <EventCard
           key={event.id}
           event={event}
@@ -89,5 +93,16 @@ export default function EventList({ onRegister, showRegisterButton = true }: Eve
         />
       ))}
     </div>
+  )
+
+  if (!section) return list
+
+  return (
+    <TextCard title="UPCOMING EVENTS">
+      <TextHierarchy level={1} muted className="mb-3">
+        Join our community events and connect with fellow developers.
+      </TextHierarchy>
+      {list}
+    </TextCard>
   )
 }
