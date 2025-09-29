@@ -53,9 +53,14 @@ export default function TicketView({ params }: { params: Promise<{ reference: st
       <div className="min-h-screen flex flex-col">
         <header className="border-b-2 border-black bg-white">
           <div className="max-w-6xl mx-auto px-4 py-4">
-            <h1 className="text-2xl font-mono font-bold text-center">
-              MASTERFABRIC WELCOME
-            </h1>
+            <div className="flex items-center justify-center space-x-4">
+              <h1 className="text-2xl font-mono font-bold">
+                MASTERFABRIC
+              </h1>
+              <TextBadge variant="muted">
+                WELCOME
+              </TextBadge>
+            </div>
           </div>
         </header>
         <div className="flex-1 flex items-center justify-center">
@@ -70,9 +75,14 @@ export default function TicketView({ params }: { params: Promise<{ reference: st
       <div className="min-h-screen flex flex-col">
         <header className="border-b-2 border-black bg-white">
           <div className="max-w-6xl mx-auto px-4 py-4">
-            <h1 className="text-2xl font-mono font-bold text-center">
-              MASTERFABRIC WELCOME
-            </h1>
+            <div className="flex items-center justify-center space-x-4">
+              <h1 className="text-2xl font-mono font-bold">
+                MASTERFABRIC
+              </h1>
+              <TextBadge variant="muted">
+                WELCOME
+              </TextBadge>
+            </div>
           </div>
         </header>
         <div className="flex-1 flex items-center justify-center p-4">
@@ -99,9 +109,14 @@ export default function TicketView({ params }: { params: Promise<{ reference: st
       {/* Header */}
       <header className="border-b-2 border-black bg-white">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-mono font-bold text-center">
-            MASTERFABRIC WELCOME
-          </h1>
+          <div className="flex items-center justify-center space-x-4">
+            <h1 className="text-2xl font-mono font-bold">
+              MASTERFABRIC
+            </h1>
+            <TextBadge variant="muted">
+              WELCOME
+            </TextBadge>
+          </div>
         </div>
       </header>
 

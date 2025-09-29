@@ -257,13 +257,20 @@ export default function OwnerEventsPage() {
                         </TextHierarchy>
                       )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                       <TextBadge variant={event.is_published ? 'success' : 'warning'}>
                         {event.is_published ? 'PUBLISHED' : 'DRAFT'}
                       </TextBadge>
                       <TextBadge variant={event.is_active ? 'success' : 'error'}>
                         {event.is_active ? 'ACTIVE' : 'INACTIVE'}
                       </TextBadge>
+                      <TextButton
+                        variant="default"
+                        onClick={() => {/* TODO: Edit functionality */}}
+                        className="text-xs"
+                      >
+                        ✏️ EDIT
+                      </TextButton>
                     </div>
                   </div>
 
@@ -324,6 +331,36 @@ export default function OwnerEventsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {participants.map((participant) => (
                             <div key={participant.id} className="border border-gray-300 p-3 rounded bg-gray-50 relative">
+                              {/* Delete Icon Button - Top Right */}
+                              <button
+                                onClick={async () => {
+                                  if (confirm(`Remove ${participant.full_name} from this event?`)) {
+                                    try {
+                                      const supabase = await import('@/lib/supabase').then(m => m.supabase)
+                                      const { error } = await supabase
+                                        .from('event_participants')
+                                        .delete()
+                                        .eq('id', participant.id)
+                                      
+                                      if (error) throw error
+                                      
+                                      // Refresh participants list
+                                      if (selectedEvent) {
+                                        fetchParticipants(selectedEvent.id)
+                                        fetchEvents()
+                                      }
+                                    } catch (err) {
+                                      console.error('Delete participant error:', err)
+                                      alert('Failed to remove participant')
+                                    }
+                                  }
+                                }}
+                                className="absolute top-2 right-2 w-6 h-6 bg-red-600 hover:bg-red-700 text-white transition-colors flex items-center justify-center rounded-full"
+                                title="Remove Participant"
+                              >
+                                ✕
+                              </button>
+
                               <div className="flex items-start gap-3">
                                 <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-mono font-bold flex-shrink-0">
                                   {getInitials(participant.full_name)}
@@ -350,7 +387,7 @@ export default function OwnerEventsPage() {
                                   </TextHierarchy>
                                 </div>
                               </div>
-                              {/* QR Code Icon Button */}
+                              {/* QR Code Icon Button - Bottom Right */}
                               <button
                                 onClick={() => setSelectedTicket(participant)}
                                 className="absolute bottom-2 right-2 w-8 h-8 bg-white border-2 border-black hover:bg-black hover:text-white transition-colors flex items-center justify-center group"

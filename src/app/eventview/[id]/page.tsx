@@ -77,9 +77,14 @@ export default function PublicEventView({ params }: { params: Promise<{ id: stri
         {/* Header */}
         <header className="border-b-2 border-black bg-white">
           <div className="max-w-6xl mx-auto px-4 py-4">
-            <h1 className="text-2xl font-mono font-bold text-center">
-              MASTERFABRIC WELCOME
-            </h1>
+            <div className="flex items-center justify-center space-x-4">
+              <h1 className="text-2xl font-mono font-bold">
+                MASTERFABRIC
+              </h1>
+              <TextBadge variant="muted">
+                WELCOME
+              </TextBadge>
+            </div>
           </div>
         </header>
 
@@ -116,9 +121,14 @@ export default function PublicEventView({ params }: { params: Promise<{ id: stri
       {/* Header */}
       <header className="border-b-2 border-black bg-white">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-mono font-bold text-center">
-            MASTERFABRIC WELCOME
-          </h1>
+          <div className="flex items-center justify-center space-x-4">
+            <h1 className="text-2xl font-mono font-bold">
+              MASTERFABRIC
+            </h1>
+            <TextBadge variant="muted">
+              WELCOME
+            </TextBadge>
+          </div>
         </div>
       </header>
 
