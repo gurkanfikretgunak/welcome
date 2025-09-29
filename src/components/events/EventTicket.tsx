@@ -25,18 +25,16 @@ interface EventTicketProps {
 export default function EventTicket({ participant }: EventTicketProps) {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('')
 
-  // Generate QR code
+  // Generate QR code (encode public ticket view URL)
   useEffect(() => {
     const generateQR = async () => {
       try {
-        const qrData = {
-          reference: participant.reference_number,
-          event: participant.event_title,
-          name: participant.full_name,
-          date: participant.event_date
-        }
+        const base = (typeof window !== 'undefined')
+          ? window.location.origin
+          : (process.env.NEXT_PUBLIC_SITE_URL || '')
+        const qrUrl = `${base}/ticketview/${participant.reference_number}`
         
-        const qrCodeUrl = await QRCode.toDataURL(JSON.stringify(qrData), {
+        const qrCodeUrl = await QRCode.toDataURL(qrUrl, {
           width: 220,
           margin: 2,
           color: {

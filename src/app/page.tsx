@@ -519,7 +519,7 @@ export default function Home() {
 
         <TextCard variant="default" className="mt-8">
           <TextHierarchy level={1} muted>
-            By proceeding, you agree to authenticate via GitHub OAuth and provide your email for verification.
+            Event participation is public. By registering, you consent to processing your data for event management purposes.
           </TextHierarchy>
         </TextCard>
       </PageLayout>

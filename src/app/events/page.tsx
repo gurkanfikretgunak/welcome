@@ -40,7 +40,7 @@ interface RegistrationData {
 export default function EventsPage() {
   const { user, userProfile, loading } = useAuth()
   const router = useRouter()
-  const [currentView, setCurrentView] = useState<'list' | 'register' | 'tickets' | 'create'>('list')
+  const [currentView, setCurrentView] = useState<'list' | 'register' | 'tickets'>('list')
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null)
   const [isOwner, setIsOwner] = useState(false)
@@ -119,14 +119,7 @@ export default function EventsPage() {
             >
               MY TICKETS
             </TextButton>
-            {isOwner && (
-              <TextButton
-                variant={currentView === 'create' ? 'success' : 'default'}
-                onClick={() => setCurrentView('create')}
-              >
-                CREATE EVENT
-              </TextButton>
-            )}
+            {/* Create Event removed from here; available in owner dashboard only */}
           </div>
         </TextCard>
 
@@ -172,22 +165,7 @@ export default function EventsPage() {
           </div>
         )}
 
-        {currentView === 'create' && isOwner && (
-          <div>
-            <TextButton
-              variant="default"
-              onClick={handleBackToList}
-              className="mb-4"
-            >
-              ← BACK TO EVENTS
-            </TextButton>
-            <TextCard title="CREATE EVENT" variant="warning">
-              <TextHierarchy level={1} muted>
-                Event creation form will be implemented here.
-              </TextHierarchy>
-            </TextCard>
-          </div>
-        )}
+        {/* Create Event view removed */}
 
         {/* Registration Success */}
         {registrationData && (

@@ -50,14 +50,17 @@ export default function EventCard({ event, onRegister, showRegisterButton = true
   }
 
   return (
-    <TextCard title={event.title} className="mb-4">
+    <TextCard title={event.title} className="mb-4 text-left">
       <div className="space-y-3">
         {/* Event Status and Date */}
         <div className="flex items-center justify-between">
-          {getStatusBadge()}
-          <TextHierarchy level={2} muted>
-            {formatDate(eventDate)}
-          </TextHierarchy>
+          <div className="flex items-center gap-2">
+            {getStatusBadge()}
+            <TextHierarchy level={2} muted>
+              {formatDate(eventDate)}
+            </TextHierarchy>
+          </div>
+          <span className="text-xs muted">{isExpanded ? '▲' : '▼'}</span>
         </div>
 
         {/* Location */}
@@ -83,15 +86,15 @@ export default function EventCard({ event, onRegister, showRegisterButton = true
         {event.description && (
           <div>
             <TextHierarchy level={2} muted>
-              {isExpanded ? event.description : `${event.description.substring(0, 100)}${event.description.length > 100 ? '...' : ''}`}
+              {isExpanded ? event.description : `${event.description.substring(0, 140)}${event.description.length > 140 ? '...' : ''}`}
             </TextHierarchy>
-            {event.description.length > 100 && (
+            {event.description.length > 140 && (
               <TextButton
                 variant="default"
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="mt-2 text-xs"
               >
-                {isExpanded ? 'SHOW LESS' : 'SHOW MORE'}
+                {isExpanded ? 'SHOW LESS' : 'READ MORE'}
               </TextButton>
             )}
           </div>
