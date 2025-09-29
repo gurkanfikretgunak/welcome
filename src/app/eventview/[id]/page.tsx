@@ -5,6 +5,7 @@ import TextBadge from '@/components/ui/TextBadge'
 import TextCard from '@/components/ui/TextCard'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import EventRegistrationForm from '@/components/events/EventRegistrationForm'
+import TicketLookup from '@/components/events/TicketLookup'
 import { getEventById } from '@/lib/supabase'
 
 interface EventData {
@@ -72,44 +73,60 @@ export default function PublicEventView({ params }: { params: Promise<{ id: stri
 
   if (countdown !== null) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <TextCard variant="success" title="KAYIT BAŞARILI! 🎉">
-          <div className="text-center space-y-4">
-            <TextHierarchy level={1} emphasis className="text-4xl">
-              {countdown}
-            </TextHierarchy>
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1 flex items-center justify-center p-4">
+          <TextCard variant="success" title="REGISTRATION SUCCESSFUL! 🎉">
+            <div className="text-center space-y-4">
+              <TextHierarchy level={1} emphasis className="text-4xl">
+                {countdown}
+              </TextHierarchy>
+              <TextHierarchy level={2} muted>
+                Preparing your ticket...
+              </TextHierarchy>
+              <TextHierarchy level={2} muted>
+                Redirecting in {countdown} second{countdown !== 1 ? 's' : ''}
+              </TextHierarchy>
+            </div>
+          </TextCard>
+        </div>
+        
+        {/* Footer */}
+        <footer className="border-t border-black p-4 mt-8">
+          <div className="max-w-6xl mx-auto text-center">
             <TextHierarchy level={2} muted>
-              Biletiniz hazırlanıyor...
-            </TextHierarchy>
-            <TextHierarchy level={2} muted>
-              {countdown} saniye sonra yönlendirileceksiniz
+              © 2024 MasterFabric. All rights reserved.
             </TextHierarchy>
           </div>
-        </TextCard>
+        </footer>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen p-4">
-      <div className="max-w-xl mx-auto">
-        <TextCard title={event.title}>
-          <TextHierarchy level={2} muted>
-            📅 {new Date(event.event_date).toLocaleString('tr-TR')}
-          </TextHierarchy>
-          {event.location && (
-            <TextHierarchy level={2} muted>
-              📍 {event.location}
-            </TextHierarchy>
-          )}
-          {event.description && (
-            <TextHierarchy level={2} muted className="mt-2">
-              {event.description}
-            </TextHierarchy>
-          )}
-        </TextCard>
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 p-4">
+        <div className="max-w-xl mx-auto space-y-4">
+          {/* Ticket Lookup Section */}
+          <TicketLookup />
 
-        <div className="mt-4">
+          {/* Event Info Section */}
+          <TextCard title={event.title}>
+            <TextHierarchy level={2} muted>
+              📅 {new Date(event.event_date).toLocaleString('en-US')}
+            </TextHierarchy>
+            {event.location && (
+              <TextHierarchy level={2} muted>
+                📍 {event.location}
+              </TextHierarchy>
+            )}
+            {event.description && (
+              <TextHierarchy level={2} muted className="mt-2">
+                {event.description}
+              </TextHierarchy>
+            )}
+          </TextCard>
+
+          {/* Registration Form Section */}
           <EventRegistrationForm
             event={event}
             submitLabel="JOIN"
@@ -123,6 +140,15 @@ export default function PublicEventView({ params }: { params: Promise<{ id: stri
           />
         </div>
       </div>
+      
+      {/* Footer */}
+      <footer className="border-t border-black p-4 mt-8">
+        <div className="max-w-6xl mx-auto text-center">
+          <TextHierarchy level={2} muted>
+            © 2025 MasterFabric. All rights reserved.
+          </TextHierarchy>
+        </div>
+      </footer>
     </div>
   )
 }

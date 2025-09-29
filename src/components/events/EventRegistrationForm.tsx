@@ -225,7 +225,7 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel, subm
             <ReCAPTCHA
               sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ''}
               onChange={setRecaptchaToken}
-              theme="dark"
+              theme="light"
             />
           </div>
 
