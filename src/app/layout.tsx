@@ -3,6 +3,7 @@ import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import UpdateSnackbar from "@/components/UpdateSnackbar";
+import CursorGame from "@/components/CursorGame";
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
@@ -80,6 +81,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <UpdateSnackbar />
+          <CursorGame />
         </AuthProvider>
       </body>
     </html>
