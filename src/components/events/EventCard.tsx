@@ -64,7 +64,7 @@ export default function EventCard({ event, onRegister, showRegisterButton = true
             {showRegisterButton && isUpcoming && !isFull && (
               <TextButton
                 variant="success"
-                onClick={() => onRegister(event.id)}
+                onClick={() => window.location.href = `/eventview/${event.id}`}
                 className="text-xs"
               >
                 JOIN

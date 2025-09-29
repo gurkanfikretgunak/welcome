@@ -20,6 +20,8 @@ export default function PublicEventView({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [event, setEvent] = useState<EventData | null>(null)
+  const [countdown, setCountdown] = useState<number | null>(null)
+  const [redirectReference, setRedirectReference] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -39,6 +41,17 @@ export default function PublicEventView({ params }: { params: Promise<{ id: stri
     load()
   }, [params])
 
+  useEffect(() => {
+    if (countdown !== null && countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(countdown - 1)
+      }, 1000)
+      return () => clearTimeout(timer)
+    } else if (countdown === 0 && redirectReference) {
+      window.location.href = `/ticketview/${redirectReference}`
+    }
+  }, [countdown, redirectReference])
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -52,6 +65,26 @@ export default function PublicEventView({ params }: { params: Promise<{ id: stri
       <div className="min-h-screen flex items-center justify-center p-4">
         <TextCard variant="error">
           <TextHierarchy level={1} muted>{error || 'Event not found'}</TextHierarchy>
+        </TextCard>
+      </div>
+    )
+  }
+
+  if (countdown !== null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <TextCard variant="success" title="KAYIT BAŞARILI! 🎉">
+          <div className="text-center space-y-4">
+            <TextHierarchy level={1} emphasis className="text-4xl">
+              {countdown}
+            </TextHierarchy>
+            <TextHierarchy level={2} muted>
+              Biletiniz hazırlanıyor...
+            </TextHierarchy>
+            <TextHierarchy level={2} muted>
+              {countdown} saniye sonra yönlendirileceksiniz
+            </TextHierarchy>
+          </div>
         </TextCard>
       </div>
     )
@@ -82,7 +115,8 @@ export default function PublicEventView({ params }: { params: Promise<{ id: stri
             submitLabel="JOIN"
             onSuccess={(data) => {
               if (data?.reference_number) {
-                window.location.href = `/ticketview/${data.reference_number}`
+                setRedirectReference(data.reference_number)
+                setCountdown(3)
               }
             }}
             onCancel={() => { window.location.href = '/events' }}

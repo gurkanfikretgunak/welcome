@@ -227,164 +227,138 @@ export default function OwnerEventsPage() {
           </TextCard>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Events List */}
-          <div>
-            <TextCard title="ALL EVENTS">
-              {loadingEvents ? (
-                <TextHierarchy level={1} muted>
-                  Loading events...
-                </TextHierarchy>
-              ) : events.length === 0 ? (
-                <TextHierarchy level={1} muted>
-                  No events found.
-                </TextHierarchy>
-              ) : (
-                <div className="space-y-3">
-                  {events.map((event) => (
-                    <div
-                      key={event.id}
-                      className={`border p-3 rounded cursor-pointer transition-colors ${
-                        selectedEvent?.id === event.id 
-                          ? 'border-green-500 bg-green-900/20' 
-                          : 'border-gray-600 hover:border-gray-500'
-                      }`}
-                      onClick={() => handleEventSelect(event)}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <TextHierarchy level={1} emphasis>
-                          {event.title}
-                        </TextHierarchy>
-                        <div className="flex gap-2">
-                          <TextBadge variant={event.is_published ? 'success' : 'warning'}>
-                            {event.is_published ? 'PUBLISHED' : 'DRAFT'}
-                          </TextBadge>
-                          <TextBadge variant={event.is_active ? 'success' : 'error'}>
-                            {event.is_active ? 'ACTIVE' : 'INACTIVE'}
-                          </TextBadge>
-                          <span className="text-xs muted">
-                            {selectedEvent?.id === event.id ? '▼' : '►'}
-                          </span>
-                        </div>
-                      </div>
-                      <TextHierarchy level={2} muted>
+        {/* Events List - Vertical Layout */}
+        <TextCard title="ALL EVENTS">
+          {loadingEvents ? (
+            <TextHierarchy level={1} muted>
+              Loading events...
+            </TextHierarchy>
+          ) : events.length === 0 ? (
+            <TextHierarchy level={1} muted>
+              No events found.
+            </TextHierarchy>
+          ) : (
+            <div className="space-y-4">
+              {events.map((event) => (
+                <div key={event.id} className="border border-black p-4 bg-white">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <TextHierarchy level={1} emphasis className="text-lg">
+                        {event.title}
+                      </TextHierarchy>
+                      <TextHierarchy level={2} muted className="mt-1">
                         📅 {formatDate(event.event_date)}
                       </TextHierarchy>
+                      {event.location && (
+                        <TextHierarchy level={2} muted>
+                          📍 {event.location}
+                        </TextHierarchy>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <TextBadge variant={event.is_published ? 'success' : 'warning'}>
+                        {event.is_published ? 'PUBLISHED' : 'DRAFT'}
+                      </TextBadge>
+                      <TextBadge variant={event.is_active ? 'success' : 'error'}>
+                        {event.is_active ? 'ACTIVE' : 'INACTIVE'}
+                      </TextBadge>
+                    </div>
+                  </div>
+
+                  {event.description && (
+                    <TextHierarchy level={2} muted className="mb-3">
+                      {event.description}
+                    </TextHierarchy>
+                  )}
+
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                    <div className="flex items-center gap-4">
                       <TextHierarchy level={2} muted>
                         👥 {event.participant_count} participants
                       </TextHierarchy>
+                      {event.max_participants && (
+                        <TextHierarchy level={2} muted>
+                          (max {event.max_participants})
+                        </TextHierarchy>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
-            </TextCard>
-          </div>
-
-          {/* Event Details & Participants */}
-          <div>
-            {selectedEvent ? (
-              <div className="space-y-4">
-                {/* Event Details */}
-                <TextCard title="EVENT DETAILS">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <TextHierarchy level={1} emphasis>
-                        {selectedEvent.title}
-                      </TextHierarchy>
-                      <div className="flex gap-2">
-                        <TextButton
-                          variant={selectedEvent.is_published ? 'warning' : 'success'}
-                          onClick={() => handlePublishToggle(selectedEvent.id, selectedEvent.is_published)}
-                        >
-                          {selectedEvent.is_published ? 'UNPUBLISH' : 'PUBLISH'}
-                        </TextButton>
-                        <TextButton
-                          variant="error"
-                          onClick={() => handleDeleteEvent(selectedEvent.id)}
-                        >
-                          DELETE
-                        </TextButton>
-                      </div>
+                    <div className="flex gap-2">
+                      <TextButton
+                        variant="default"
+                        onClick={() => handleEventSelect(event)}
+                      >
+                        {selectedEvent?.id === event.id ? 'HIDE DETAILS' : 'VIEW DETAILS'}
+                      </TextButton>
+                      <TextButton
+                        variant={event.is_published ? 'warning' : 'success'}
+                        onClick={() => handlePublishToggle(event.id, event.is_published)}
+                      >
+                        {event.is_published ? 'UNPUBLISH' : 'PUBLISH'}
+                      </TextButton>
+                      <TextButton
+                        variant="error"
+                        onClick={() => handleDeleteEvent(event.id)}
+                      >
+                        DELETE
+                      </TextButton>
                     </div>
-                    <TextHierarchy level={2} muted>
-                      📅 {formatDate(selectedEvent.event_date)}
-                    </TextHierarchy>
-                    {selectedEvent.location && (
-                      <TextHierarchy level={2} muted>
-                        📍 {selectedEvent.location}
-                      </TextHierarchy>
-                    )}
-                    {selectedEvent.description && (
-                      <TextHierarchy level={2} muted>
-                        {selectedEvent.description}
-                      </TextHierarchy>
-                    )}
-                    <TextHierarchy level={2} muted>
-                      👥 {selectedEvent.participant_count} / {selectedEvent.max_participants || '∞'} participants
-                    </TextHierarchy>
                   </div>
-                </TextCard>
 
-                {/* Participants List */}
-                <TextCard title="PARTICIPANTS">
-                  {loadingParticipants ? (
-                    <TextHierarchy level={1} muted>
-                      Loading participants...
-                    </TextHierarchy>
-                  ) : participants.length === 0 ? (
-                    <TextHierarchy level={1} muted>
-                      No participants yet.
-                    </TextHierarchy>
-                  ) : (
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
-                      {participants.map((participant) => (
-                        <div key={participant.id} className="border border-gray-600 p-3 rounded">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-mono font-bold text-sm">
-                              {getInitials(participant.full_name)}
+                  {/* Event Details Expanded */}
+                  {selectedEvent?.id === event.id && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <TextHierarchy level={1} emphasis className="mb-3">
+                        PARTICIPANTS
+                      </TextHierarchy>
+                      {loadingParticipants ? (
+                        <TextHierarchy level={1} muted>
+                          Loading participants...
+                        </TextHierarchy>
+                      ) : participants.length === 0 ? (
+                        <TextHierarchy level={1} muted>
+                          No participants yet.
+                        </TextHierarchy>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {participants.map((participant) => (
+                            <div key={participant.id} className="border border-gray-300 p-3 rounded bg-gray-50">
+                              <div className="flex items-start gap-3">
+                                <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-mono font-bold flex-shrink-0">
+                                  {getInitials(participant.full_name)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <TextHierarchy level={1} emphasis className="truncate">
+                                    {participant.full_name}
+                                  </TextHierarchy>
+                                  <TextHierarchy level={2} muted className="truncate text-xs">
+                                    {participant.email}
+                                  </TextHierarchy>
+                                  {participant.title && (
+                                    <TextHierarchy level={2} muted className="text-xs">
+                                      💼 {participant.title}
+                                    </TextHierarchy>
+                                  )}
+                                  {participant.company && (
+                                    <TextHierarchy level={2} muted className="text-xs">
+                                      🏢 {participant.company}
+                                    </TextHierarchy>
+                                  )}
+                                  <TextHierarchy level={2} muted className="text-xs mt-1">
+                                    📅 {formatDate(participant.registration_date)}
+                                  </TextHierarchy>
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex-1">
-                              <TextHierarchy level={1} emphasis>
-                                {participant.full_name}
-                              </TextHierarchy>
-                              <TextHierarchy level={2} muted>
-                                {participant.email}
-                              </TextHierarchy>
-                              {participant.title && (
-                                <TextHierarchy level={2} muted>
-                                  💼 {participant.title}
-                                </TextHierarchy>
-                              )}
-                              {participant.company && (
-                                <TextHierarchy level={2} muted>
-                                  🏢 {participant.company}
-                                </TextHierarchy>
-                              )}
-                            </div>
-                            <div className="text-right">
-                              <TextHierarchy level={2} muted>
-                                {participant.reference_number}
-                              </TextHierarchy>
-                              <TextHierarchy level={2} muted>
-                                {formatDate(participant.registration_date)}
-                              </TextHierarchy>
-                            </div>
-                          </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
                   )}
-                </TextCard>
-              </div>
-            ) : (
-              <TextCard title="SELECT AN EVENT">
-                <TextHierarchy level={1} muted>
-                  Select an event from the list to view details and participants.
-                </TextHierarchy>
-              </TextCard>
-            )}
-          </div>
-        </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </TextCard>
       </PageLayout>
     </div>
   )

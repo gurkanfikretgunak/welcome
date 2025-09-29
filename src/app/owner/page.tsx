@@ -836,6 +836,23 @@ export default function OwnerPage() {
         </CollapsibleSection>
       </TextCard>
 
+        {/* Event Management Section */}
+        <TextCard title="EVENT MANAGEMENT">
+          <div className="space-y-4 mb-4">
+            <div className="flex justify-end">
+              <TextButton
+                variant="success"
+                onClick={() => router.push('/events/owner')}
+              >
+                MANAGE EVENTS →
+              </TextButton>
+            </div>
+            <TextHierarchy level={2} muted>
+              Create, manage, and monitor events. View participant lists and manage registrations.
+            </TextHierarchy>
+          </div>
+        </TextCard>
+
         <TextCard title="USER MANAGEMENT">
           <CollapsibleSection
             title="USER MANAGEMENT"
