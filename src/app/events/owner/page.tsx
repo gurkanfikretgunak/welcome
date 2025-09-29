@@ -9,6 +9,7 @@ import TextCard from '@/components/ui/TextCard'
 import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
+import EventTicket from '@/components/events/EventTicket'
 import { getOwnerEvents, getEventParticipants, updateEvent, deleteEvent, createEvent } from '@/lib/supabase'
 
 interface Event {
@@ -44,6 +45,7 @@ export default function OwnerEventsPage() {
   const [loadingParticipants, setLoadingParticipants] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
+  const [selectedTicket, setSelectedTicket] = useState<Participant | null>(null)
 
   useEffect(() => {
     if (!loading && userProfile) {
@@ -321,7 +323,7 @@ export default function OwnerEventsPage() {
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {participants.map((participant) => (
-                            <div key={participant.id} className="border border-gray-300 p-3 rounded bg-gray-50">
+                            <div key={participant.id} className="border border-gray-300 p-3 rounded bg-gray-50 relative">
                               <div className="flex items-start gap-3">
                                 <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-mono font-bold flex-shrink-0">
                                   {getInitials(participant.full_name)}
@@ -348,6 +350,24 @@ export default function OwnerEventsPage() {
                                   </TextHierarchy>
                                 </div>
                               </div>
+                              {/* QR Code Icon Button */}
+                              <button
+                                onClick={() => setSelectedTicket(participant)}
+                                className="absolute bottom-2 right-2 w-8 h-8 bg-white border-2 border-black hover:bg-black hover:text-white transition-colors flex items-center justify-center group"
+                                title="View Ticket"
+                              >
+                                <svg 
+                                  xmlns="http://www.w3.org/2000/svg" 
+                                  fill="none" 
+                                  viewBox="0 0 24 24" 
+                                  strokeWidth={2} 
+                                  stroke="currentColor" 
+                                  className="w-5 h-5"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
+                                </svg>
+                              </button>
                             </div>
                           ))}
                         </div>
@@ -360,6 +380,44 @@ export default function OwnerEventsPage() {
           )}
         </TextCard>
       </PageLayout>
+
+      {/* Ticket Popup Modal */}
+      {selectedTicket && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedTicket(null)}
+        >
+          <div 
+            className="bg-white max-w-2xl w-full max-h-[90vh] overflow-y-auto relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedTicket(null)}
+              className="absolute top-4 right-4 w-8 h-8 bg-black text-white hover:bg-red-600 transition-colors flex items-center justify-center z-10"
+            >
+              ✕
+            </button>
+
+            {/* Ticket Component */}
+            <div className="p-6">
+              <EventTicket
+                participant={{
+                  participant_id: selectedTicket.id,
+                  reference_number: selectedTicket.reference_number,
+                  full_name: selectedTicket.full_name,
+                  email: selectedTicket.email,
+                  event_id: selectedEvent?.id || '',
+                  event_title: selectedEvent?.title || '',
+                  event_date: selectedEvent?.event_date || '',
+                  event_location: selectedEvent?.location,
+                  registration_date: selectedTicket.registration_date
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
