@@ -32,6 +32,7 @@ export default function Navbar({ user, onSignOut }: NavbarProps) {
   }
 
   const navItems = [
+    { href: '/events', label: 'EVENTS', show: !!user && user.master_email },
     { href: '/worklog', label: 'WORKLOG', show: !!user },
     { href: '/checklist', label: 'CHECKLIST', show: !!user && user.master_email },
     { href: '/tickets', label: 'TICKETS', show: !!user && user.master_email },

@@ -16,6 +16,7 @@ export default function Home() {
   const router = useRouter()
   const [processSteps, setProcessSteps] = useState<ProcessStep[]>([])
   const [welcomeText, setWelcomeText] = useState<string>('')
+  const [events, setEvents] = useState<any[]>([])
   const [isLoadingContent, setIsLoadingContent] = useState(true)
   const [initialLoading, setInitialLoading] = useState(true)
   const [showBadge, setShowBadge] = useState('masterfabric')
@@ -287,6 +288,19 @@ export default function Home() {
         }
         const welcomeData = await welcomeResponse.json()
         setWelcomeText(welcomeData.welcomeText || '')
+
+        // Fetch events (public)
+        try {
+          const eventsResponse = await fetch('/api/events')
+          if (eventsResponse.ok) {
+            const eventsData = await eventsResponse.json()
+            setEvents(Array.isArray(eventsData.events) ? eventsData.events : [])
+          } else {
+            setEvents([])
+          }
+        } catch {
+          setEvents([])
+        }
       } catch (error) {
         console.error('Error loading content:', error)
         setWelcomeText('Failed to load content. Please refresh the page.')
@@ -465,20 +479,22 @@ export default function Home() {
           )}
         </TextCard>
 
-        <TextCard title="UPCOMING EVENTS">
-          <TextHierarchy level={1} className="mb-3">
-            Join our community events and connect with fellow developers.
-          </TextHierarchy>
-          <div className="flex gap-3">
-            <TextButton
-              variant="success"
-              onClick={() => router.push('/events')}
-              className="text-base px-6 py-3"
-            >
-              VIEW EVENTS →
-            </TextButton>
-          </div>
-        </TextCard>
+        {events.length > 0 && (
+          <TextCard title="UPCOMING EVENTS">
+            <TextHierarchy level={1} className="mb-3">
+              Join our community events and connect with fellow developers.
+            </TextHierarchy>
+            <div className="flex gap-3">
+              <TextButton
+                variant="success"
+                onClick={() => router.push('/events')}
+                className="text-base px-6 py-3"
+              >
+                VIEW EVENTS →
+              </TextButton>
+            </div>
+          </TextCard>
+        )}
 
         <TextCard title="SYSTEM INFORMATION">
           <TextHierarchy level={1} className="mb-3">
