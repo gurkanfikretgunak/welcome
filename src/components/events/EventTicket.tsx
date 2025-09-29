@@ -100,14 +100,14 @@ export default function EventTicket({ participant, hideAvatar = true, enableShar
           )}
 
           {/* Reference Number */}
-          <div className="border-b border-gray-600 pb-3">
+          <div className="border-b border-gray-600 pb-3 text-center">
             <TextHierarchy level={1} emphasis>
               REFERENCE: {participant.reference_number}
             </TextHierarchy>
           </div>
 
           {/* Event Info */}
-          <div className="space-y-2">
+          <div className="space-y-2 text-center">
             <TextHierarchy level={1} emphasis>
               {participant.event_title}
             </TextHierarchy>
@@ -122,14 +122,9 @@ export default function EventTicket({ participant, hideAvatar = true, enableShar
           </div>
 
           {/* Participant Info */}
-          <div className="border-t border-gray-600 pt-3 text-left">
-            <div className="flex items-center gap-3 mb-3">
-              {!hideAvatar && (
-                <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white font-mono font-bold text-lg">
-                  {getInitials(participant.full_name)}
-                </div>
-              )}
-              <div>
+          <div className="border-t border-gray-600 pt-3 text-center">
+            {hideAvatar ? (
+              <div className="mb-3">
                 <TextHierarchy level={1} emphasis>
                   {participant.full_name}
                 </TextHierarchy>
@@ -137,7 +132,21 @@ export default function EventTicket({ participant, hideAvatar = true, enableShar
                   {participant.email}
                 </TextHierarchy>
               </div>
-            </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2 mb-3">
+                <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white font-mono font-bold text-lg">
+                  {getInitials(participant.full_name)}
+                </div>
+                <div>
+                  <TextHierarchy level={1} emphasis>
+                    {participant.full_name}
+                  </TextHierarchy>
+                  <TextHierarchy level={2} muted>
+                    {participant.email}
+                  </TextHierarchy>
+                </div>
+              </div>
+            )}
 
             {participant.title && (
               <TextHierarchy level={2} muted>
@@ -152,7 +161,7 @@ export default function EventTicket({ participant, hideAvatar = true, enableShar
           </div>
 
           {/* Registration Date */}
-          <div className="border-t border-gray-600 pt-3">
+          <div className="border-t border-gray-600 pt-3 text-center">
             <TextHierarchy level={2} muted>
               Registered: {formatDate(participant.registration_date)}
             </TextHierarchy>
