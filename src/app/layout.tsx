@@ -9,9 +9,55 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || 'https://example.com'
+
 export const metadata: Metadata = {
-  title: "MasterFabric Onboarding",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "MasterFabric Onboarding",
+    template: "%s • MasterFabric",
+  },
   description: "Developer onboarding system for MasterFabric Information Technologies Inc.",
+  applicationName: "MasterFabric Welcome",
+  keywords: [
+    "MasterFabric",
+    "onboarding",
+    "developer onboarding",
+    "supabase",
+    "next.js",
+  ],
+  authors: [{ name: "MasterFabric" }],
+  creator: "MasterFabric",
+  publisher: "MasterFabric",
+  openGraph: {
+    type: "website",
+    url: "/",
+    title: "MasterFabric Onboarding",
+    description: "Developer onboarding system for MasterFabric Information Technologies Inc.",
+    siteName: "MasterFabric Welcome",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MasterFabric Onboarding",
+    description: "Developer onboarding system for MasterFabric Information Technologies Inc.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  alternates: {
+    canonical: "/",
+  },
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export const viewport = {
