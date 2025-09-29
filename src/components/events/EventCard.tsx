@@ -60,7 +60,18 @@ export default function EventCard({ event, onRegister, showRegisterButton = true
               {formatDate(eventDate)}
             </TextHierarchy>
           </div>
-          <span className="text-xs muted">{isExpanded ? '▲' : '▼'}</span>
+          <div className="flex items-center gap-2">
+            {showRegisterButton && isUpcoming && !isFull && (
+              <TextButton
+                variant="success"
+                onClick={() => onRegister(event.id)}
+                className="text-xs"
+              >
+                JOIN
+              </TextButton>
+            )}
+            <span className="text-xs muted">{isExpanded ? '▲' : '▼'}</span>
+          </div>
         </div>
 
         {/* Location */}
@@ -97,19 +108,6 @@ export default function EventCard({ event, onRegister, showRegisterButton = true
                 {isExpanded ? 'SHOW LESS' : 'READ MORE'}
               </TextButton>
             )}
-          </div>
-        )}
-
-        {/* Register Button */}
-        {showRegisterButton && isUpcoming && !isFull && (
-          <div className="pt-3 border-t border-gray-600">
-            <TextButton
-              variant="success"
-              onClick={() => onRegister(event.id)}
-              className="w-full"
-            >
-              REGISTER FOR EVENT
-            </TextButton>
           </div>
         )}
 

@@ -75,12 +75,12 @@ export default function TicketView({ params }: { params: Promise<{ reference: st
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + '\n' + ticketUrl)}`
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full">
         <EventTicket participant={participant} hideAvatar enableShare />
 
         {/* Notices under the ticket */}
-        <div className="mt-4 space-y-2">
+        <div className="mt-4 space-y-2 text-center">
           <TextCard variant="muted">
             <TextHierarchy level={2} muted>
               - Please keep your reference number confidential.
@@ -92,6 +92,11 @@ export default function TicketView({ params }: { params: Promise<{ reference: st
               - For any issues, contact the event organizer.
             </TextHierarchy>
           </TextCard>
+          <div className="flex justify-center">
+            <TextButton variant="default" onClick={() => window.location.href = '/'}>
+              ← BACK TO WELCOME
+            </TextButton>
+          </div>
         </div>
       </div>
     </div>

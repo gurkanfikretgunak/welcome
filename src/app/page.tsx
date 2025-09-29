@@ -509,17 +509,7 @@ export default function Home() {
           section
         />
 
-        {events.length > 0 && (
-          <div className="flex justify-center mt-3">
-            <TextButton
-              variant="default"
-              onClick={handleShareEvents}
-              className="text-xs px-4 py-2"
-            >
-              SHARE EVENTS
-            </TextButton>
-          </div>
-        )}
+        {/* Share events removed by request */}
 
         <TextCard title="SYSTEM INFORMATION">
           <TextHierarchy level={1} className="mb-3">
