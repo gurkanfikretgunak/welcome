@@ -30,7 +30,7 @@ export default function CursorGame() {
   const [cursors, setCursors] = useState<CursorPosition[]>([])
   const [myCursor, setMyCursor] = useState<CursorPosition | null>(null)
   const [isConnected, setIsConnected] = useState(false)
-  const mouseMoveRef = useRef<NodeJS.Timeout | null>(null)
+  const mouseMoveRef = useRef<NodeJS.Timeout>()
   const sessionId = useRef<string>(Math.random().toString(36).substring(7))
   const username = useRef<string>(RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)])
   const color = useRef<string>(COLORS[Math.floor(Math.random() * COLORS.length)])
