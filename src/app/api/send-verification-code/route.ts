@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { captureException, captureMessage } from '@/lib/sentry'
+import { sendEmail } from '@app/lib/email/resend'
+import { VerificationCodeEmail } from '@app/lib/email/templates/VerificationCodeEmail'
+import React from 'react'
 
 export async function POST(request: NextRequest) {
   try {
@@ -77,10 +80,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // In a real implementation, you would send the email here
-    // For now, we'll just log it
+    // Send verification email
     const emailType = isInternship ? 'Internship' : 'Standard'
-    console.log(`📧 ${emailType} verification code for ${email}: ${verificationCode}`)
+    const element = React.createElement(VerificationCodeEmail as any, { code: verificationCode, email })
+    const { error: emailError } = await sendEmail({ to: email, subject: `${emailType} verification code`, react: element as any })
+    if (emailError) {
+      captureException(emailError, {
+        tags: { api: 'send-verification-code', operation: 'email_send' },
+        extra: { userId, email, isInternship }
+      })
+      return NextResponse.json(
+        { error: 'Failed to send verification email' },
+        { status: 500 }
+      )
+    }
     
     captureMessage(`Verification code sent to ${email}`, {
       level: 'info',
@@ -90,9 +103,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ 
       success: true, 
-      message: 'Verification code sent',
-      // In development, return the code for testing
-      ...(process.env.NODE_ENV === 'development' && { code: verificationCode })
+      message: 'Verification code sent'
     })
     
   } catch (error) {

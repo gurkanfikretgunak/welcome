@@ -584,6 +584,29 @@ export const createWorklog = async (worklog: Omit<Worklog, 'id' | 'created_at' |
     }
 
     console.log('✅ Worklog created successfully:', data)
+    // Notify user via email (best-effort)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const { data: profile } = await supabase
+        .from('users')
+        .select('master_email')
+        .eq('id', user?.id || '')
+        .maybeSingle()
+      const email = profile?.master_email
+      if (email) {
+        const base = process.env.NEXT_PUBLIC_APP_URL || ''
+        const link = base ? `${base}/worklog` : '/worklog'
+        await fetch('/api/notifications/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: email,
+            subject: 'Worklog created',
+            html: `<p>Your worklog \"${worklog.title}\" was created.</p><p><a href=\"${link}\">View worklogs</a></p>`
+          })
+        }).catch(() => null)
+      }
+    } catch {}
     return { data, error: null }
   } catch (error) {
     console.error('❌ Create worklog exception:', error)
@@ -714,6 +737,31 @@ export async function createTicket(ticketData: {
     }
 
     console.log('✅ Ticket created successfully:', data)
+    // Notify creator via email
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('users')
+          .select('master_email')
+          .eq('id', user.id)
+          .maybeSingle()
+        const email = profile?.master_email
+        if (email) {
+          const base = process.env.NEXT_PUBLIC_APP_URL || ''
+          const link = base ? `${base}/tickets` : '/tickets'
+          await fetch('/api/notifications/email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: email,
+              subject: 'Ticket created',
+              html: `<p>Your ticket \"${ticketData.title}\" was created.</p><p><a href=\"${link}\">View your tickets</a></p>`
+            })
+          }).catch(() => null)
+        }
+      }
+    } catch {}
     return { data, error: null }
   } catch (error) {
     console.error('❌ Create ticket exception:', error)
@@ -1775,6 +1823,23 @@ export async function registerForEvent(registrationData: {
 
     const result = Array.isArray(data) ? data[0] : data
     console.log('✅ Registration successful:', result?.reference_number)
+    // Email confirmation with event link
+    try {
+      const email = registrationData.email
+      if (email) {
+        const base = process.env.NEXT_PUBLIC_APP_URL || ''
+        const link = base ? `${base}/eventview/${registrationData.event_id}` : `/eventview/${registrationData.event_id}`
+        await fetch('/api/notifications/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: email,
+            subject: 'Event registration confirmed',
+            html: `<p>Registration confirmed for event.</p><p><a href=\"${link}\">View event details</a></p>`
+          })
+        }).catch(() => null)
+      }
+    } catch {}
     return { data: result, error: null }
   } catch (error) {
     console.error('❌ Register exception:', error)

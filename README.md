@@ -65,6 +65,9 @@ Required envs (see `env.example`):
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+ - `RESEND_API_KEY`
+ - `RESEND_FROM` (default: `no-reply@masterfabric.co`)
+ - `NEXT_PUBLIC_APP_URL` (e.g., `http://localhost:3000`)
 - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
 - (optional) Sentry if you enable monitoring:
 -   - `NEXT_PUBLIC_SENTRY_DSN`
