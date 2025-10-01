@@ -28,18 +28,9 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Protected routes that require authentication
-  const protectedRoutes = ['/bio', '/email', '/checklist', '/profile', '/settings']
+  // Only enforce owner-only routes here; leave other auth to page-level handling
   const ownerRoutes = ['/owner']
-  
-  const isProtectedRoute = protectedRoutes.some(route => req.nextUrl.pathname.startsWith(route))
   const isOwnerRoute = ownerRoutes.some(route => req.nextUrl.pathname.startsWith(route))
-
-  // If accessing protected routes without session, redirect to home
-  if (isProtectedRoute && !session) {
-    const redirectUrl = new URL('/', req.url)
-    return NextResponse.redirect(redirectUrl)
-  }
 
   // If accessing owner routes, check if user is owner
   if (isOwnerRoute && session) {
