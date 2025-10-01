@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import "../../sentry/client";
+import NetworkHealthDialog from "@/components/NetworkHealthDialog";
 import { AuthProvider } from "@/context/AuthContext";
 import UpdateSnackbar from "@/components/UpdateSnackbar";
 
@@ -81,6 +82,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <UpdateSnackbar />
+          <NetworkHealthDialog />
         </AuthProvider>
       </body>
     </html>
