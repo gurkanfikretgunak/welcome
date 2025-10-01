@@ -11,10 +11,6 @@ export function captureException(
     level?: Sentry.SeverityLevel
   }
 ) {
-  if (process.env.NODE_ENV === 'development') {
-    console.error('Error:', error)
-  }
-
   Sentry.captureException(error, {
     level: context?.level || 'error',
     tags: context?.tags,
@@ -33,10 +29,6 @@ export function captureMessage(
     level?: Sentry.SeverityLevel
   }
 ) {
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Message:', message)
-  }
-
   Sentry.captureMessage(message, {
     level: context?.level || 'info',
     tags: context?.tags,

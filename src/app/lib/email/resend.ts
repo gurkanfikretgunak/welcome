@@ -1,11 +1,15 @@
 import { Resend } from 'resend'
+import { captureMessage } from '@/lib/sentry'
 
 const resendApiKey = process.env.RESEND_API_KEY
 const fromAddress = process.env.RESEND_FROM || 'no-reply@masterfabric.co'
 
 if (!resendApiKey) {
   // Avoid throwing during build; fail fast at runtime when used
-  console.warn('RESEND_API_KEY is not set. Emails will not be sent.')
+  captureMessage('RESEND_API_KEY is not set. Emails will not be sent.', {
+    level: 'warning',
+    tags: { module: 'email', provider: 'resend' },
+  })
 }
 
 export const resend = resendApiKey ? new Resend(resendApiKey) : null

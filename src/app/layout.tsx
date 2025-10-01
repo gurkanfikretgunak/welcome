@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import "../../sentry/client";
+import { useEffect } from "react";
+import { installConsoleBridge } from "@/lib/consoleBridge";
 import NetworkHealthDialog from "@/components/NetworkHealthDialog";
 import { AuthProvider } from "@/context/AuthContext";
 import UpdateSnackbar from "@/components/UpdateSnackbar";
@@ -74,6 +76,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Install console bridge on the client
+  useEffect(() => {
+    try {
+      installConsoleBridge()
+    } catch {
+      // ignore
+    }
+  }, [])
   return (
     <html lang="en">
       <body
