@@ -9,6 +9,7 @@ import TextHierarchy from '@/components/ui/TextHierarchy'
 export default function NetworkHealthDialog() {
   const { isOnline, isSupabaseHealthy, problem, checking, error, checkNow } = useNetworkHealth()
   const [visible, setVisible] = useState(false)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
   useEffect(() => {
     if (problem) setVisible(true)
@@ -35,22 +36,28 @@ export default function NetworkHealthDialog() {
           )}
           <div className="flex items-center gap-3">
             <TextButton
-              onClick={() => void checkNow()}
+              onClick={async () => {
+                const ok = await checkNow()
+                if (ok) {
+                  setSuccessMsg('Status checked. Everything looks good.')
+                  setTimeout(() => {
+                    setSuccessMsg(null)
+                    setVisible(false)
+                  }, 1200)
+                }
+              }}
               variant="default"
               className="px-4 py-2"
               disabled={checking}
             >
               {checking ? 'Checking…' : 'Check again'}
             </TextButton>
-            <TextButton
-              onClick={() => void checkNow()}
-              variant="success"
-              className="px-4 py-2"
-              disabled={checking}
-            >
-              {checking ? 'Validating…' : 'Validate & continue'}
-            </TextButton>
           </div>
+          {successMsg && (
+            <TextHierarchy level={3} className="text-green-700">
+              {successMsg}
+            </TextHierarchy>
+          )}
           <div className="text-xs muted">
             Status: Internet {isOnline ? 'OK' : 'DOWN'} • Supabase {isSupabaseHealthy === null ? '…' : isSupabaseHealthy ? 'OK' : 'DOWN'}
           </div>
