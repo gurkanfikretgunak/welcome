@@ -105,7 +105,22 @@ Issues and PRs are welcome. Please run `npm run lint` and `npm run type-check` b
 
 ## License
 
-MIT
+Licensed under GNU AGPLv3 with Additional Terms. See `LICENSE` for the full text.
+
+- Repository: https://github.com/masterfabric/welcome
+- Organization website: https://masterfabric.co
+- Contact: license@masterfabric.co
+
+Next.js + Supabase notice (courtesy):
+- If you deploy this software or derivatives as a Next.js project using Supabase, please email a short notice to `license@masterfabric.co` with:
+  - Repository URL or product link
+  - Deploy target (e.g., production, internal)
+  - Maintainer contact
+
+Web projects meta requirement:
+- Include a MasterFabric-provided license code as a meta tag in your main HTML (e.g., `index.html`):
+  - <meta name="masterfabric-license" content="<your-license-code>" />
+  - Request a code via `license@masterfabric.co`
 
 
 Built for MasterFabric development team.
