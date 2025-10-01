@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
-import { updateUserProfile } from '@/lib/supabase'
+import { updateUserProfile } from '@/lib/repositories/users'
 import Navbar from '@/components/layout/Navbar'
 import { sanitizeTurkishName } from '@/lib/validation'
 import PageLayout from '@/components/layout/PageLayout'

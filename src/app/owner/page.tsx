@@ -3,7 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
-import { getAllUsers, getAllChecklistStatuses, getAllTickets, updateTicket, Ticket, getAllPerformanceGoals, createPerformanceGoal, updatePerformanceGoal, deletePerformanceGoal, PerformanceGoalWithUser, getCurrentMonthYear, calculatePerformancePercentage, getAllDynamicChecklists, createDynamicChecklist, updateDynamicChecklist, deleteDynamicChecklist, DynamicChecklist, ChecklistWithAssignments, getActiveOtpCodes, OtpCode, getStoreProducts, createStoreProduct, updateStoreProduct, deleteStoreProduct, getAllStoreTransactions, deleteStoreTransaction, adjustUserPoints, StoreProduct, StoreTransaction } from '@/lib/supabase'
+import { getAllUsers, getCurrentMonthYear, calculatePerformancePercentage, createPerformanceGoal, getAllPerformanceGoals, updatePerformanceGoal, deletePerformanceGoal, PerformanceGoalWithUser } from '@/lib/repositories/users'
+import { getAllChecklistStatuses, getAllDynamicChecklists, createDynamicChecklist, updateDynamicChecklist, deleteDynamicChecklist, DynamicChecklist, ChecklistWithAssignments } from '@/lib/repositories/checklists'
+import { getAllTickets, updateTicket, Ticket } from '@/lib/repositories/tickets'
+import { getActiveOtpCodes, OtpCode } from '@/lib/repositories/otp'
+import { getStoreProducts, createStoreProduct, updateStoreProduct, deleteStoreProduct, getAllStoreTransactions, deleteStoreTransaction, adjustUserPoints, StoreProduct, StoreTransaction } from '@/lib/repositories/store'
 import { ONBOARDING_CHECKLIST, CATEGORY_LABELS } from '@/data/checklist'
 import Navbar from '@/components/layout/Navbar'
 import PageLayout from '@/components/layout/PageLayout'
@@ -163,14 +167,14 @@ export default function OwnerPage() {
       const storeTxData = (storeTxResult.data || []) as StoreTransaction[]
 
       // Process checklist data by user
-      const userProgress = usersData.map(user => {
-        const userChecklistItems = checklistData.filter(item => item.user_id === user.id)
-        const completedTasks = userChecklistItems.filter(item => item.completed).length
+      const userProgress = usersData.map((user: any) => {
+        const userChecklistItems = checklistData.filter((item: { user_id: string; completed: boolean; step_name: string }) => item.user_id === user.id)
+        const completedTasks = userChecklistItems.filter((item: { completed: boolean }) => item.completed).length
         const totalTasks = ONBOARDING_CHECKLIST.length
         
         const requiredTasks = ONBOARDING_CHECKLIST.filter(item => item.required)
         const requiredCompleted = requiredTasks.filter(task => 
-          userChecklistItems.some(item => item.step_name === task.id && item.completed)
+          userChecklistItems.some((item: { step_name: string; completed: boolean }) => item.step_name === task.id && item.completed)
         ).length
 
         return {

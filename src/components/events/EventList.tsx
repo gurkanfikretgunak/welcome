@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import EventCard from './EventCard'
 import TextCard from '@/components/ui/TextCard'
 import TextHierarchy from '@/components/ui/TextHierarchy'
-import { getPublishedEvents } from '@/lib/supabase'
+import { getPublishedEvents } from '@/lib/repositories/events'
 
 interface Event {
   id: string

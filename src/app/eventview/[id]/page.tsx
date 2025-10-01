@@ -6,7 +6,7 @@ import TextCard from '@/components/ui/TextCard'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import EventRegistrationForm from '@/components/events/EventRegistrationForm'
 import TicketLookup from '@/components/events/TicketLookup'
-import { getEventById } from '@/lib/supabase'
+import { getEventById } from '@/lib/repositories/events'
 
 interface EventData {
   id: string

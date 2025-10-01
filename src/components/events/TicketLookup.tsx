@@ -6,7 +6,7 @@ import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
 import EventTicket from './EventTicket'
-import { getParticipantByReference, getParticipantsByEmail } from '@/lib/supabase'
+import { getParticipantByReference, getParticipantsByEmail } from '@/lib/repositories/events'
 
 interface Participant {
   participant_id: string

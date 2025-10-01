@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
-import { updateUserProfile } from '@/lib/supabase'
+import { updateUserProfile } from '@/lib/repositories/users'
 import Navbar from '@/components/layout/Navbar'
 import PageLayout from '@/components/layout/PageLayout'
 import TextCard from '@/components/ui/TextCard'
@@ -12,7 +12,7 @@ import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
 import BottomSheet from '@/components/ui/BottomSheet'
 import StoreSheetContent from '@/components/ui/StoreSheetContent'
-import { getStoreProducts, purchaseStoreProduct, getStoreTransactions, StoreProduct, StoreTransaction } from '@/lib/supabase'
+import { getStoreProducts, purchaseStoreProduct, getStoreTransactions, StoreProduct, StoreTransaction } from '@/lib/repositories/store'
 import { StoreProductUI } from '@/data/store'
 
 const DEPARTMENTS = [

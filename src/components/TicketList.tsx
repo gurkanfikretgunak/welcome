@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getUserTickets, Ticket } from '@/lib/supabase'
+import { getUserTickets, Ticket } from '@/lib/repositories/tickets'
 import TextCard from '@/components/ui/TextCard'
 import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'

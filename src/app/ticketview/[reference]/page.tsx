@@ -7,7 +7,7 @@ import TextCard from '@/components/ui/TextCard'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextButton from '@/components/ui/TextButton'
 import EventTicket from '@/components/events/EventTicket'
-import { getParticipantByReference } from '@/lib/supabase'
+import { getParticipantByReference } from '@/lib/repositories/events'
 
 interface ParticipantTicketData {
   participant_id: string

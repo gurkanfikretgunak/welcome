@@ -6,7 +6,7 @@ import TextCard from '@/components/ui/TextCard'
 import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
-import { registerForEvent } from '@/lib/supabase'
+import { registerForEvent } from '@/lib/repositories/events'
 import { captureException, startTransaction, addBreadcrumb } from '@/lib/sentry'
 
 interface Event {

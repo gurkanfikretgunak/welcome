@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
-import { getChecklistStatus, updateChecklistStep } from '@/lib/supabase'
+import { getChecklistStatus, updateChecklistStep } from '@/lib/repositories/checklists'
 import { ONBOARDING_CHECKLIST, CATEGORY_LABELS, CATEGORY_DESCRIPTIONS, ChecklistItem } from '@/data/checklist'
 import Navbar from '@/components/layout/Navbar'
 import PageLayout from '@/components/layout/PageLayout'
@@ -54,7 +54,7 @@ export default function ChecklistPage() {
       console.log('📋 Raw checklist data:', data)
       
       const statusMap: ChecklistStatus = {}
-      data?.forEach(item => {
+      data?.forEach((item: { step_name: string; completed: boolean }) => {
         console.log('📝 Processing item:', item.step_name, 'completed:', item.completed)
         statusMap[item.step_name] = item.completed
       })

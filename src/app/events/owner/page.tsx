@@ -10,7 +10,7 @@ import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
 import EventTicket from '@/components/events/EventTicket'
-import { getOwnerEvents, getEventParticipants, updateEvent, deleteEvent, createEvent } from '@/lib/supabase'
+import { getOwnerEvents, getEventParticipants, updateEvent, deleteEvent, createEvent } from '@/lib/repositories/events'
 import { captureException } from '@/lib/sentry'
 
 interface Event {
