@@ -63,6 +63,7 @@ export default function Navbar({ user, onSignOut }: NavbarProps) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={false}
                   className={`
                     text-sm tracking-wide transition-opacity duration-200
                     ${pathname === item.href 
@@ -140,6 +141,7 @@ export default function Navbar({ user, onSignOut }: NavbarProps) {
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch={false}
                       onClick={closeMobileMenu}
                       className={`
                         block text-sm tracking-wide transition-opacity duration-200 py-2
