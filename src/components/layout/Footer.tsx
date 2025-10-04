@@ -19,7 +19,7 @@ export default function Footer() {
   return (
     <>
       <div className="relative mt-8 p-4 text-sm muted border-t border-gray-100">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center items-start gap-4">
           <div className="flex items-center gap-4">
             <span>© {currentYear} All rights reserved by MasterFabric.</span>
           </div>
