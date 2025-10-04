@@ -6,7 +6,7 @@ import TextButton from "@/components/ui/TextButton";
 import TextCard from "@/components/ui/TextCard";
 import { useNotify } from "@/context/NotificationContext";
 
-export default function NotificationDemo() {
+export default function NotificationSystemPreview() {
   const [message, setMessage] = useState(
     "Welcome to the enhanced notification system!"
   );
@@ -200,7 +200,7 @@ export default function NotificationDemo() {
   return (
     <PageLayout>
       <div className="container mx-auto p-6 max-w-5xl">
-        <TextCard title="🔔 Enhanced Notification System Demo" className="mb-8">
+        <TextCard title="🔔 Notification System Preview" className="mb-8">
           <p className="mb-4">
             Test the enhanced dynamic notification system with new features:
           </p>
