@@ -76,6 +76,17 @@ export async function createForm(input: Partial<Form>) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { data: null, error: new Error('Not authenticated') }
 
+  // Prefer secure RPC to avoid client-side RLS friction
+  const { data: rpcData, error: rpcError } = await supabase.rpc('create_form_secure', {
+    p_title: input.title,
+    p_description: input.description ?? null,
+    p_slug: input.slug,
+    p_is_internal: input.is_internal ?? true,
+    p_gdpr: input.gdpr_consent_text ?? 'I agree to the processing of my personal data in accordance with GDPR regulations and the company\'s privacy policy'
+  })
+  if (!rpcError && rpcData) return { data: rpcData as Form, error: null }
+
+  // Fallback to direct insert if RPC is not available
   const payload = {
     created_by: user.id,
     owner_user_id: user.id,
@@ -94,13 +105,8 @@ export async function createForm(input: Partial<Form>) {
     email_summary_frequency: (input.email_summary_frequency as any) ?? 'none',
     collect_submitter_email: input.collect_submitter_email ?? false
   }
-
-  const { data, error } = await supabase
-    .from('forms')
-    .insert(payload)
-    .select('*')
-    .single()
-  if (error) return { data: null, error }
+  const { data, error } = await supabase.from('forms').insert(payload).select('*').single()
+  if (error) return { data: null, error: rpcError || error }
   return { data: data as Form, error: null }
 }
 
