@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { getFormQuestions, updateForm, addQuestion, addQuestionOption } from '@/lib/supabase/forms'
+import { getFormQuestions, updateForm, addQuestion, addQuestionOption, updateQuestion } from '@/lib/supabase/forms'
 import { supabase } from '@/lib/supabase/client'
 
 export default function EditFormPage() {
@@ -163,9 +163,16 @@ export default function EditFormPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-xs uppercase text-gray-500">{q.type}</span>
                 </div>
-                <input className="mt-2 border rounded w-full px-3 py-2" value={q.label} onChange={e=>setQuestions(prev=>prev.map(i=>i.id===q.id?{...i,label:e.target.value}:i))} />
+                <input className="mt-2 border rounded w-full px-3 py-2" value={q.label} onChange={e=>setQuestions(prev=>prev.map(i=>i.id===q.id?{...i,label:e.target.value}:i))} onBlur={async()=>{
+                  const cur = questions.find(i=>i.id===q.id)
+                  if (cur) await updateQuestion(q.id, { label: cur.label })
+                }} />
                 <div className="mt-2 flex items-center gap-2">
-                  <input id={`req-${q.id}`} type="checkbox" checked={!!q.required} onChange={e=>setQuestions(prev=>prev.map(i=>i.id===q.id?{...i,required:e.target.checked}:i))} />
+                  <input id={`req-${q.id}`} type="checkbox" checked={!!q.required} onChange={async e=>{
+                    const checked = e.target.checked
+                    setQuestions(prev=>prev.map(i=>i.id===q.id?{...i,required:checked}:i))
+                    await updateQuestion(q.id, { required: checked })
+                  }} />
                   <label htmlFor={`req-${q.id}`}>Required</label>
                 </div>
                 {['multiple_choice','checkboxes','dropdown'].includes(q.type) && (

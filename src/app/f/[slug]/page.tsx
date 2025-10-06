@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { getFormBySlugPublic, getFormQuestions, FormQuestion } from '@/lib/supabase/forms'
+import { getFormBySlugPublic, getFormBySlugOwner, getFormQuestions, FormQuestion } from '@/lib/supabase/forms'
 import { createSubmission, insertAnswers } from '@/lib/supabase/submissions'
 
 export default function PublicFormPage() {
@@ -18,12 +18,18 @@ export default function PublicFormPage() {
   useEffect(() => {
     let mounted = true
     ;(async () => {
-      const { data: f } = await getFormBySlugPublic(params.slug)
+      let f: any = null
+      const pub = await getFormBySlugPublic(params.slug)
+      if (pub.data) f = pub.data
+      if (!f) {
+        const own = await getFormBySlugOwner(params.slug)
+        if (own.data) f = own.data
+      }
       if (!f) { setLoading(false); return }
-      const { data: qs } = await getFormQuestions((f as any).id)
+      const qs = await getFormQuestions(f.id)
       if (mounted) {
         setForm(f)
-        setQuestions(qs || [])
+        setQuestions(qs.data || [])
         setLoading(false)
       }
     })()
@@ -72,18 +78,18 @@ export default function PublicFormPage() {
     const clientErr = validateClient()
     if (clientErr) { setError(clientErr); return }
     setSubmitting(true)
-    const ip = '0.0.0.0' // replace by server-provided IP in edge runtime
-    const { data: sub, error: subErr } = await createSubmission({
+    const ip = '0.0.0.0'
+    const sub = await createSubmission({
       form_id: (form as any).id,
       consent_checked: consent,
       submitter_ip: ip,
       user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined
     })
-    if (subErr || !sub) { setError(subErr?.message || 'Submission failed'); setSubmitting(false); return }
+    if (sub.error || !sub.data) { setError(sub.error?.message || 'Submission failed'); setSubmitting(false); return }
     const payload = buildAnswerPayload()
-    const { error: ansErr } = await insertAnswers(sub.id, payload)
+    const ans = await insertAnswers(sub.data.id, payload)
     setSubmitting(false)
-    if (ansErr) { setError(ansErr.message); return }
+    if (ans.error) { setError(ans.error.message); return }
     setSubmitted(true)
   }
 

@@ -131,6 +131,17 @@ export async function getFormBySlugPublic(slug: string) {
   return { data: data as Form | null, error: null }
 }
 
+export async function getFormBySlugOwner(slug: string) {
+  // Owner can select from base table due to RLS
+  const { data, error } = await supabase
+    .from('forms')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle()
+  if (error) return { data: null, error }
+  return { data: data as Form | null, error: null }
+}
+
 export async function getFormQuestions(formId: string) {
   const { data: questions, error } = await supabase
     .from('form_questions')
@@ -168,8 +179,31 @@ export async function listMyForms() {
     .from('forms_owner_dashboard')
     .select('*')
     .order('updated_at', { ascending: false })
-  if (error) return { data: null, error }
-  return { data: data as OwnerDashboardItem[], error: null }
+  if (!error && data && data.length > 0) return { data: data as OwnerDashboardItem[], error: null }
+
+  // Fallback: direct query on forms if the view is unavailable or returns empty
+  const { data: me } = await supabase.auth.getUser()
+  const userId = me?.user?.id
+  if (!userId) return { data: [], error: null }
+
+  const { data: raw, error: rawErr } = await supabase
+    .from('forms')
+    .select('*')
+    .eq('owner_user_id', userId)
+    .order('updated_at', { ascending: false })
+  if (rawErr) return { data: null, error: rawErr }
+  const mapped: OwnerDashboardItem[] = (raw || []).map((f: any) => ({
+    id: f.id,
+    title: f.title,
+    slug: f.slug,
+    status: f.status,
+    access_type: f.is_internal ? 'Internal' : 'Public',
+    response_count: 0,
+    created_at: f.created_at,
+    updated_at: f.updated_at,
+    last_submission_at: null
+  }))
+  return { data: mapped, error: null }
 }
 
 export async function deleteForm(id: string) {
@@ -221,6 +255,24 @@ export async function addQuestionOption(questionId: string, input: Partial<FormQ
     .single()
   if (error) return { data: null, error }
   return { data: data as FormQuestionOption, error: null }
+}
+
+export async function updateQuestion(questionId: string, updates: Partial<FormQuestion>) {
+  const payload: any = {}
+  if (typeof updates.label !== 'undefined') payload.label = updates.label
+  if (typeof updates.required !== 'undefined') payload.required = updates.required
+  if (typeof updates.description !== 'undefined') payload.description = updates.description
+  if (typeof updates.order_index !== 'undefined') payload.order_index = updates.order_index
+  if (typeof updates.settings !== 'undefined') payload.settings = updates.settings
+  if (typeof updates.is_active !== 'undefined') payload.is_active = updates.is_active
+  const { data, error } = await supabase
+    .from('form_questions')
+    .update(payload)
+    .eq('id', questionId)
+    .select('*')
+    .single()
+  if (error) return { data: null, error }
+  return { data, error: null }
 }
 
 
