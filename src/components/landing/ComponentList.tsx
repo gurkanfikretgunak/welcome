@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { LandingComponent } from '@/lib/types/landing-components'
+import { supabase } from '@/lib/supabase/client'
 import TextCard from '@/components/ui/TextCard'
 import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
