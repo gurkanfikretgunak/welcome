@@ -874,6 +874,23 @@ export default function OwnerPage() {
           </div>
         </TextCard>
 
+        {/* Landing Page Management Section */}
+        <TextCard title="LANDING PAGE MANAGEMENT">
+          <div className="space-y-4 mb-4">
+            <div className="flex justify-end">
+              <TextButton
+                variant="success"
+                onClick={() => router.push('/landing-management')}
+              >
+                MANAGE LANDING PAGE →
+              </TextButton>
+            </div>
+            <TextHierarchy level={2} muted>
+              Customize your landing page. Create sections, manage content, and control what visitors see.
+            </TextHierarchy>
+          </div>
+        </TextCard>
+
         <TextCard title="USER MANAGEMENT">
           <CollapsibleSection
             title="USER MANAGEMENT"
