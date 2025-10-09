@@ -14,26 +14,56 @@ import {
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verify owner access
+    // Verify owner access - try both cookie and header auth
     const cookieStore = await cookies()
+    const authHeader = request.headers.get('Authorization')
     
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key',
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
+    let supabase
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      // Use header-based auth if provided
+      supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key',
+        {
+          global: {
+            headers: {
+              Authorization: authHeader
+            }
           },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options })
+          cookies: {
+            get(name: string) {
+              return cookieStore.get(name)?.value
+            },
+            set(name: string, value: string, options: any) {
+              cookieStore.set({ name, value, ...options })
+            },
+            remove(name: string, options: any) {
+              cookieStore.set({ name, value: '', ...options })
+            },
           },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options })
+        }
+      )
+    } else {
+      // Use cookie-based auth
+      supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key',
+        {
+          cookies: {
+            get(name: string) {
+              return cookieStore.get(name)?.value
+            },
+            set(name: string, value: string, options: any) {
+              cookieStore.set({ name, value, ...options })
+            },
+            remove(name: string, options: any) {
+              cookieStore.set({ name, value: '', ...options })
+            },
           },
-        },
-      }
-    )
+        }
+      )
+    }
 
     const { data: { user } } = await supabase.auth.getUser()
     
@@ -86,26 +116,56 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify owner access
+    // Verify owner access - try both cookie and header auth
     const cookieStore = await cookies()
+    const authHeader = request.headers.get('Authorization')
     
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key',
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
+    let supabase
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      // Use header-based auth if provided
+      supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key',
+        {
+          global: {
+            headers: {
+              Authorization: authHeader
+            }
           },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options })
+          cookies: {
+            get(name: string) {
+              return cookieStore.get(name)?.value
+            },
+            set(name: string, value: string, options: any) {
+              cookieStore.set({ name, value, ...options })
+            },
+            remove(name: string, options: any) {
+              cookieStore.set({ name, value: '', ...options })
+            },
           },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options })
+        }
+      )
+    } else {
+      // Use cookie-based auth
+      supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key',
+        {
+          cookies: {
+            get(name: string) {
+              return cookieStore.get(name)?.value
+            },
+            set(name: string, value: string, options: any) {
+              cookieStore.set({ name, value, ...options })
+            },
+            remove(name: string, options: any) {
+              cookieStore.set({ name, value: '', ...options })
+            },
           },
-        },
-      }
-    )
+        }
+      )
+    }
 
     const { data: { user } } = await supabase.auth.getUser()
     
