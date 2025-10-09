@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 import {
   getAllLandingPages,
   createLandingPage,
@@ -14,15 +15,23 @@ import {
 export async function GET(request: NextRequest) {
   try {
     // Verify owner access
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    const cookieStore = await cookies()
+    
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key',
       {
-        global: {
-          headers: {
-            Authorization: request.headers.get('Authorization') || ''
-          }
-        }
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options })
+          },
+        },
       }
     )
 
@@ -42,17 +51,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden - Owner only' }, { status: 403 })
     }
 
-    const { data, error } = await getAllLandingPages()
+    // Get all landing pages directly with authenticated supabase client
+    const { data, error } = await supabase
+      .from('landing_pages')
+      .select('*')
+      .order('created_at', { ascending: false })
 
     if (error) {
       console.error('Error fetching landing pages:', error)
+      console.error('Error details:', error.message, error.details, error.hint)
       return NextResponse.json(
-        { error: 'Failed to fetch landing pages' },
+        { 
+          error: 'Failed to fetch landing pages',
+          details: error.message,
+          hint: error.hint,
+          code: error.code
+        },
         { status: 500 }
       )
     }
 
-    return NextResponse.json({ landingPages: data })
+    return NextResponse.json({ landingPages: data || [] })
   } catch (error) {
     console.error('Error in landing manage API:', error)
     return NextResponse.json(
@@ -68,15 +87,23 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Verify owner access
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    const cookieStore = await cookies()
+    
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key',
       {
-        global: {
-          headers: {
-            Authorization: request.headers.get('Authorization') || ''
-          }
-        }
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options })
+          },
+        },
       }
     )
 
@@ -106,16 +133,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { data, error } = await createLandingPage({
-      title,
-      subtitle,
-      is_active: is_active || false
-    })
+    // Create landing page directly with authenticated supabase client
+    const { data, error } = await supabase
+      .from('landing_pages')
+      .insert([{
+        title,
+        subtitle,
+        is_active: is_active || false
+      }])
+      .select()
+      .single()
 
     if (error) {
       console.error('Error creating landing page:', error)
+      console.error('Error details:', error.message, error.details, error.hint)
       return NextResponse.json(
-        { error: 'Failed to create landing page' },
+        { 
+          error: 'Failed to create landing page',
+          details: error.message,
+          hint: error.hint,
+          code: error.code
+        },
         { status: 500 }
       )
     }
@@ -136,15 +174,23 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     // Verify owner access
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    const cookieStore = await cookies()
+    
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key',
       {
-        global: {
-          headers: {
-            Authorization: request.headers.get('Authorization') || ''
-          }
-        }
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options })
+          },
+        },
       }
     )
 
@@ -215,15 +261,23 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     // Verify owner access
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    const cookieStore = await cookies()
+    
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key',
       {
-        global: {
-          headers: {
-            Authorization: request.headers.get('Authorization') || ''
-          }
-        }
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options })
+          },
+        },
       }
     )
 
