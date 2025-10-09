@@ -290,21 +290,18 @@ export default function ComponentList({
               <div className="flex items-center space-x-2">
                 <TextButton
                   variant="default"
-                  size="sm"
                   onClick={() => handleToggleVisibility(component)}
                 >
                   {component.is_visible ? 'HIDE' : 'SHOW'}
                 </TextButton>
                 <TextButton
                   variant="default"
-                  size="sm"
                   onClick={() => onEditComponent(component)}
                 >
                   EDIT
                 </TextButton>
                 <TextButton
                   variant="warning"
-                  size="sm"
                   onClick={() => handleDelete(component.id)}
                 >
                   DELETE
