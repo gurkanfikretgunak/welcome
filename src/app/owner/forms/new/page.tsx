@@ -39,11 +39,11 @@ export default function NewFormPage() {
       setError(error.message);
       return;
     }
-    if (data) router.push(`/forms/${data.id}/edit`);
+    if (data) router.push(`/owner/forms/${data.id}/edit`);
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-4 space-y-4">
+    <div className="space-y-4">
       <h1 className="text-2xl font-semibold">Create Form</h1>
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
