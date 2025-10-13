@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   getAllUsers,
@@ -39,7 +39,6 @@ import {
   StoreTransaction,
 } from "@/lib/repositories/store";
 import { ONBOARDING_CHECKLIST, CATEGORY_LABELS } from "@/data/checklist";
-import Navbar from "@/components/layout/Navbar";
 import PageLayout from "@/components/layout/PageLayout";
 import TextCard from "@/components/ui/TextCard";
 import TextHierarchy from "@/components/ui/TextHierarchy";
@@ -140,6 +139,11 @@ export default function OwnerPage() {
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(
     null
   );
+
+  useEffect(() => {
+    loadOwnerData();
+    loadOtpCodes();
+  }, []);
 
   // Load OTP codes
   const loadOtpCodes = async () => {
