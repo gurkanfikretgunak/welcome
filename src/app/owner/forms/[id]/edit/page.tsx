@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -11,6 +12,7 @@ import {
   deleteQuestionOption,
 } from "@/lib/supabase/forms";
 import { supabase } from "@/lib/supabase/client";
+import NotFound from "@/app/not-found";
 import TextButton from "@/components/ui/TextButton";
 
 export default function EditFormPage() {
@@ -114,10 +116,10 @@ export default function EditFormPage() {
   }
 
   if (loading) return <div className="p-4">Loading…</div>;
-  if (!form) return <div className="p-4">Form not found</div>;
+  if (!form) return <NotFound />;
 
   return (
-    <div className="max-w-6xl mx-auto p-4 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Edit Form</h1>
         <div className="flex gap-2">
