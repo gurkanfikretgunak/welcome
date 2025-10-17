@@ -279,18 +279,16 @@ export default function OwnerEventsPage() {
                   key={event.id}
                   className="border border-black p-4 bg-white"
                 >
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex flex-col md:flex-row items-start justify-between mb-3 gap-4">
                     <div className="flex-1">
                       <TextHierarchy level={1} emphasis className="text-lg">
                         {event.title}
                       </TextHierarchy>
-                      <TextHierarchy level={2} muted className="mt-1">
+                      <p className="muted mt-1">
                         📅 {formatDate(event.event_date)}
-                      </TextHierarchy>
+                      </p>
                       {event.location && (
-                        <TextHierarchy level={2} muted>
-                          📍 {event.location}
-                        </TextHierarchy>
+                        <p className="muted">📍 {event.location}</p>
                       )}
                     </div>
                     <div className="flex gap-2 items-center">
@@ -309,29 +307,25 @@ export default function OwnerEventsPage() {
                         onClick={() => setEditingEvent(event)}
                         className="text-xs"
                       >
-                        ✏️ EDIT
+                        EDIT
                       </TextButton>
                     </div>
                   </div>
 
                   {event.description && (
-                    <TextHierarchy level={2} muted className="mb-3">
-                      {event.description}
-                    </TextHierarchy>
+                    <p className="muted mb-3">{event.description}</p>
                   )}
 
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                    <div className="flex items-center gap-4">
-                      <TextHierarchy level={2} muted>
+                  <div className="flex flex-col md:flex-row items-center justify-between pt-3 border-t border-gray-200 gap-2">
+                    <div className="w-full md:w-auto flex items-center gap-4">
+                      <p className="muted">
                         👥 {event.participant_count} participants
-                      </TextHierarchy>
+                      </p>
                       {event.max_participants && (
-                        <TextHierarchy level={2} muted>
-                          (max {event.max_participants})
-                        </TextHierarchy>
+                        <p className="muted">(max {event.max_participants})</p>
                       )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col w-full md:w-auto md:flex-row gap-2">
                       <TextButton
                         variant="default"
                         onClick={() => handleEventSelect(event)}
