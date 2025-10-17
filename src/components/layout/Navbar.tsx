@@ -55,7 +55,7 @@ export default function Navbar({ user, onSignOut }: NavbarProps) {
         </div>
 
         {/* Navigation Links */}
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-4">
           {navItems
             .filter((item) => item.show)
             .map((item) => (
@@ -78,7 +78,7 @@ export default function Navbar({ user, onSignOut }: NavbarProps) {
 
           {/* User Info & Actions */}
           {user && (
-            <div className="flex items-center space-x-4 border-l border-black pl-6">
+            <div className="flex items-center space-x-4 border-l border-black pl-4">
               <div className="text-xs muted">{user.github_username}</div>
               {isOwner && <TextBadge variant="success">OWNER</TextBadge>}
               <TextButton

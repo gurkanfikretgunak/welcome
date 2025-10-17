@@ -316,8 +316,8 @@ export default function OwnerEventsPage() {
                     <p className="muted mb-3">{event.description}</p>
                   )}
 
-                  <div className="flex flex-col md:flex-row items-center justify-between pt-3 border-t border-gray-200">
-                    <div className="flex items-center gap-4">
+                  <div className="flex flex-col md:flex-row items-center justify-between pt-3 border-t border-gray-200 gap-2">
+                    <div className="w-full md:w-auto flex items-center gap-4">
                       <p className="muted">
                         👥 {event.participant_count} participants
                       </p>
