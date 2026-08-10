@@ -17,6 +17,13 @@ export async function insertAnswers(_submissionId:string,answers:AnswerPayload[]
     return data.submitForm})
 }
 export async function listResponsesForOwner(formId:string){return result(async()=>{const data=await particular<{formSubmissions:Record<string,any>[]}>('welcome.forms.read',
-  `query Responses($formId:String!){formSubmissions(formId:$formId){${ENTITY_FIELDS}}}`,{formId});return data.formSubmissions})}
+  `query Responses($formId:String!){formSubmissions(formId:$formId){${ENTITY_FIELDS}}}`,{formId})
+  // Map Particular entities → owner responses table shape (replaces missing form_responses_owner_view)
+  return data.formSubmissions.map((row)=>({
+    submission_id: row.id,
+    submission_created_at: row.createdAt ?? row.created_at,
+    submitter_email: row.respondentEmail ?? row.respondent_email ?? null,
+    status: 'complete',
+  }))})}
 export async function exportResponses(formId:string){return result(async()=>{const data=await particular<{exportFormResponses:string}>('welcome.forms.read',
   `query Export($formId:String!){exportFormResponses(formId:$formId)}`,{formId});const parsed=JSON.parse(data.exportFormResponses);return Array.isArray(parsed)?parsed:[]})}
