@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>#19 datetime validation</title>
+<style>
+body{font-family:ui-monospace,monospace;padding:24px;max-width:640px}
+.card{border:1px solid #000;padding:16px;margin:12px 0}
+label{display:block;margin-top:12px;font-size:12px}
+input{width:100%;padding:8px;font-family:inherit;border:1px solid #000}
+.err{color:#dc2626;font-size:13px;margin-top:8px}
+.ok{color:#16a34a;font-size:13px}
+button{margin-top:12px;padding:8px 12px;font-family:inherit;border:1px solid #000;background:#fff;cursor:pointer}
+</style></head><body>
+<h1>Issue #19 — date/time validation</h1>
+<div class="card">
+  <label>DATE/TIME (datetime-local bounds 1900–2100)</label>
+  <input type="datetime-local" id="dt" min="1900-01-01T00:00" max="2100-12-31T23:59" value="200000-05-12T07:67">
+  <p class="err" id="msg"></p>
+  <button type="button" id="go">VALIDATE</button>
+  <p class="ok">✓ Year must be 1900–2100; time hours 0–23 / minutes 0–59; invalid blocks submit</p>
+</div>
+<script>
+function isValidYear(y){return Number.isInteger(y)&&y>=1900&&y<=2100}
+function isValidTime(v){const m=v.trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/); if(!m)return false; const h=+m[1],min=+m[2],s=m[3]!=null?+m[3]:0; return h>=0&&h<=23&&min>=0&&min<=59&&s>=0&&s<=59}
+function isValidDate(v){const m=v.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m)return false; const y=+m[1],mo=+m[2],d=+m[3]; if(!isValidYear(y)||mo<1||mo>12||d<1||d>31)return false; const dt=new Date(Date.UTC(y,mo-1,d)); return dt.getUTCFullYear()===y&&dt.getUTCMonth()===mo-1&&dt.getUTCDate()===d}
+function validate(v){if(!v.trim())return 'Date and time are required.'; const [d,t]=v.split('T'); if(!d||!t)return 'Enter a valid date/time (year 1900–2100, time HH:MM).'; if(!isValidDate(d)||!isValidTime(t))return 'Enter a valid date/time (year 1900–2100, time HH:MM).'; return null}
+const msg=document.getElementById('msg'); const dt=document.getElementById('dt');
+document.getElementById('go').onclick=()=>{msg.textContent=validate(dt.value)||'✓ Valid'};
+msg.textContent=validate(dt.value)||'';
+</script>
+</body></html>

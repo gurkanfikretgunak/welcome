@@ -16,6 +16,10 @@ import {
   createEvent,
 } from "@/lib/repositories/events";
 import { captureException } from "@/lib/sentry";
+import {
+  datetimeLocalBounds,
+  validateDateTimeLocal,
+} from "@/lib/datetime-validation";
 
 interface Event {
   id: string;
@@ -642,6 +646,8 @@ function EditEventForm({
           name="event_date"
           value={form.event_date}
           onChange={handleChange}
+          min={datetimeLocalBounds().min}
+          max={datetimeLocalBounds().max}
           className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
           required
         />
@@ -737,6 +743,12 @@ function CreateEventForm({ onCreated }: { onCreated: () => void }) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    const dateErr = validateDateTimeLocal(form.event_date);
+    if (dateErr) {
+      setError(dateErr);
+      setSubmitting(false);
+      return;
+    }
     try {
       const { error } = await createEvent({
         title: form.title,
@@ -804,6 +816,8 @@ function CreateEventForm({ onCreated }: { onCreated: () => void }) {
           name="event_date"
           value={form.event_date}
           onChange={handleChange}
+          min={datetimeLocalBounds().min}
+          max={datetimeLocalBounds().max}
           className="w-full px-3 py-2 bg-white border border-gray-600 text-black font-mono text-sm focus:border-green-500 focus:outline-none"
           required
         />

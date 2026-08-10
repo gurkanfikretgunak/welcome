@@ -422,6 +422,8 @@ export default function WorklogSection() {
                 </TextHierarchy>
                 <input
                   type="date"
+                  min={dateInputBounds().min}
+                  max={dateInputBounds().max}
                   value={dateFilter.startDate}
                   onChange={(e) =>
                     setDateFilter((prev) => ({
@@ -440,6 +442,8 @@ export default function WorklogSection() {
                 </TextHierarchy>
                 <input
                   type="date"
+                  min={dateInputBounds().min}
+                  max={dateInputBounds().max}
                   value={dateFilter.endDate}
                   onChange={(e) =>
                     setDateFilter((prev) => ({
@@ -529,6 +533,8 @@ export default function WorklogSection() {
                     </TextHierarchy>
                     <input
                       type="date"
+                      min={dateInputBounds().min}
+                      max={dateInputBounds().max}
                       value={formData.date}
                       onChange={(e) =>
                         setFormData((prev) => ({
