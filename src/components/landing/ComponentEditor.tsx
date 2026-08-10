@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { LandingComponent, ComponentType, CreateComponentData, ComponentTemplate } from '@/lib/types/landing-components'
-import { supabase } from '@/lib/supabase/client'
+import { readSession } from '@/lib/mf/session'
 import TextCard from '@/components/ui/TextCard'
 import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
@@ -118,7 +118,7 @@ export default function ComponentEditor({ landingPageId, onComponentCreated, onC
     setError(null)
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const session = readSession()
       
       if (!session) {
         setError('No session found')
@@ -129,7 +129,7 @@ export default function ComponentEditor({ landingPageId, onComponentCreated, onC
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${session.accessToken}`
         },
         body: JSON.stringify(componentData)
       })

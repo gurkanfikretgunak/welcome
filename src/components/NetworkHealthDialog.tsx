@@ -7,7 +7,7 @@ import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 
 export default function NetworkHealthDialog() {
-  const { isOnline, isSupabaseHealthy, problem, checking, error, checkNow } = useNetworkHealth()
+  const { isOnline, isBackendHealthy, problem, checking, error, checkNow } = useNetworkHealth()
   const [visible, setVisible] = useState(false)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
@@ -59,7 +59,7 @@ export default function NetworkHealthDialog() {
             </TextHierarchy>
           )}
           <div className="text-xs muted">
-            Status: Internet {isOnline ? 'OK' : 'DOWN'} • Supabase {isSupabaseHealthy === null ? '…' : isSupabaseHealthy ? 'OK' : 'DOWN'}
+            Status: Internet {isOnline ? 'OK' : 'DOWN'} • mf-go {isBackendHealthy === null ? '…' : isBackendHealthy ? 'OK' : 'DOWN'}
           </div>
         </div>
       </TextCard>

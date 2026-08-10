@@ -1,11 +1,11 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getGraphqlUrl } from '@/lib/mf/config'
 
 type HealthState = {
   isOnline: boolean
-  isSupabaseHealthy: boolean | null
+  isBackendHealthy: boolean | null
   lastCheckedAt: number | null
   checking: boolean
   error?: string
@@ -16,7 +16,7 @@ const DEFAULT_POLL_MS = 15000
 export function useNetworkHealth(pollMs: number = DEFAULT_POLL_MS) {
   const [state, setState] = useState<HealthState>({
     isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
-    isSupabaseHealthy: null,
+    isBackendHealthy: null,
     lastCheckedAt: null,
     checking: false,
   })
@@ -30,27 +30,26 @@ export function useNetworkHealth(pollMs: number = DEFAULT_POLL_MS) {
     }
   }
 
-  const checkSupabase = useCallback(async () => {
+  const checkBackend = useCallback(async () => {
     setState(prev => ({ ...prev, checking: true, error: undefined }))
     try {
-      // Lightweight call to validate SDK connectivity
-      const { data, error } = await supabase.auth.getSession()
-      const ok = !error
+      const response = await fetch(getGraphqlUrl().replace(/\/graphql\/?$/, '/health'))
+      const ok = response.ok
       setState(prev => ({
         ...prev,
-        isSupabaseHealthy: ok,
+        isBackendHealthy: ok,
         lastCheckedAt: Date.now(),
         checking: false,
-        error: error ? (error.message || 'Supabase connectivity error') : undefined,
+        error: ok ? undefined : `mf-go health returned ${response.status}`,
       }))
       return ok
     } catch (e: any) {
       setState(prev => ({
         ...prev,
-        isSupabaseHealthy: false,
+        isBackendHealthy: false,
         lastCheckedAt: Date.now(),
         checking: false,
-        error: e?.message || 'Supabase connectivity error',
+        error: e?.message || 'mf-go connectivity error',
       }))
       return false
     }
@@ -59,17 +58,17 @@ export function useNetworkHealth(pollMs: number = DEFAULT_POLL_MS) {
   const schedule = useCallback(() => {
     clearTimer()
     timerRef.current = setTimeout(() => {
-      void checkSupabase()
+      void checkBackend()
     }, pollMs)
-  }, [checkSupabase, pollMs])
+  }, [checkBackend, pollMs])
 
   const checkNow = useCallback(async () => {
     const okNet = typeof navigator !== 'undefined' ? navigator.onLine : true
     setState(prev => ({ ...prev, isOnline: okNet }))
-    const okSb = await checkSupabase()
+    const okSb = await checkBackend()
     if (!okSb) schedule()
     return okNet && okSb
-  }, [checkSupabase, schedule])
+  }, [checkBackend, schedule])
 
   useEffect(() => {
     const handleOnline = () => setState(prev => ({ ...prev, isOnline: true }))
@@ -94,18 +93,18 @@ export function useNetworkHealth(pollMs: number = DEFAULT_POLL_MS) {
   }, [checkNow])
 
   useEffect(() => {
-    if (state.isSupabaseHealthy === false) {
+    if (state.isBackendHealthy === false) {
       schedule()
     } else {
       clearTimer()
     }
-  }, [state.isSupabaseHealthy, schedule])
+  }, [state.isBackendHealthy, schedule])
 
   const problem = useMemo(() => {
     if (!state.isOnline) return 'No internet connection.'
-    if (state.isSupabaseHealthy === false) return 'Cannot reach Supabase.'
+    if (state.isBackendHealthy === false) return 'Cannot reach mf-go.'
     return null
-  }, [state.isOnline, state.isSupabaseHealthy])
+  }, [state.isOnline, state.isBackendHealthy])
 
   return {
     ...state,

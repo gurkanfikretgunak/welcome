@@ -1,0 +1,8 @@
+=== particular-welcome health (:39206) ===
+ok
+=== mf-go health (:8080) ===
+{"status":"ok","service":"masterfabric-go","version":"0.1.4"}
+=== welcome-text API ===
+{"welcomeText":"Welcome to MasterFabric Technologies Inc. developer onboarding system.\n\nThis text-based interface will guide you through the complete integration process step by step.\n\nNow powered by MasterFabric Core (mf-go) and the welcome Particular — auth, worklogs, tickets, and events in one place.\n\n---\n\nGurkan Fikret Gunak\nAugust 2026 | v.5.0.0"}
+=== recaptcha verify (no secret => skip) ===
+{"ok":true,"skipped":true}

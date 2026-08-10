@@ -7,7 +7,8 @@ import TextCard from "@/components/ui/TextCard";
 import TextHierarchy from "@/components/ui/TextHierarchy";
 import TextBadge from "@/components/ui/TextBadge";
 import TextButton from "@/components/ui/TextButton";
-import { supabase } from "@/lib/supabase/client";
+import { readSession } from "@/lib/mf/session";
+import { getLandingPageById } from "@/lib/repositories/landing";
 
 interface LandingPage {
   id: string;
@@ -69,9 +70,7 @@ export default function LandingManagementPage() {
       setIsLoading(true);
       setError(null);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const session = readSession();
 
       if (!session) {
         setError("No session found");
@@ -80,7 +79,7 @@ export default function LandingManagementPage() {
 
       const response = await fetch("/api/landing/manage", {
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.accessToken}`,
         },
       });
 
@@ -105,16 +104,7 @@ export default function LandingManagementPage() {
 
   const loadPageDetails = async (pageId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("landing_pages")
-        .select(
-          `
-          *,
-          sections:landing_sections(*)
-        `
-        )
-        .eq("id", pageId)
-        .single();
+      const { data, error } = await getLandingPageById(pageId);
 
       if (error) throw error;
 
@@ -140,9 +130,7 @@ export default function LandingManagementPage() {
       setError(null);
       setSuccess(null);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const session = readSession();
 
       if (!session) {
         setError("No session found");
@@ -153,7 +141,7 @@ export default function LandingManagementPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.accessToken}`,
         },
         body: JSON.stringify(pageForm),
       });
@@ -177,9 +165,7 @@ export default function LandingManagementPage() {
       setError(null);
       setSuccess(null);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const session = readSession();
 
       if (!session) {
         setError("No session found");
@@ -190,7 +176,7 @@ export default function LandingManagementPage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.accessToken}`,
         },
         body: JSON.stringify({ id: pageId, setActive: true }),
       });
@@ -216,9 +202,7 @@ export default function LandingManagementPage() {
       setError(null);
       setSuccess(null);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const session = readSession();
 
       if (!session) {
         setError("No session found");
@@ -228,7 +212,7 @@ export default function LandingManagementPage() {
       const response = await fetch(`/api/landing/manage?id=${pageId}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.accessToken}`,
         },
       });
 
@@ -251,9 +235,7 @@ export default function LandingManagementPage() {
       setError(null);
       setSuccess(null);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const session = readSession();
 
       if (!session) {
         setError("No session found");
@@ -273,7 +255,7 @@ export default function LandingManagementPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.accessToken}`,
         },
         body: JSON.stringify({
           landing_page_id: selectedPage.id,
@@ -309,9 +291,7 @@ export default function LandingManagementPage() {
       setError(null);
       setSuccess(null);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const session = readSession();
 
       if (!session) {
         setError("No session found");
@@ -331,7 +311,7 @@ export default function LandingManagementPage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.accessToken}`,
         },
         body: JSON.stringify({
           id: editingSection.id,
@@ -373,9 +353,7 @@ export default function LandingManagementPage() {
       setError(null);
       setSuccess(null);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const session = readSession();
 
       if (!session) {
         setError("No session found");
@@ -385,7 +363,7 @@ export default function LandingManagementPage() {
       const response = await fetch(`/api/landing/sections?id=${sectionId}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.accessToken}`,
         },
       });
 

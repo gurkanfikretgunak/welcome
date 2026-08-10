@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     "MasterFabric",
     "onboarding",
     "developer onboarding",
-    "supabase",
+    "mf-go",
     "next.js",
   ],
   authors: [{ name: "MasterFabric" }],

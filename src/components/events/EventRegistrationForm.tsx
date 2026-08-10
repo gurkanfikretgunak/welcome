@@ -8,6 +8,7 @@ import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'
 import { registerForEvent } from '@/lib/repositories/events'
 import { captureException, startTransaction, addBreadcrumb } from '@/lib/sentry'
+import { getRecaptchaSiteKey, isRecaptchaClientEnabled } from '@/lib/recaptcha'
 
 interface Event {
   id: string
@@ -24,6 +25,8 @@ interface EventRegistrationFormProps {
 }
 
 export default function EventRegistrationForm({ event, onSuccess, onCancel, submitLabel = 'REGISTER' }: EventRegistrationFormProps) {
+  const captchaEnabled = isRecaptchaClientEnabled()
+  const siteKey = getRecaptchaSiteKey()
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -56,10 +59,23 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel, subm
     const transaction = startTransaction('Event Registration', 'event.register')
     addBreadcrumb('Event registration started', {
       eventId: event.id,
-      eventTitle: event.title
+      eventTitle: event.title,
+      captchaEnabled
     })
 
     try {
+      if (captchaEnabled) {
+        const verifyRes = await fetch('/api/recaptcha/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: recaptchaToken }),
+        })
+        const verifyJson = await verifyRes.json().catch(() => ({}))
+        if (!verifyRes.ok || !verifyJson?.ok) {
+          throw new Error(verifyJson?.error || 'Captcha verification failed')
+        }
+      }
+
       const { data, error } = await registerForEvent({
         event_id: event.id,
         ...formData
@@ -99,7 +115,7 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel, subm
     !!formData.full_name &&
     !!formData.email && emailRegex.test(formData.email) &&
     !!formData.gdpr_consent &&
-    !!recaptchaToken
+    (!captchaEnabled || !!recaptchaToken)
 
   const eventDate = new Date(event.event_date)
   const formatDate = (date: Date) => {
@@ -245,14 +261,20 @@ export default function EventRegistrationForm({ event, onSuccess, onCancel, subm
             </TextHierarchy>
           </div>
 
-          {/* reCAPTCHA */}
-          <div className="flex justify-center">
-            <ReCAPTCHA
-              sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ''}
-              onChange={setRecaptchaToken}
-              theme="light"
-            />
-          </div>
+          {/* reCAPTCHA — only when NEXT_PUBLIC_RECAPTCHA_SITE_KEY is configured */}
+          {captchaEnabled ? (
+            <div className="flex justify-center">
+              <ReCAPTCHA
+                sitekey={siteKey}
+                onChange={setRecaptchaToken}
+                theme="light"
+              />
+            </div>
+          ) : (
+            <TextHierarchy level={2} muted className="text-center">
+              Captcha is disabled for this environment (no site key configured).
+            </TextHierarchy>
+          )}
 
           {/* Error Message */}
           {error && (

@@ -10,8 +10,8 @@ import {
   updateQuestion,
   updateQuestionOption,
   deleteQuestionOption,
-} from "@/lib/supabase/forms";
-import { supabase } from "@/lib/supabase/client";
+  getFormById,
+} from "@/lib/repositories/forms";
 import NotFound from "@/app/not-found";
 import TextButton from "@/components/ui/TextButton";
 
@@ -26,11 +26,7 @@ export default function EditFormPage() {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data: formData } = await supabase
-        .from("forms")
-        .select("*")
-        .eq("id", params.id)
-        .single();
+      const { data: formData } = await getFormById(params.id);
       const { data: qs } = await getFormQuestions(params.id);
       if (mounted) {
         setForm(formData);

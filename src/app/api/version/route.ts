@@ -1,53 +1,15 @@
-import { NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { NextRequest, NextResponse } from 'next/server'
+import { getRequestAccessToken } from '@/lib/mf/client'
+import { getOrganizationId } from '@/lib/mf/config'
+import { particular } from '@/lib/repositories/entity'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key',
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options })
-          },
-        },
-      }
-    )
-
-    // Public, no-auth table suggestion: app_versions(version text, created_at timestamp)
-    // Must have RLS policy allowing anon SELECT.
-    const { data, error } = await supabase
-      .from('app_versions')
-      .select('version')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (!error && data?.version) {
-      return NextResponse.json({ version: data.version })
-    }
-
-    // Fallbacks if table missing or no row
-    const ver = process.env.VERCEL_GIT_COMMIT_SHA
-      || process.env.NEXT_PUBLIC_VERCEL_URL
-      || `${Date.now()}`
-
-    return NextResponse.json({ version: ver })
-  } catch (e) {
-    const ver = process.env.VERCEL_GIT_COMMIT_SHA
-      || process.env.NEXT_PUBLIC_VERCEL_URL
-      || `${Date.now()}`
-    return NextResponse.json({ version: ver })
-  }
+    const data = await particular<{ appVersions: { version?: string; createdAt?: string }[] }>('welcome.graphql',
+      `query Versions($organizationId:String!){appVersions(organizationId:$organizationId){version createdAt}}`,
+      { organizationId: getOrganizationId() }, getRequestAccessToken(request))
+    const latest = data.appVersions.sort((a,b)=>(b.createdAt??'').localeCompare(a.createdAt??''))[0]
+    if (latest?.version) return NextResponse.json({ version: latest.version })
+  } catch {}
+  return NextResponse.json({ version: process.env.VERCEL_GIT_COMMIT_SHA || process.env.NEXT_PUBLIC_VERCEL_URL || `${Date.now()}` })
 }
-
-

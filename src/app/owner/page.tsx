@@ -1653,7 +1653,7 @@ export default function OwnerPage() {
                               }
                               className="text-xs font-bold"
                             >
-                              {ticket.status.toUpperCase()}
+                              {ticket.status?.toUpperCase() || "OPEN"}
                             </TextBadge>
                             <TextBadge
                               variant={
@@ -1665,7 +1665,7 @@ export default function OwnerPage() {
                               }
                               className="text-xs font-bold"
                             >
-                              {ticket.priority.toUpperCase()}
+                              {ticket.priority?.toUpperCase() || "MEDIUM"}
                             </TextBadge>
                           </div>
                         </div>

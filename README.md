@@ -41,7 +41,7 @@ This project isn't just a collection of random tools; it's a cohesive system des
 ## Tech Stack 🛠️
 
 - Next.js 15 + React 19 + TypeScript
-- Supabase (database + auth + RLS)
+- mf-go GraphQL authentication + `particular-welcome` operations
 - Tailwind CSS
 - Sentry for error monitoring
 
@@ -64,35 +64,39 @@ npm run type-check
 ```bash
 npm install
 cp env.example .env.local
-# Fill .env.local with your Supabase + GitHub OAuth credentials
+# Fill .env.local with your mf-go app key and organization ID
 npm run dev
 ```
 
 Required envs (see `env.example`):
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_GRAPHQL_URL`
+- `NEXT_PUBLIC_MF_APP_API_KEY`
+- `NEXT_PUBLIC_WELCOME_ORGANIZATION_ID`
  - `RESEND_API_KEY`
  - `RESEND_FROM` (default: `no-reply@masterfabric.co`)
  - `NEXT_PUBLIC_APP_URL` (e.g., `http://localhost:3000`)
-- `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
+- GitHub OAuth is configured in mf-go and exposed through `mfCorePublicAuth`
 - (optional) Sentry if you enable monitoring:
 -   - `NEXT_PUBLIC_SENTRY_DSN`
 -   - `SENTRY_AUTH_TOKEN`
 -   - `SENTRY_ORG`
 -   - `SENTRY_PROJECT`
-- reCAPTCHA (optional):
--   - `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`
--   - `RECAPTCHA_SECRET_KEY`
+- reCAPTCHA (optional — leave empty to skip):
+  - `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` (browser widget)
+  - `RECAPTCHA_SECRET_KEY` (server verify via `POST /api/recaptcha/verify`)
+  - If either is unset/placeholder, event registration continues without captcha.
 
-## Database 🗄️
+## Data architecture 🗄️
 
-Apply SQL in Supabase (in this order as needed):
+The browser talks to mf-go. Operational data is forwarded through
+`particularGraphqlEnvelope` to the `welcome` Particular.
 
 ## Development Notes 📝
 
 - Error boundaries: `src/app/error.tsx`, `src/app/global-error.tsx`
-- Supabase helpers and data access: `src/lib/supabase.ts`
+- mf-go transport and session helpers: `src/lib/mf/*`
+- Particular repositories: `src/lib/repositories/*`
 - Sentry helpers: `src/lib/sentry.ts`
 - UI components: `src/components/*`
 
@@ -117,12 +121,6 @@ Licensed under GNU AGPLv3 with Additional Terms. See `LICENSE` for the full text
 - Repository: https://github.com/masterfabric/welcome
 - Organization website: https://masterfabric.co
 - Contact: license@masterfabric.co
-
-Next.js + Supabase notice (courtesy):
-- If you deploy this software or derivatives as a Next.js project using Supabase, please email a short notice to `license@masterfabric.co` with:
-  - Repository URL or product link
-  - Deploy target (e.g., production, internal)
-  - Maintainer contact
 
 Web projects meta requirement:
 - Include a MasterFabric-provided license code as a meta tag in your main HTML (e.g., `index.html`):

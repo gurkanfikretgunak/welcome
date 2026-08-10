@@ -1,8 +1,8 @@
 "use client"
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { getFormBySlugPublic, getFormBySlugOwner, getFormQuestions, FormQuestion } from '@/lib/supabase/forms'
-import { createSubmission, insertAnswers } from '@/lib/supabase/submissions'
+import { getFormBySlugPublic, getFormBySlugOwner, getFormQuestions, FormQuestion } from '@/lib/repositories/forms'
+import { createSubmission, insertAnswers } from '@/lib/repositories/submissions'
 
 export default function PublicFormPage() {
   const params = useParams() as { slug: string }

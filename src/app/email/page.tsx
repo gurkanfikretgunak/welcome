@@ -163,7 +163,7 @@ export default function EmailPage() {
             <TextBadge variant="success">AUTHENTICATED</TextBadge> GitHub OAuth completed
           </TextHierarchy>
           <TextHierarchy level={1}>
-            <TextBadge variant="default">GITHUB USER</TextBadge> {user.user_metadata?.user_name || user.email}
+            <TextBadge variant="default">GITHUB USER</TextBadge> {user.displayName || user.email}
           </TextHierarchy>
           <TextHierarchy level={1}>
             <TextBadge variant={userProfile?.master_email ? "success" : "warning"}>

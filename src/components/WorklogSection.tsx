@@ -13,7 +13,7 @@ import {
   createWorklog,
   updateWorklog,
   deleteWorklog,
-} from "@/lib/supabase";
+} from "@/lib/repositories/worklogs";
 
 interface WorklogFormData {
   title: string;

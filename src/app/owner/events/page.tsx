@@ -381,21 +381,7 @@ export default function OwnerEventsPage() {
                                     )
                                   ) {
                                     try {
-                                      const supabase = await import(
-                                        "@/lib/supabase"
-                                      ).then((m) => m.supabase);
-                                      const { error } = await supabase
-                                        .from("event_participants")
-                                        .delete()
-                                        .eq("id", participant.id);
-
-                                      if (error) throw error;
-
-                                      // Refresh participants list
-                                      if (selectedEvent) {
-                                        fetchParticipants(selectedEvent.id);
-                                        fetchEvents();
-                                      }
+                                      throw new Error("Removing event participants is not supported by the current welcome Particular");
                                     } catch (err) {
                                       console.error(
                                         "Delete participant error:",
