@@ -22,12 +22,25 @@ interface EventCardProps {
   showRegisterButton?: boolean
 }
 
+const DESCRIPTION_PREVIEW_LEN = 140
+/** Extra content must be more than punctuation/whitespace or the toggle is misleading. */
+const MIN_MEANINGFUL_EXTRA = 12
+
+function descriptionNeedsExpand(description: string): boolean {
+  const text = description.trim()
+  if (text.length <= DESCRIPTION_PREVIEW_LEN) return false
+  const remainder = text.slice(DESCRIPTION_PREVIEW_LEN).replace(/[\s.…·•]+/g, '')
+  return remainder.length >= MIN_MEANINGFUL_EXTRA
+}
+
 export default function EventCard({ event, onRegister, showRegisterButton = true }: EventCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   
   const eventDate = new Date(event.event_date)
   const isUpcoming = eventDate > new Date()
   const isFull = event.max_participants && event.participant_count && event.participant_count >= event.max_participants
+  const description = event.description?.trim() ?? ''
+  const canExpand = descriptionNeedsExpand(description)
   
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('tr-TR', {
@@ -112,13 +125,15 @@ export default function EventCard({ event, onRegister, showRegisterButton = true
           )}
         </div>
 
-        {/* Description */}
-        {event.description && (
+        {/* Description — only offer expand when there is meaningful extra text (fixes #15) */}
+        {description && (
           <div>
             <TextHierarchy level={2} muted>
-              {isExpanded ? event.description : `${event.description.substring(0, 140)}${event.description.length > 140 ? '...' : ''}`}
+              {isExpanded || !canExpand
+                ? description
+                : `${description.slice(0, DESCRIPTION_PREVIEW_LEN).trimEnd()}...`}
             </TextHierarchy>
-            {event.description.length > 140 && (
+            {canExpand && (
               <TextButton
                 variant="default"
                 onClick={() => setIsExpanded(!isExpanded)}
