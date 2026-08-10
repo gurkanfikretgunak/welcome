@@ -1,0 +1,32 @@
+### GET /api/welcome-text
+{
+    "welcomeText": "Welcome to MasterFabric Technologies Inc. developer onboarding system.\n\nThis text-based interface will guide you through the complete integration process step by step.\n\nNow powered by MasterFabric Core (mf-go) and the welcome Particular \u2014 auth, worklogs, tickets, and events in one place.\n\n---\n\nGurkan Fikret Gunak\nAugust 2026 | v.5.0.0"
+}
+
+### GET /api/events
+{
+    "events": []
+}
+
+### GET /api/landing
+{
+    "landingPage": null
+}
+
+### POST /api/recaptcha/verify (no secret → skipped)
+{
+    "ok": true,
+    "skipped": true
+}
+
+### GET /api/version
+{
+    "version": "1786389989210"
+}
+
+### particular-welcome GET /health :39206
+ok
+
+### particular-welcome POST /graphql (introspection-ish publishedEvents via direct)
+unauthorized
+
