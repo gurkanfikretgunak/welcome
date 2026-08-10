@@ -20,8 +20,8 @@ export default function TextButton({
   const variantClasses = {
     default: 'border-black text-black hover:bg-black hover:text-white',
     success: 'text-green-600 border-green-600 hover:!bg-green-600 hover:!text-white hover:!border-green-600',
-    warning: 'warning hover:bg-yellow-500 hover:text-white',
-    error: 'error'
+    warning: 'warning hover:!bg-[var(--warning)] hover:!text-white hover:!border-[var(--warning)]',
+    error: 'error hover:!bg-[var(--error)] hover:!text-white hover:!border-[var(--error)]'
   }
 
   const sizeClasses = {

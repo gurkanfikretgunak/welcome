@@ -6,9 +6,12 @@
   --background: #ffffff;
   --foreground: #000000;
   --success: #16a34a;
-  --warning: #eab308;
-  --error: #ea580c;
+  --warning: #ca8a04;
+  --warning-bg: #fef9c3;
+  --error: #dc2626;
+  --error-bg: #fef2f2;
   --muted: #6b7280;
+  --focus: #000000;
 }
 
 body {
@@ -61,7 +64,26 @@ body {
   border-color: var(--warning);
 }
 
+.info-card.warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border-color: var(--warning);
+}
+
 .error {
+  color: var(--error);
+  border-color: var(--error);
+}
+
+/* Unified error card: same red for text, border, badge — no orange/pink mix (#17) */
+.info-card.error {
+  background: var(--error-bg);
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.info-card.error .info-badge,
+.info-card.error .emphasis {
   color: var(--error);
   border-color: var(--error);
 }
@@ -93,6 +115,35 @@ body {
 .hierarchy-2 { margin-left: 2rem; }
 .hierarchy-3 { margin-left: 4rem; }
 .hierarchy-4 { margin-left: 6rem; }
+
+/* Consistent focus tokens; avoid sticky mouse :focus look (#17) */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select,
+button {
+  outline: none;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible,
+[role="tab"]:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  border-color: var(--focus);
+}
+
+/* Active/pressed should not persist after pointer up */
+button:active:not(:disabled),
+[role="tab"]:active {
+  opacity: 0.85;
+}
 
 @keyframes blinkAnimation {
   0% { opacity: 1; }
