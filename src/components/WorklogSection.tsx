@@ -1,5 +1,6 @@
 "use client";
 
+import { dateInputBounds } from "@/lib/datetime-validation";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import TextCard from "@/components/ui/TextCard";
