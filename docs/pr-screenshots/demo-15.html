@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>#15 Show More fix</title>
+<style>
+  body{font-family:ui-monospace,monospace;padding:24px;background:#fff;color:#000;max-width:720px}
+  .card{border:1px solid #000;padding:16px;margin:16px 0}
+  .title{font-weight:700;letter-spacing:.08em;margin-bottom:12px}
+  .muted{color:#6b7280;white-space:pre-wrap}
+  button{font-family:inherit;border:1px solid #000;background:#fff;padding:4px 8px;margin-top:8px;cursor:pointer;text-transform:uppercase;font-size:12px}
+  h1{font-size:18px} .ok{color:#16a34a} .badge{display:inline-block;border:1px solid #000;padding:2px 6px;font-size:11px;margin-right:8px}
+</style></head><body>
+<h1>Issue #15 — READ MORE only when meaningful extra text</h1>
+<div class="card">
+  <div class="title">CASE A — short / punctuation-only extra (NO toggle)</div>
+  <span class="badge">OPEN</span>
+  <p class="muted" id="a">Welcome meetup for new joiners. Bring laptop.</p>
+  <p class="ok">✓ Toggle hidden — description ≤140 or remainder is only punctuation</p>
+</div>
+<div class="card">
+  <div class="title">CASE B — long description (toggle shown)</div>
+  <span class="badge">OPEN</span>
+  <p class="muted" id="b"></p>
+  <button id="btn" type="button">READ MORE</button>
+  <p class="ok">✓ Toggle appears only because there is substantial remaining content</p>
+</div>
+<script>
+const long = 'MasterFabric Welcome onboarding event covers GitHub login, email verification, bio, worklogs, tickets, checklists, and live event registration. Please arrive 15 minutes early and bring your laptop for the hands-on portion of the session. Mentors will be available throughout.';
+const PREVIEW=140, MIN=12;
+function needs(t){const x=t.trim(); if(x.length<=PREVIEW)return false; return x.slice(PREVIEW).replace(/[\s.…·•]+/g,'').length>=MIN}
+let expanded=false;
+const b=document.getElementById('b'); const btn=document.getElementById('btn');
+function render(){ if(!needs(long)){btn.style.display='none'; b.textContent=long; return;} btn.style.display='inline-block'; b.textContent=expanded?long:long.slice(0,PREVIEW).trimEnd()+'...'; btn.textContent=expanded?'SHOW LESS':'READ MORE'}
+btn.onclick=()=>{expanded=!expanded; render()}; render();
+</script>
+</body></html>
