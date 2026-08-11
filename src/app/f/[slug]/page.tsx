@@ -89,7 +89,11 @@ export default function PublicFormPage() {
     const payload = buildAnswerPayload()
     const ans = await insertAnswers(sub.data.id, payload)
     setSubmitting(false)
-    if (ans.error) { setError(ans.error.message); return }
+    if (ans.error) {
+      const msg = ans.error.message || 'Submission failed'
+      setError(/unauthor/i.test(msg) ? 'Please sign in to submit this form, then try again.' : msg)
+      return
+    }
     setSubmitted(true)
   }
 
