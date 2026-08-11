@@ -13,7 +13,7 @@ import EventList from '@/components/events/EventList'
 import EventRegistrationForm from '@/components/events/EventRegistrationForm'
 import TicketLookup from '@/components/events/TicketLookup'
 import EventTicket from '@/components/events/EventTicket'
-import { getEventById } from '@/lib/supabase'
+import { getEventById } from '@/lib/repositories/events'
 
 interface Event {
   id: string

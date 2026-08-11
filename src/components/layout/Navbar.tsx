@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { User } from "@/lib/supabase";
+import { User } from "@/lib/repositories/users";
 import TextButton from "@/components/ui/TextButton";
 import TextBadge from "@/components/ui/TextBadge";
 

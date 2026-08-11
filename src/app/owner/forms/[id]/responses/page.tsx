@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import {
   listResponsesForOwner,
   exportResponses,
-} from "@/lib/supabase/submissions";
+} from "@/lib/repositories/submissions";
 
 export default function ResponsesPage() {
   const params = useParams() as { id: string };

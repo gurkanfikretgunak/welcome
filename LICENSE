@@ -697,8 +697,8 @@ of this license document, but changing it is not allowed.
 5. Repository Scope:
    These additional terms apply to this repository and derivative works: https://github.com/masterfabric/welcome
 
-6. Notification for Next.js + Supabase Deployments:
-   If you deploy this software (or derivatives) as a Next.js project that uses Supabase, please send a short notice to license@masterfabric.co including:
+6. Notification for Next.js + MasterFabric Deployments:
+   If you deploy this software (or derivatives) as a Next.js project that uses MasterFabric (mf-go / Particulars), please send a short notice to license@masterfabric.co including:
    - Repository URL or product link
    - Deployment target (e.g., production, internal)
    - Maintainer contact information

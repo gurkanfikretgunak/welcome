@@ -5,7 +5,7 @@ import {
   OwnerDashboardItem,
   deleteForm,
   duplicateForm,
-} from "@/lib/supabase/forms";
+} from "@/lib/repositories/forms";
 import Link from "next/link";
 
 export default function MyFormsPage() {

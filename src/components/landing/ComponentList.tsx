@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { LandingComponent } from '@/lib/types/landing-components'
-import { supabase } from '@/lib/supabase/client'
+import { readSession } from '@/lib/mf/session'
 import TextCard from '@/components/ui/TextCard'
 import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
@@ -57,7 +57,7 @@ export default function ComponentList({
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const session = readSession()
       
       if (!session) {
         setError('No session found')
@@ -67,7 +67,7 @@ export default function ComponentList({
       const response = await fetch(`/api/landing/components/${componentId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${session.accessToken}`
         }
       })
 
@@ -85,7 +85,7 @@ export default function ComponentList({
 
   const handleToggleVisibility = async (component: LandingComponent) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const session = readSession()
       
       if (!session) {
         setError('No session found')
@@ -96,7 +96,7 @@ export default function ComponentList({
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${session.accessToken}`
         },
         body: JSON.stringify({
           is_visible: !component.is_visible

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { DynamicChecklist } from '@/lib/supabase'
+import { DynamicChecklist } from '@/lib/repositories/checklists'
 import TextButton from '@/components/ui/TextButton'
 import TextHierarchy from '@/components/ui/TextHierarchy'
 import TextBadge from '@/components/ui/TextBadge'

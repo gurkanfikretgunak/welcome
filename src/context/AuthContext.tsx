@@ -1,322 +1,74 @@
 'use client'
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { User, Session } from '@supabase/supabase-js'
-import { supabase, User as UserProfile } from '@/lib/supabase'
+import { getAppUrl } from '@/lib/mf/config'
+import { logout, mfCorePublicAuth, refreshTokens } from '@/lib/mf/auth-api'
+import { clearSession, MfUser, readSession, writeSession } from '@/lib/mf/session'
+import { createUserProfile, getUserProfile, User as WelcomeProfile } from '@/lib/repositories/users'
 import { captureException, setUser as setSentryUser } from '@/lib/sentry'
 
 interface AuthContextType {
-  user: User | null
-  userProfile: UserProfile | null
-  loading: boolean
-  profileLoading: boolean
-  signInWithGitHub: () => Promise<{ data: any; error: any }>
-  signOut: () => Promise<void>
-  refreshProfile: () => Promise<void>
-  isOwner: () => boolean
+  user: MfUser|null; userProfile: WelcomeProfile|null; loading:boolean; profileLoading:boolean
+  signInWithGitHub:()=>Promise<{data:any;error:any}>; signOut:()=>Promise<void>
+  refreshProfile:()=>Promise<void>; isOwner:()=>boolean
 }
+const AuthContext=createContext<AuthContextType|undefined>(undefined)
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+export function AuthProvider({children}:{children:ReactNode}) {
+  const [user,setUser]=useState<MfUser|null>(null)
+  const [userProfile,setUserProfile]=useState<WelcomeProfile|null>(null)
+  const [loading,setLoading]=useState(true)
+  const [profileLoading,setProfileLoading]=useState(false)
+  const owner=(candidate:MfUser|null=user)=>['owner','admin'].includes(candidate?.role?.toLowerCase()??'')
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [profileLoading, setProfileLoading] = useState(false)
-
-  // Initialize auth state
-  useEffect(() => {
-    console.log('🔐 Initializing auth system...')
-    
-    const initializeAuth = async () => {
-      try {
-        // Try to get real session
-        const { data: { session }, error } = await supabase.auth.getSession()
-        console.log('📋 Session check:', session ? 'Found' : 'None')
-        
-        if (session?.user) {
-          console.log('✅ User found:', session.user.email)
-          setUser(session.user)
-          // Load profile without blocking loading state
-          loadUserProfile(session.user.id)
-        } else {
-          console.log('ℹ️ No session found')
-          setUser(null)
-          setUserProfile(null)
-        }
-        
-        // Set loading to false immediately after checking session
-        setLoading(false)
-      } catch (error) {
-        console.error('❌ Auth initialization error:', error)
-        captureException(error, {
-          tags: { context: 'auth', operation: 'initialization' }
-        })
-        setLoading(false)
-      }
-    }
-
-    initializeAuth()
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('🔄 Auth state change:', event, session ? 'Session exists' : 'No session')
-        
-        if (session?.user) {
-          setUser(session.user)
-          // Load profile without blocking
-          loadUserProfile(session.user.id)
-        } else {
-          console.log('🚪 No session - clearing auth state')
-          setUser(null)
-          setUserProfile(null)
-          
-          // If this is a sign out event, clear cookies
-          if (event === 'SIGNED_OUT') {
-            if (typeof window !== 'undefined') {
-              // Clear all cookies
-              document.cookie.split(";").forEach((c) => {
-                const eqPos = c.indexOf("=")
-                const name = eqPos > -1 ? c.substr(0, eqPos) : c
-                document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"
-                document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname
-              })
-            }
-          }
-        }
-        
-        // Don't set loading to false here, it's already handled in initialization
-      }
-    )
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [])
-
-  // Load user profile from database
-  const loadUserProfile = async (userId: string) => {
+  const loadProfile=async(current:MfUser)=>{
     setProfileLoading(true)
     try {
-      console.log('👤 Loading profile for user:', userId)
-      
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single()
+      let response=await getUserProfile(current.id)
+      if(!response.data) response=await createUserProfile({id:current.id,github_username:current.displayName||current.email.split('@')[0],
+        personal_email:current.email,role:current.role})
+      if(response.data){
+        const profile={...response.data,is_owner:owner(current)}
+        setUserProfile(profile)
+        setSentryUser({id:current.id,email:current.email,username:profile.github_username})
+      }
+    } catch(error){captureException(error,{tags:{context:'auth',operation:'load_profile'}})}
+    finally{setProfileLoading(false)}
+  }
 
-      if (error) {
-        console.error('❌ Profile load error:', error.message || error)
-        captureException(error, {
-          tags: { context: 'auth', operation: 'load_profile' },
-          extra: { userId },
-          level: 'warning'
-        })
-        // Create profile if it doesn't exist
+  useEffect(()=>{void(async()=>{
+    try {
+      let session=readSession()
+      if(session){
         try {
-          const newProfile = await createUserProfile(userId)
-          if (newProfile) {
-            setUserProfile(newProfile)
-          }
-        } catch (createError) {
-          console.error('❌ Profile creation error:', createError)
-          captureException(createError, {
-            tags: { context: 'auth', operation: 'create_profile' },
-            extra: { userId }
-          })
-        }
-        return
+          const renewed=await refreshTokens(session.user.id,session.refreshToken)
+          writeSession(renewed);session=renewed
+        } catch {/* Existing access token may still be valid. */}
+        setUser(session.user)
+        await loadProfile(session.user)
       }
+    } catch(error){captureException(error,{tags:{context:'auth',operation:'initialization'}})}
+    finally{setLoading(false)}
+  })()},[])
 
-      console.log('✅ Profile loaded:', data)
-      setUserProfile(data)
-      // Set user context in Sentry
-      setSentryUser({
-        id: data.id,
-        email: data.master_email || data.personal_email,
-        username: data.github_username
-      })
-    } catch (error) {
-      console.error('❌ Profile load exception:', error)
-      captureException(error, {
-        tags: { context: 'auth', operation: 'load_profile_exception' },
-        extra: { userId }
-      })
-    } finally {
-      setProfileLoading(false)
-    }
+  const signInWithGitHub=async()=>{
+    try{
+      const {githubClientId}=await mfCorePublicAuth()
+      if(!githubClientId)throw new Error('GitHub OAuth is not configured in mf-go')
+      const redirectUri=`${getAppUrl()}/auth/callback`
+      const url=new URL('https://github.com/login/oauth/authorize')
+      url.searchParams.set('client_id',githubClientId)
+      url.searchParams.set('redirect_uri',redirectUri)
+      url.searchParams.set('scope','read:user user:email')
+      window.location.assign(url)
+      return{data:{url:url.toString()},error:null}
+    }catch(error){captureException(error,{tags:{context:'auth',operation:'github_signin'}});return{data:null,error}}
   }
-
-  // Create user profile if it doesn't exist
-  const createUserProfile = async (userId: string) => {
-    try {
-      console.log('🆕 Creating profile for user:', userId)
-      
-      const { data: user } = await supabase.auth.getUser()
-      if (!user.user) {
-        console.error('❌ No authenticated user found - redirecting to home')
-        // Clear all auth state and redirect to home
-        setUser(null)
-        setUserProfile(null)
-        setLoading(false)
-        
-        // Clear cookies and redirect
-        if (typeof window !== 'undefined') {
-          // Clear all cookies
-          document.cookie.split(";").forEach((c) => {
-            const eqPos = c.indexOf("=")
-            const name = eqPos > -1 ? c.substr(0, eqPos) : c
-            document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"
-            document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname
-          })
-          
-          // Redirect to home
-          window.location.href = '/'
-        }
-        return
-      }
-
-      const githubUsername = user.user.user_metadata?.user_name || 
-                            user.user.user_metadata?.preferred_username ||
-                            user.user.email?.split('@')[0] ||
-                            'github-user'
-
-      // Save email from GitHub as personal email
-      const githubEmail = user.user.email || user.user.user_metadata?.email
-
-      console.log('📝 Creating profile with username:', githubUsername)
-      console.log('📧 GitHub email for personal email:', githubEmail)
-
-      const { data, error } = await supabase
-        .from('users')
-        .insert({
-          id: userId,
-          github_username: githubUsername,
-          personal_email: githubEmail,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single()
-
-      if (error) {
-        console.error('❌ Profile creation error:', error)
-        console.error('❌ Error details:', error.message, error.details, error.hint)
-        captureException(error, {
-          tags: { context: 'auth', operation: 'insert_profile' },
-          extra: { 
-            userId, 
-            errorMessage: error.message,
-            errorDetails: error.details,
-            errorHint: error.hint
-          }
-        })
-        return null
-      }
-
-      console.log('✅ Profile created successfully:', data)
-      setUserProfile(data)
-      return data
-    } catch (error) {
-      console.error('❌ Profile creation exception:', error)
-      captureException(error, {
-        tags: { context: 'auth', operation: 'create_profile_exception' },
-        extra: { userId }
-      })
-      return null
-    }
+  const signOut=async()=>{
+    const session=readSession()
+    try{if(session)await logout(session.user.id,session.accessToken,session.refreshToken)}catch(error){captureException(error,{tags:{context:'auth',operation:'signout'}})}
+    clearSession();setUser(null);setUserProfile(null);setSentryUser(null);window.location.assign('/')
   }
-
-  // Sign in with GitHub
-  const signInWithGitHub = async () => {
-    try {
-      console.log('🚀 Starting GitHub sign in...')
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      })
-
-      console.log('📤 GitHub sign in result:', { data, error })
-      return { data, error }
-    } catch (error) {
-      console.error('❌ GitHub sign in exception:', error)
-      captureException(error, {
-        tags: { context: 'auth', operation: 'github_signin' }
-      })
-      return { data: null, error }
-    }
-  }
-
-  // Sign out
-  const signOut = async () => {
-    try {
-      console.log('🚪 Signing out...')
-      await supabase.auth.signOut()
-      setUser(null)
-      setUserProfile(null)
-      
-      // Clear all cookies
-      if (typeof window !== 'undefined') {
-        document.cookie.split(";").forEach((c) => {
-          const eqPos = c.indexOf("=")
-          const name = eqPos > -1 ? c.substr(0, eqPos) : c
-          document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"
-          document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname
-        })
-        
-        // Redirect to home
-        window.location.href = '/'
-      }
-    } catch (error) {
-      console.error('❌ Sign out error:', error)
-      captureException(error, {
-        tags: { context: 'auth', operation: 'signout' }
-      })
-      // Clear Sentry user context
-      setSentryUser(null)
-    }
-  }
-
-  // Refresh profile
-  const refreshProfile = async () => {
-    if (user) {
-      console.log('🔄 Refreshing profile for user:', user.id)
-      await loadUserProfile(user.id)
-      console.log('✅ Profile refresh completed')
-    }
-  }
-
-  const isOwner = () => {
-    return userProfile?.is_owner === true
-  }
-
-  const value = {
-    user,
-    userProfile,
-    profileLoading,
-    loading,
-    signInWithGitHub,
-    signOut,
-    refreshProfile,
-    isOwner
-  }
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  )
+  const refreshProfile=async()=>{if(user)await loadProfile(user)}
+  return <AuthContext.Provider value={{user,userProfile,loading,profileLoading,signInWithGitHub,signOut,refreshProfile,isOwner:()=>owner()}}>{children}</AuthContext.Provider>
 }
-
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
+export function useAuth(){const context=useContext(AuthContext);if(!context)throw new Error('useAuth must be used within an AuthProvider');return context}

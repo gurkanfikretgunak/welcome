@@ -159,8 +159,13 @@ export default function PublicEventView({ params }: { params: Promise<{ id: stri
             event={event}
             submitLabel="JOIN"
             onSuccess={(data) => {
-              if (data?.reference_number) {
-                setRedirectReference(data.reference_number)
+              const reference =
+                data?.reference_number ||
+                data?.reference_code ||
+                data?.referenceCode ||
+                null
+              if (reference) {
+                setRedirectReference(String(reference))
                 setCountdown(3)
               }
             }}

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { createForm } from "@/lib/supabase/forms";
+import { createForm } from "@/lib/repositories/forms";
 import { useRouter } from "next/navigation";
 
 function slugify(input: string) {

@@ -1,53 +1,25 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
+import { getAppUrl } from '@/lib/mf/config'
+import { loginWithGitHub } from '@/lib/mf/auth-api'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-
-  if (code) {
-    const cookieStore = await cookies()
-    
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_anon_key',
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options })
-          },
-        },
-      }
-    )
-    
-    try {
-      // Exchange the code for a session
-      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-      
-      if (error) {
-        console.error('❌ Auth callback error:', error)
-        return NextResponse.redirect(`${requestUrl.origin}/?error=auth_callback_failed`)
-      }
-
-      if (data.user) {
-        console.log('✅ Auth callback success for user:', data.user.email)
-        
-        // Redirect to home with success parameter
-        return NextResponse.redirect(`${requestUrl.origin}/?auth_success=true`)
-      }
-    } catch (error) {
-      console.error('❌ Auth callback exception:', error)
-      return NextResponse.redirect(`${requestUrl.origin}/?error=auth_callback_exception`)
+  if (!code) return NextResponse.redirect(`${requestUrl.origin}/`)
+  try {
+    const payload = await loginWithGitHub(code, `${getAppUrl()}/auth/callback`)
+    if (payload.otpRequired || !payload.accessToken || !payload.refreshToken) {
+      return NextResponse.redirect(`${requestUrl.origin}/?error=otp_not_supported`)
     }
+    const response = NextResponse.redirect(`${requestUrl.origin}/?auth_success=true`)
+    const options = { path: '/', sameSite: 'lax' as const, secure: requestUrl.protocol === 'https:' }
+    response.cookies.set('mf_welcome_access', payload.accessToken, options)
+    response.cookies.set('mf_welcome_refresh', payload.refreshToken, options)
+    response.cookies.set('mf_welcome_user', JSON.stringify(payload.user), options)
+    response.cookies.set('mf_welcome_role', payload.user.role, options)
+    return response
+  } catch (error) {
+    console.error('Auth callback failed:', error)
+    return NextResponse.redirect(`${requestUrl.origin}/?error=auth_callback_failed`)
   }
-
-  // If no code, redirect to home
-  return NextResponse.redirect(`${requestUrl.origin}/`)
 }

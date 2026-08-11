@@ -244,11 +244,11 @@ export default function TicketList({ showCreateButton = true, onCreateTicket }: 
                   {ticket.title}
                 </TextHierarchy>
                 <div className="flex gap-2 mt-2">
-                  <TextBadge variant={STATUS_COLORS[ticket.status]} className="text-xs font-bold">
-                    {ticket.status.toUpperCase()}
+                  <TextBadge variant={STATUS_COLORS[ticket.status || "open"]} className="text-xs font-bold">
+                    {(ticket.status || "open").toUpperCase()}
                   </TextBadge>
-                  <TextBadge variant={PRIORITY_COLORS[ticket.priority]} className="text-xs font-bold">
-                    {ticket.priority.toUpperCase()}
+                  <TextBadge variant={PRIORITY_COLORS[ticket.priority || "medium"]} className="text-xs font-bold">
+                    {(ticket.priority || "medium").toUpperCase()}
                   </TextBadge>
                 </div>
               </div>
