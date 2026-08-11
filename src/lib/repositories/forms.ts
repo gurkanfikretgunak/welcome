@@ -41,8 +41,26 @@ export const getFormById=async(id:string)=>result(async()=>{const data=await par
   `query Form($formId:String!){form(formId:$formId){${ENTITY_FIELDS}}}`,{formId:id});return data.form?mapForm(data.form):null})
 export const listMyForms=async()=>result(async()=>(await forms()).map((f):OwnerDashboardItem=>({id:f.id,title:f.title,slug:f.slug,status:f.status,access_type:f.is_internal?'Internal':'Public',response_count:0,created_at:f.created_at,updated_at:f.updated_at,last_submission_at:null})))
 export const deleteForm=async(id:string)=>{try{await particular('welcome.forms.write',`mutation D($id:String!){deleteForm(id:$id)}`,{id});return{error:null}}catch(error){return{error:error as Error}}}
-export const duplicateForm=async(id:string)=>result(async()=>{const data=await particular<{duplicateForm:Record<string,any>}>('welcome.forms.write',
-  `mutation D($formId:String!,$slug:String!){duplicateForm(formId:$formId,slug:$slug){${ENTITY_FIELDS}}}`,{formId:id,slug:`copy-${Date.now()}`});return data.duplicateForm.id})
+export const duplicateForm=async(id:string)=>result(async()=>{
+  const data=await particular<{duplicateForm:Record<string,any>}>('welcome.forms.write',
+    `mutation D($formId:String!,$slug:String!){duplicateForm(formId:$formId,slug:$slug){${ENTITY_FIELDS}}}`,
+    {formId:id,slug:`copy-${Date.now()}`})
+  const newId=data.duplicateForm.id as string
+  // Copy questions + options (Particular duplicateForm only clones the form row)
+  const qs=await getFormQuestions(id)
+  for (const q of qs.data||[]) {
+    const created=await addQuestion(newId,{
+      type:q.type,label:q.label,description:q.description,required:q.required,
+      order_index:q.order_index,settings:q.settings,is_active:q.is_active,
+    })
+    const newQid=created.data?.id
+    if(!newQid||!q.options?.length) continue
+    for (const opt of q.options) {
+      await addQuestionOption(newQid,{label:opt.label,value:opt.value,order_index:opt.order_index,is_other:opt.is_other})
+    }
+  }
+  return newId
+})
 export async function getFormQuestions(formId:string){return result(async()=>{const data=await particular<{formQuestions:Record<string,any>[]}>('welcome.forms.read',
   `query Q($formId:String!){formQuestions(formId:$formId){${ENTITY_FIELDS}}}`,{formId})
   return Promise.all(data.formQuestions.map(async row=>{const q=mapQuestion(row);const opts=await particular<{formQuestionOptions:Record<string,any>[]}>('welcome.forms.read',
