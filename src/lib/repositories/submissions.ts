@@ -40,6 +40,7 @@ export async function insertAnswers(_submissionId:string,answers:AnswerPayload[]
 }
 export async function listResponsesForOwner(formId:string){return result(async()=>{const data=await particular<{formSubmissions:Record<string,any>[]}>('welcome.forms.read',
   `query Responses($formId:String!){formSubmissions(formId:$formId){${ENTITY_FIELDS}}}`,{formId})
+  // Map Particular entities → owner responses table shape (replaces missing form_responses_owner_view)
   return data.formSubmissions.map((row)=>({
     submission_id: row.id,
     submission_created_at: row.createdAt ?? row.created_at,
